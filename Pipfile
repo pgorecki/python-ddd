@@ -10,6 +10,7 @@ gunicorn = "*"
 pylint = "*"
 pytest = "*"
 pytest-watch = "*"
+schematics = "*"
 
 [dev-packages]
 pylint = "*"

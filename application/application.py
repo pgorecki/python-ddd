@@ -1,0 +1,1 @@
+APPLICATION_NAME = 'foo:app'

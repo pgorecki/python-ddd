@@ -5,3 +5,18 @@ class Currency:
     @property
     def amount(self):
         return self._amount
+
+    def __add__(self, other):
+        return Currency(self.amount + other.amount)
+
+    def __sub__(self, other):
+        return Currency(self.amount - other.amount)  
+
+    def __eq__(self, other):
+        return self.amount == other.amount
+
+    def __lt__(self, other):
+        return self.amount < other.amount
+
+    def __repr__(self):
+        return '{:.2f}'.format(self.amount)

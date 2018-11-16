@@ -3,7 +3,6 @@ import json
 from application.application import APPLICATION_NAME 
 
 class Info(object):
-
     def on_get(self, req, resp):
         doc = {
             'framework': 'Falcon {}'.format(falcon.__version__),
@@ -14,3 +13,6 @@ class Info(object):
 
 app = falcon.API()
 app.add_route('/info', Info())
+
+
+from domain.entities import AuctionItem

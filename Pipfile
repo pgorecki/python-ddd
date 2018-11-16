@@ -8,6 +8,8 @@ flask = "*"
 falcon = "*"
 gunicorn = "*"
 pylint = "*"
+pytest = "*"
+pytest-watch = "*"
 
 [dev-packages]
 pylint = "*"

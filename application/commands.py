@@ -1,8 +1,24 @@
+from enum import Enum
 from schematics.models import Model
 from schematics.types import StringType
 from schematics.exceptions import ValidationError, DataError
 
+class ResultStatus(Enum):
+    OK = 'ok'
+    ERROR = 'error'
+
+class CommandResult(object):
+    def __init__(self, status: ResultStatus, **kwargs):
+        self._kwargs = kwargs
+        self.status = status
+
+    def __repr__(self):
+        return '<{}>({}) {}'.format(type(self).__name__, self.status, self._kwargs)
+
 class Command(Model):
+    """
+    Command is an immutable data structure holding object 
+    """
     def is_valid(self):
         try:
             self.validate()
@@ -10,18 +26,19 @@ class Command(Model):
             return False
         return True
 
-    # def get_validation_errors(self):
-    #     try:
-    #         self.validate()
-    #     except DataError as e:
-    #         print('zzz', e.errors)
-    #         return {}
-    #     return {} 
-
     def __repr__(self):
         return '<{}>({})'.format(type(self).__name__, self.__dict__['_data'])
+
+
 
 class AddItemCommand(Command):
     title = StringType(required=True)
     description = StringType()
 
+class AddItemCommandHandler():
+    def __init__(self):
+        # TODO: inject dependencies here
+        pass
+
+    def handle(self, command):
+        pass

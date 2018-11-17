@@ -2,6 +2,24 @@ AUCTION APPLICATION
 
 The goal is to implement an automatic bidding system, described here: https://www.ebay.co.uk/pages/help/buy/bidding-overview.html
 
+
+TODO for near future:
+
+* commands, command bus and handlers
+
+* executing commands with immediate feedback
+  http://blog.sapiensworks.com/post/2015/07/20/CQRS-Immediate-Feedback-Web-App
+
+* handling commands errors: application layer, business layer
+
+* start using dependency injection
+
+* command validation
+  https://stackoverflow.com/questions/32239353/command-validation-in-ddd-with-cqrs
+
+* handling async commands
+
+
 User stories:
 
 * As a seller I can list a new item for sale. The item has the following fields: text, description, starting price
@@ -98,5 +116,7 @@ TODO:
  * event bus? for domain
  
 References:
+
+* Command design pattern: https://www.youtube.com/watch?v=9qA5kw8dcSU
 
 * https://skillsmatter.com/skillscasts/5025-domain-driven-design-with-python(python-ddd)

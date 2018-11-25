@@ -1,15 +1,21 @@
 from application.commands import Command, CommandResult 
 
 
-def command_handler_locator(command: Command):
-    import importlib
-    module_name = type(command).__module__
-    command_class_name = type(command).__name__
-    handler_class_name = '{}Handler'.format(command_class_name)
-    importlib.invalidate_caches()
-    handler_module = importlib.import_module(module_name)
-    handler_class = getattr(handler_module, handler_class_name)
-    return handler_class
+def default_command_handler_locator(command, **kwargs):
+    print('finding handler for command', command, kwargs)
+    raise NotImplementedError('handler lookup')
+
+    # import importlib
+    # def _default_command_handler_locator(command: Command):
+    #     module_name = type(command).__module__
+    #     command_class_name = type(command).__name__
+    #     handler_class_name = '{}Handler'.format(command_class_name)
+    #     print('locating handler for', command_class_name)
+    #     importlib.invalidate_caches()
+    #     handler_module = importlib.import_module(module_name)
+    #     handler_class = getattr(handler_module, handler_class_name)
+    #     return handler_class
+    # return _default_command_handler_locator
 
 
 class CommandBus(object):
@@ -21,10 +27,9 @@ class CommandBus(object):
     - we can provide rate limiting and protection against DOS attacks
     - we can reject duplicated commands
     """
-    def __init__(self, command_handler_locator = None):
-        # TODO: inected
+    def __init__(self, command_handler_locator, foo=None):
         self.command_handler_locator = command_handler_locator
 
     def execute(self, command : Command) -> CommandResult: 
-        handler = command_handler_locator(command)()
+        handler = self.command_handler_locator(command)()
         return handler.handle(command)

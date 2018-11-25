@@ -11,6 +11,7 @@ pylint = "*"
 pytest = "*"
 pytest-watch = "*"
 schematics = "*"
+dependency-injector = "*"
 
 [dev-packages]
 pylint = "*"

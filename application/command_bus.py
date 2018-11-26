@@ -35,5 +35,6 @@ class CommandBus(object):
         return self._command_handler_factory(command_class_name)
 
     def execute(self, command: Command) -> CommandResult: 
+        # mediator pattern??
         handler = self.get_handler_for_command(command)
         return handler.handle(command)

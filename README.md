@@ -7,6 +7,14 @@ TODO for near future:
 
 * commands, command bus and handlers
 
+* command validation
+
+* application-level exceptions for invalid commands
+
+* mediator pattern
+
+* TESTS!!!!
+
 * executing commands with immediate feedback
   http://blog.sapiensworks.com/post/2015/07/20/CQRS-Immediate-Feedback-Web-App
 
@@ -19,6 +27,8 @@ TODO for near future:
 
 * handling async commands
 
+* framework agnostic integration tests??
+
 
 User stories:
 
@@ -26,7 +36,7 @@ User stories:
 
 * As a seller, I'm allowed to list up to 3 items at the same time
 
-* As a user I can view all the items for sale. For each item I will see: text, description, current price, minimum bidding price, a winner, all participants, action end date
+* As a user I can view all the items for sale. For each item I will see: text, description, current price, minimum bidding price, a winner, all participants, auction end date
 
 * As a bidder, when placing a bid, I enter the maximum amount I am willing to pay for the item. The seller and other bidders don't know my maximum bid
 
@@ -112,8 +122,6 @@ Domain artifacts
 
 * context maps - mappings between concepts between bounded contexts
 
-TODO:
- * event bus? for domain
  
 References:
 

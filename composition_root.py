@@ -17,10 +17,13 @@ def functional_handler(logger):
   return handle
 
 
-from application.command_handlers import add_item_handler
+from application.command_handlers import AddItemCommandHandler
 class CommandBusContainer(containers.DeclarativeContainer):
+  items_repository = None
   command_handler_factory = providers.FactoryAggregate(
-    AddItemCommand=providers.Factory(add_item_handler)
+    AddItemCommand=providers.Factory(AddItemCommandHandler, 
+      items_repository=items_repository
+    )
   )
 
   command_bus_factory = providers.Factory(

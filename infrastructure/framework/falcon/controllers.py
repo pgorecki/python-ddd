@@ -21,6 +21,7 @@ class ItemsController(object):
     def on_get(self, req, res):
         command = AddItemCommand(req.params, strict=False)
         command.validate()
+        # TODO: exception handling? validation?
         result = self.command_bus.execute(command)
         res.body = json.dumps(result, ensure_ascii=False)
         res.status = falcon.HTTP_200

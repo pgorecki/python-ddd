@@ -30,15 +30,6 @@ class Command(Model):
         return '<{}>({})'.format(type(self).__name__, self.__dict__['_data'])
 
 
-
 class AddItemCommand(Command):
     title = StringType(required=True)
     description = StringType()
-
-class AddItemCommandHandler():
-    def __init__(self):
-        # TODO: inject dependencies here
-        pass
-
-    def handle(self, command):
-        pass

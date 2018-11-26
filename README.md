@@ -122,7 +122,8 @@ Domain artifacts
 
 * context maps - mappings between concepts between bounded contexts
 
- 
+Installing Python 3.7 from source on Ubuntu 18.04: https://gist.github.com/jerblack/798718c1910ccdd4ede92481229043be
+
 References:
 
 * Command design pattern: https://www.youtube.com/watch?v=9qA5kw8dcSU

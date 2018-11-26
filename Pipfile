@@ -15,6 +15,7 @@ dependency-injector = "*"
 
 [dev-packages]
 pylint = "*"
+ptvsd = "*"
 
 [requires]
 python_version = "3.7"

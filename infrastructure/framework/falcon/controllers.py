@@ -23,7 +23,7 @@ class ItemsController(object):
         command.validate()
         # TODO: exception handling? validation?
         result = self.command_bus.execute(command)
-        res.body = json.dumps(result, ensure_ascii=False)
+        res.body = result.toJSON()
         res.status = falcon.HTTP_200
 
     def on_post(self, req, res):

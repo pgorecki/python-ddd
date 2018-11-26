@@ -1,9 +1,10 @@
+import json
 from enum import Enum
 from schematics.models import Model
 from schematics.types import StringType
 from schematics.exceptions import ValidationError, DataError
 
-class ResultStatus(Enum):
+class ResultStatus(str, Enum):
     OK = 'ok'
     ERROR = 'error'
 
@@ -14,6 +15,9 @@ class CommandResult(object):
 
     def __repr__(self):
         return '<{}>({}) {}'.format(type(self).__name__, self.status, self._kwargs)
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o:o.__dict__, sort_keys=True, indent=4)
 
 class Command(Model):
     """

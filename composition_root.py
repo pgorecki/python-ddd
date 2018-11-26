@@ -16,20 +16,21 @@ def functional_handler(logger):
     print('functional handler is handling', command, logger)
   return handle
 
+
+from application.command_handlers import add_item_handler
 class CommandBusContainer(containers.DeclarativeContainer):
-  command_handler_locator=providers.Factory(default_command_handler_locator,
-    objectiveCommandHandler=providers.Factory(ObjectiveCommandHandler, logger=None),
-    functionalHandler=providers.Factory(functional_handler, logger=None),
-    # addItemCommandHandler=providers.Factory(add_item_handler),
+  command_handler_factory = providers.FactoryAggregate(
+    AddItemCommand=providers.Factory(add_item_handler)
   )
-  commandBus = providers.Factory(
+
+  command_bus_factory = providers.Factory(
     CommandBus,
-    command_handler_locator=command_handler_locator
+    command_handler_factory=providers.DelegatedFactory(command_handler_factory)
   )
 
 class FalconContainer(containers.DeclarativeContainer):
-  itemsController = providers.Factory(ItemsController, 
-    command_bus=CommandBusContainer.commandBus
+  items_controller_factory = providers.Factory(ItemsController, 
+    command_bus=CommandBusContainer.command_bus_factory
   )
-  infoController = providers.Factory(InfoController)
+  info_controller_factory = providers.Factory(InfoController)
   

@@ -1,3 +1,6 @@
+import dependency_injector.containers as containers
+import dependency_injector.providers as providers
+
 from application.commands import Command, CommandResult, ResultStatus
 from application.command_bus import CommandBus
 from composition_root import CommandBusContainer
@@ -39,20 +42,18 @@ class LightOffCommandHandler(object):
     return CommandResult(ResultStatus.OK)
 
 
-# def test_foo():
-#   print('aa')
-#   foo = CommandBusContainer.command_handler_locator
-#   print('bb')
-#   print('ispecting foo', foo)
-#   result = foo(123)
-#   print('cc')
-#   assert result == True
+class OverriddenCommandBusContainer(CommandBusContainer):
+  light_factory = providers.Singleton(Light)
+  command_handler_factory = providers.FactoryAggregate(
+    LightOnCommand=providers.Factory(LightOnCommandHandler, light=light_factory),
+    LightOffCommand=providers.Factory(LightOffCommandHandler, light=light_factory)
+  )
 
 
-# def test_commnad_bus_will_dispatch_command():
-#   bus = CommandBusContainer.command_bus()
-#   light = Light(is_turned_on=False)
-#   command = LightOnCommand()
-#   result = bus.execute(command)
-#   assert result.status == ResultStatus.OK
-#   assert light.is_turned_on == True
+def test_commnad_bus_will_dispatch_command():
+  bus = OverriddenCommandBusContainer.command_bus_factory()
+  command = LightOnCommand()
+  result = bus.execute(command)
+  # assert result.status == ResultStatus.OK
+  # assert light.is_turned_on == True
+  pass

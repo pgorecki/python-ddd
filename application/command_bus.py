@@ -27,9 +27,13 @@ class CommandBus(object):
     - we can provide rate limiting and protection against DOS attacks
     - we can reject duplicated commands
     """
-    def __init__(self, command_handler_locator, foo=None):
-        self.command_handler_locator = command_handler_locator
+    def __init__(self, command_handler_factory):
+        self._command_handler_factory = command_handler_factory
 
-    def execute(self, command : Command) -> CommandResult: 
-        handler = self.command_handler_locator(command)()
+    def get_handler_for_command(self, command: Command):
+        command_class_name = type(command).__name__
+        return self._command_handler_factory(command_class_name)
+
+    def execute(self, command: Command) -> CommandResult: 
+        handler = self.get_handler_for_command(command)
         return handler.handle(command)

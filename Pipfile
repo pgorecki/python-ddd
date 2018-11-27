@@ -16,6 +16,8 @@ dependency-injector = "*"
 [dev-packages]
 pylint = "*"
 ptvsd = "*"
+pre-commit = "*"
+autopep8 = "*"
 
 [requires]
 python_version = "3.7"

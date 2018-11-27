@@ -4,9 +4,11 @@ from schematics.models import Model
 from schematics.types import StringType
 from schematics.exceptions import ValidationError, DataError
 
+
 class ResultStatus(str, Enum):
     OK = 'ok'
     ERROR = 'error'
+
 
 class CommandResult(object):
     def __init__(self, status: ResultStatus, **kwargs):
@@ -17,12 +19,14 @@ class CommandResult(object):
         return '<{}>({}) {}'.format(type(self).__name__, self.status, self._kwargs)
 
     def toJSON(self):
-        return json.dumps(self, default=lambda o:o.__dict__, sort_keys=True, indent=4)
+        return json.dumps(self, default=lambda o: {k: v for k, v in o.__dict__.items() if not k.startswith('_')}, sort_keys=True)
+
 
 class Command(Model):
     """
     Command is an immutable data structure holding object 
     """
+
     def is_valid(self):
         try:
             self.validate()

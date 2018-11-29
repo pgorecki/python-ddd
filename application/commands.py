@@ -1,7 +1,7 @@
 import json
 from enum import Enum
 from schematics.models import Model
-from schematics.types import StringType
+from schematics.types import StringType, DateTimeType, DecimalType
 from schematics.exceptions import ValidationError, DataError
 
 
@@ -38,3 +38,5 @@ class Command(Model):
 class AddItemCommand(Command):
     title = StringType(required=True)
     description = StringType()
+    starting_price = DecimalType()
+    end_date = DateTimeType()

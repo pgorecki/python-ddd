@@ -1,6 +1,7 @@
+import inspect
 import json
 from datetime import datetime
-import inspect
+
 
 class CustomJSONEncoder(json.JSONEncoder):
     # REF: https://stackoverflow.com/a/35483750

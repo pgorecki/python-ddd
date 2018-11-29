@@ -18,9 +18,6 @@ class CommandResult(object):
     def __repr__(self):
         return '<{}>({}) {}'.format(type(self).__name__, self.status, self._kwargs)
 
-    def to_json(self):
-        return json.dumps(self, default=lambda o: {k: v for k, v in o.__dict__.items() if not k.startswith('_')}, sort_keys=True)
-
 
 class Command(Model):
     """

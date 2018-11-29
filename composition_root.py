@@ -3,8 +3,10 @@ import dependency_injector.providers as providers
 
 from application.command_bus import CommandBus, default_command_handler_locator
 from application.command_handlers import AddItemCommandHandler
-from application.services import AuctionItemsService
-from infrastructure.framework.falcon.controllers import InfoController, ItemsController
+from application.query_bus import QueryBus
+from application.query_handlers import GetItemsQueryHandler
+from infrastructure.framework.falcon.controllers import (InfoController,
+                                                         ItemsController)
 from infrastructure.repositories.auction_items_repository import AuctionItemsRepository
 
 
@@ -38,16 +40,21 @@ class CommandBusContainer(containers.DeclarativeContainer):
     )
 
 
-class ServicesContainer(containers.DeclarativeContainer):
-    items_service = providers.Factory(
-        AuctionItemsService,
-        items_repository=CommandBusContainer.items_repository
+class QueryBusContainer(containers.DeclarativeContainer):
+    items_repository = providers.Singleton(AuctionItemsRepository)
+
+    query_handler_factory = providers.FactoryAggregate(
+        GetItemsQuery=providers.Factory(
+            GetItemsQueryHandler, items_repository=items_repository)
     )
+
+    query_bus_factory = providers.Factory(
+        QueryBus, query_handler_factory=providers.DelegatedFactory(query_handler_factory))
 
 
 class FalconContainer(containers.DeclarativeContainer):
     items_controller_factory = providers.Factory(ItemsController,
                                                  command_bus=CommandBusContainer.command_bus_factory,
-                                                 items_service=ServicesContainer.items_service,
+                                                 query_bus=QueryBusContainer.query_bus_factory,
                                                  )
     info_controller_factory = providers.Factory(InfoController)

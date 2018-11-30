@@ -3,7 +3,7 @@ import json
 from application.commands import AddItemCommand
 from application.settings import APPLICATION_NAME
 from application.queries import GetItemsQuery
-from application.response import response
+from application.response import json_response
 
 
 class InfoController(object):
@@ -12,7 +12,7 @@ class InfoController(object):
             'framework': 'Falcon {}'.format(falcon.__version__),
             'application': APPLICATION_NAME,
         }
-        res.body = response(doc)
+        res.body = json_response(doc)
         res.status = falcon.HTTP_200
 
 
@@ -29,7 +29,7 @@ class ItemsController(object):
             return
 
         result = self._query_bus.execute(query)
-        res.body = response(result)
+        res.body = json_response(result)
         res.status = falcon.HTTP_200
 
     def on_post(self, req, res):
@@ -40,8 +40,9 @@ class ItemsController(object):
             return
         # try:
         result = self._command_bus.execute(command)
-        res.body = response(result)
+        res.body = json_response(result)
         res.status = falcon.HTTP_200
+        # TODO: change to ActionResult (metadata - status, data, etc.)
         # except:
         #     # TODO: Handle app exception
         #     pass

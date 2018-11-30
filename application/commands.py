@@ -7,6 +7,7 @@ from schematics.exceptions import ValidationError, DataError
 
 class ResultStatus(str, Enum):
     OK = 'ok'
+    PENDING = 'pending'
     ERROR = 'error'
 
 

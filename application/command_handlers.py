@@ -2,7 +2,7 @@ from application.commands import AddItemCommand, CommandResult, ResultStatus
 
 
 class AddItemCommandHandler(object):
-    def __init__(self, items_repository):
+    def __init__(self, items_repository): # TODO: interface
         self._items_repository = items_repository
 
     def handle(self, command: AddItemCommand):

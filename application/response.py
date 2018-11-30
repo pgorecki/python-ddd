@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 import inspect
 
+# TODO: refactor, move JSONEncoder to composition_root
 class CustomJSONEncoder(json.JSONEncoder):
     # REF: https://stackoverflow.com/a/35483750
     def default(self, obj):
@@ -27,5 +28,5 @@ class CustomJSONEncoder(json.JSONEncoder):
         return obj
 
 
-def response(obj):
+def json_response(obj):
     return json.dumps(obj, cls=CustomJSONEncoder)

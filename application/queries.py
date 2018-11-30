@@ -11,7 +11,7 @@ class QueryResultStatus(str, Enum):
 
 
 class QueryResult(object):
-    def __init__(self, status: QueryResultStatus, data):
+    def __init__(self, status: QueryResultStatus, data): # TODO: Type hint
         self.data = data
         self.status = status
 

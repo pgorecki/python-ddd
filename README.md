@@ -5,27 +5,25 @@ The goal is to implement an automatic bidding system, described here: https://ww
 
 TODO for near future:
 
-* commands, command bus and handlers
+* simple authorization (user id in request header)
 
-* command validation
+* first business use-case (up to three open items at the same time)
 
 * application-level exceptions for invalid commands
 
-* mediator pattern
-
-* TESTS!!!!
+* TESTS!!!! + code metrics + CI/CD
 
 * executing commands with immediate feedback
   http://blog.sapiensworks.com/post/2015/07/20/CQRS-Immediate-Feedback-Web-App
 
 * handling commands errors: application layer, business layer
 
-* start using dependency injection
-
 * command validation
   https://stackoverflow.com/questions/32239353/command-validation-in-ddd-with-cqrs
 
-* handling async commands
+* handling async commands (mediator pattern, asyncio)
+
+* Application-level event bus, publisher/subscriber pattern
 
 * framework agnostic integration tests??
 

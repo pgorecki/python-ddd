@@ -11,11 +11,10 @@ pylint = "*"
 pytest = "*"
 pytest-watch = "*"
 schematics = "*"
-codacy-coverage = "*"
 
 [dev-packages]
 pylint = "*"
-pyblizzard = "*"
+pytest-cov = "*"
 
 [requires]
 python_version = "3.7"

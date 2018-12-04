@@ -1,0 +1,8 @@
+language: python
+python:
+  - "3.7-dev"
+install:
+  - pip install pipenv
+  - pipenv sync -d
+script: 'pytest --cov'
+after_success: 'codecov'

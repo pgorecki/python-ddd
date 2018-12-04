@@ -1,7 +1,7 @@
 import dependency_injector.containers as containers
 import dependency_injector.providers as providers
 
-from application.command_bus import CommandBus, default_command_handler_locator
+from application.command_bus import CommandBus
 from application.command_handlers import AddItemCommandHandler
 from application.query_bus import QueryBus
 from application.query_handlers import GetItemsQueryHandler

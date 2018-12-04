@@ -5,6 +5,7 @@ source=
     application/
     domain/
     infrastructure/
+omit=*/test_*
 
 [report]
 # Regexes for lines to exclude from consideration

@@ -18,6 +18,9 @@ pylint = "*"
 ptvsd = "*"
 pre-commit = "*"
 autopep8 = "*"
+pytest-cov = "*"
+pytest = "*"
+codecov = "*"
 
 [requires]
 python_version = "3.7"

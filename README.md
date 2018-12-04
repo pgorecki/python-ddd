@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/Ermlab/python-ddd.svg?branch=master)](https://travis-ci.org/Ermlab/python-ddd)
-[![Coverage Status](https://coveralls.io/repos/github/Ermlab/python-ddd/badge.svg?branch=ci)](https://coveralls.io/github/Ermlab/python-ddd?branch=ci)
-
+[![Build Status](https://travis-ci.org/Ermlab/python-ddd.svg?branch=ci)](https://travis-ci.org/Ermlab/python-ddd)
+[![codecov](https://codecov.io/gh/Ermlab/python-ddd/branch/ci/graph/badge.svg)](https://codecov.io/gh/Ermlab/python-ddd)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 AUCTION APPLICATION
 

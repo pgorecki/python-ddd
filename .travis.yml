@@ -4,4 +4,4 @@ python:
 install:
   - pip install pipenv
   - pipenv sync -d
-script: 'python -m pytest --cov'
+script: 'python -m pytest --cov=./'

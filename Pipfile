@@ -14,8 +14,9 @@ schematics = "*"
 
 [dev-packages]
 pylint = "*"
-python-coveralls = "*"
 pytest-cov = "*"
+pytest = "*"
+codecov = "*"
 
 [requires]
 python_version = "3.7"

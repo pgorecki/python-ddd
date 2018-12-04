@@ -5,3 +5,4 @@ install:
   - pip install pipenv
   - pipenv sync -d
 script: 'python -m pytest --cov=./'
+after_success: 'codecov'

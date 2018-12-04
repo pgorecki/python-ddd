@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/Ermlab/python-ddd.svg?branch=master)](https://travis-ci.org/Ermlab/python-ddd)
+[![Coverage Status](https://coveralls.io/repos/github/Ermlab/python-ddd/badge.svg?branch=ci)](https://coveralls.io/github/Ermlab/python-ddd?branch=ci)
+
+
 AUCTION APPLICATION
 
 The goal is to implement an automatic bidding system, described here: https://www.ebay.co.uk/pages/help/buy/bidding-overview.html

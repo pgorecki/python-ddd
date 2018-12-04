@@ -14,6 +14,7 @@ schematics = "*"
 
 [dev-packages]
 pylint = "*"
+python-coveralls = "*"
 pytest-cov = "*"
 
 [requires]

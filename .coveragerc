@@ -1,14 +1,16 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-omit = tests/*, manage.py
-source=.
+source=
+    application/
+    domain/
+    infrastructure/
 
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma
-    pragma: no cover
+    #pragma: no cover
 
     # Don't complain about missing debug-only code:
     def __repr__

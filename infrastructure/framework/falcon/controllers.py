@@ -4,9 +4,10 @@ from application.commands import AddItemCommand
 from application.settings import APPLICATION_NAME
 from application.queries import GetItemsQuery
 from application.response import response
+from infrastructure.framework.falcon.base import RouteController
+from infrastructure.framework.falcon.authentication import authenticate
 
-
-class InfoController(object):
+class InfoController(RouteController):
     def on_get(self, req, res):
         doc = {
             'framework': 'Falcon {}'.format(falcon.__version__),
@@ -16,11 +17,7 @@ class InfoController(object):
         res.status = falcon.HTTP_200
 
 
-class ItemsController(object):
-    def __init__(self, command_bus, query_bus):
-        self._command_bus = command_bus
-        self._query_bus = query_bus
-
+class ItemsController(RouteController):
     def on_get(self, req, res):
         query = GetItemsQuery()
         if not query.is_valid():
@@ -32,16 +29,31 @@ class ItemsController(object):
         res.body = response(result)
         res.status = falcon.HTTP_200
 
+    @authenticate
     def on_post(self, req, res):
-        command = AddItemCommand(req.media, strict=False)
+        command = AddItemCommand({
+            **req.media,
+            'seller_id': req.context['user_id']
+        }, strict=False)
+        command_name = type(command).__name__
+
         if not command.is_valid():
-            res.status = falcon.HTTP_400
-            # TODO: Add error details
-            return
-        # try:
-        result = self._command_bus.execute(command)
-        res.body = response(result)
-        res.status = falcon.HTTP_200
-        # except:
+            raise falcon.HTTPError(
+                status=falcon.HTTP_400,
+                title='Invalid command',
+                description="{} validation failed due to {}".format(command_name, command.validation_errors())
+                )
+
+        try:
+            result = self._command_bus.execute(command)
+            res.status = falcon.HTTP_200
+            res.body = response(result)
+        except Exception as e:
+            raise falcon.HTTPError(
+                status=falcon.HTTP_400,
+                title='Failed to execute {}'.format(command_name),
+                description=str(e)
+                )
+
         #     # TODO: Handle app exception
         #     pass

@@ -12,6 +12,7 @@ pytest = "*"
 pytest-watch = "*"
 schematics = "*"
 dependency-injector = "*"
+ptvsd = "*"
 
 [dev-packages]
 pylint = "*"

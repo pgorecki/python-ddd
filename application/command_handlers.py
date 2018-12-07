@@ -7,12 +7,12 @@ class AddItemCommandHandler(object):
 
     def handle(self, command: AddItemCommand):
 
-        # How to handle defaults for arguments not present in query/command?
-        
+        # How to handle defaults for arguments not present in query/command?        
         self._items_repository.add(
             title=command.title,
             description=command.description,
             starting_price=command.starting_price,
             end_date=command.end_date
         )
+        print(len(self._items_repository.items))
         return CommandResult(ResultStatus.OK)

@@ -1,4 +1,6 @@
 import os
+
+# TODO: import conditionally, when ENVIRONMENT is in DEBUG mode
 import ptvsd
 ptvsd.enable_attach(address=('0.0.0.0', 3000))
 

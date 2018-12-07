@@ -1,6 +1,6 @@
-from application.response import CustomJSONEncoder, json_response
 from datetime import datetime
-import json
+
+from application.response import CustomJSONEncoder, json_response
 
 
 class MockObjectWithToJsonMethod:
@@ -25,25 +25,52 @@ class MockComplexObjectWithDictMethod:
         self.value = value
 
 
-def test_custom_json_encoder():
+def test_custom_json_encoder_for_date():
     current_date = datetime.now()
     data = {
         'date': current_date,
-        'mock_object_to_json': MockObjectWithToJsonMethod('some text for to_json'),
-        'mock_object_dict': MockObjectWithDictMethod('some text for __dict__'),
-        'complex_json': MockComplexObjectWithDictMethod('title', 'some text for __dict__', 12.34),
     }
     expected = (
         '{'
-        f"\"date\": \"{current_date.isoformat()+'Z'}\""
-        ', '
-        f"\"mock_object_to_json\": \x7b\"desc\": \"some text for to_json\"\x7d"
-        ', '
-        f"\"mock_object_dict\": \x7b\"desc\": \"some text for __dict__\"\x7d"
-        ', '
-        f"\"complex_json\": \x7b\"desc\": \"some text for __dict__\", \"title\": \"title\", \"value\": 12.34\x7d"
+        f"\"date\": \"{current_date.isoformat() + 'Z'}\""
         '}'
     )
+
+    actual = CustomJSONEncoder().encode(data)
+    json_response_value = json_response(data)
+    assert actual == expected
+    assert json_response_value == expected
+
+
+def test_custom_json_encoder_for_object_with_to_json_method():
+    data = {
+        'mock_object_to_json': MockObjectWithToJsonMethod('some text for to_json')
+    }
+    expected = '{"mock_object_to_json": {"desc": "some text for to_json"}}'
+
+    actual = CustomJSONEncoder().encode(data)
+    json_response_value = json_response(data)
+    assert actual == expected
+    assert json_response_value == expected
+
+
+def test_custom_json_encoder_for_object_with_dict():
+    data = {
+        'mock_object_dict': MockObjectWithDictMethod('some text for __dict__'),
+    }
+    expected = '{"mock_object_dict": {"desc": "some text for __dict__"}}'
+
+    actual = CustomJSONEncoder().encode(data)
+    json_response_value = json_response(data)
+    assert actual == expected
+    assert json_response_value == expected
+
+
+def test_custom_json_encoder_for_complex_object_with_dict():
+    data = {
+        'complex_json': MockComplexObjectWithDictMethod('title', 'some text for __dict__', 12.34),
+    }
+    expected = '{"complex_json": {"desc": "some text for __dict__", "title": "title", "value": 12.34}}'
 
     actual = CustomJSONEncoder().encode(data)
     json_response_value = json_response(data)

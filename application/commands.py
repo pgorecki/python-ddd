@@ -32,11 +32,20 @@ class Command(Model):
             return False
         return True
 
+    def validation_errors(self):
+        try:
+            self.validate()
+            return None
+        except Exception as e:
+            return e
+
+
     def __repr__(self):
         return '<{}>({})'.format(type(self).__name__, self.__dict__['_data'])
 
 
 class AddItemCommand(Command):
+    seller_id = StringType(required=True)
     title = StringType(required=True)
     description = StringType()
     starting_price = DecimalType()

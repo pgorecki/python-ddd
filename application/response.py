@@ -1,13 +1,14 @@
+import inspect
 import json
 from datetime import datetime
-import inspect
+
 
 # TODO: refactor, move JSONEncoder to composition_root
 class CustomJSONEncoder(json.JSONEncoder):
     # REF: https://stackoverflow.com/a/35483750
     def default(self, obj):
         if isinstance(obj, datetime):
-            return obj.isoformat()+'Z'
+            return obj.isoformat() + 'Z'
         if hasattr(obj, "to_json"):
             return self.default(obj.to_json())
         elif hasattr(obj, "__dict__"):

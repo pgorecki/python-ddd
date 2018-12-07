@@ -1,35 +1,25 @@
 import falcon
-import json
-from application.commands import AddItemCommand
-from application.settings import APPLICATION_NAME 
+import yaml
+from composition_root import FalconContainer
+from infrastructure.framework.falcon.controllers import InfoController
 
-# TODO: command_bus should be injected by DI
-from application.command_bus import CommandBus
-command_bus = CommandBus()
 
-class Info(object):
-    def on_get(self, req, res):
-        doc = {
-            'framework': 'Falcon {}'.format(falcon.__version__),
-            'application': APPLICATION_NAME
-        }
-        res.body = json.dumps(doc, ensure_ascii=False)
-        res.status = falcon.HTTP_200
+def error_serializer(req, resp, exception):
+    representation = None
+    preferred = req.client_prefers(('application/x-yaml',
+                                    'application/json'))
+    if preferred is not None:
+        if preferred == 'application/json':
+            representation = exception.to_json()
+        else:
+            representation = yaml.dump(exception.to_dict(),
+                                       encoding=None)
+        resp.body = representation
+        resp.content_type = preferred
+    resp.append_header('Vary', 'Accept')
 
-class ItemsController(object):
-    def on_get(self, req, res):
-        command = AddItemCommand(req.params, strict=False)
-        command.validate()
-        result = command_bus.execute(command)
-        res.body = json.dumps(result, ensure_ascii=False)
-        res.status = falcon.HTTP_200
-
-    def on_post(self, req, res):
-        pass
 
 app = falcon.API()
-app.add_route('/info', Info())
-app.add_route('/items', ItemsController())
-
-
-from domain.entities import AuctionItem
+app.set_error_serializer(error_serializer)
+app.add_route('/', FalconContainer.info_controller_factory())
+app.add_route('/items', FalconContainer.items_controller_factory())

@@ -1,3 +1,5 @@
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -43,6 +45,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+cov.xml
 *.cover
 .hypothesis/
 .pytest_cache/

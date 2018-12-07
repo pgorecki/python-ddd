@@ -11,9 +11,13 @@ pylint = "*"
 pytest = "*"
 pytest-watch = "*"
 schematics = "*"
+dependency-injector = "*"
 
 [dev-packages]
 pylint = "*"
+ptvsd = "*"
+pre-commit = "*"
+autopep8 = "*"
 pytest-cov = "*"
 pytest = "*"
 codecov = "*"

@@ -6,13 +6,39 @@ AUCTION APPLICATION
 
 The goal is to implement an automatic bidding system, described here: https://www.ebay.co.uk/pages/help/buy/bidding-overview.html
 
+
+TODO for near future:
+
+* simple authorization (user id in request header)
+
+* first business use-case (up to three open items at the same time)
+
+* application-level exceptions for invalid commands
+
+* TESTS!!!! + code metrics + CI/CD
+
+* executing commands with immediate feedback
+  http://blog.sapiensworks.com/post/2015/07/20/CQRS-Immediate-Feedback-Web-App
+
+* handling commands errors: application layer, business layer
+
+* command validation
+  https://stackoverflow.com/questions/32239353/command-validation-in-ddd-with-cqrs
+
+* handling async commands (mediator pattern, asyncio)
+
+* Application-level event bus, publisher/subscriber pattern
+
+* framework agnostic integration tests??
+
+
 User stories:
 
 * As a seller I can list a new item for sale. The item has the following fields: text, description, starting price
 
 * As a seller, I'm allowed to list up to 3 items at the same time
 
-* As a user I can view all the items for sale. For each item I will see: text, description, current price, minimum bidding price, a winner, all participants, action end date
+* As a user I can view all the items for sale. For each item I will see: text, description, current price, minimum bidding price, a winner, all participants, auction end date
 
 * As a bidder, when placing a bid, I enter the maximum amount I am willing to pay for the item. The seller and other bidders don't know my maximum bid
 
@@ -98,9 +124,10 @@ Domain artifacts
 
 * context maps - mappings between concepts between bounded contexts
 
-TODO:
- * event bus? for domain
- 
+Installing Python 3.7 from source on Ubuntu 18.04: https://gist.github.com/jerblack/798718c1910ccdd4ede92481229043be
+
 References:
+
+* Command design pattern: https://www.youtube.com/watch?v=9qA5kw8dcSU
 
 * https://skillsmatter.com/skillscasts/5025-domain-driven-design-with-python(python-ddd)

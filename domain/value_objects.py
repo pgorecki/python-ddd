@@ -20,3 +20,6 @@ class Currency:
 
     def __repr__(self):
         return '{:.2f}'.format(self.amount)
+
+    def __str__(self):
+        return '{:.2f}'.format(self.amount)

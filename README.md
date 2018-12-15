@@ -78,6 +78,18 @@ To run the app as Flask server
 FRAMEWORK=flask gunicorn --reload main
 ```
 
+To run application Shell:
+```
+python shell.py
+```
+
+Within the shell you can execute and queries and commands, i.e.:
+```
+(InteractiveConsole)
+>>> c = AddItemCommand({'title': 'Fluffy bunny'})
+>>> command_bus.execute(c)
+<CommandResult>(ok) {}
+```
 
 Project structure:
 

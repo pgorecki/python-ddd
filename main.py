@@ -1,6 +1,10 @@
 import os
-import ptvsd
-ptvsd.enable_attach(address=('0.0.0.0', 3000))
+
+try:
+    import ptvsd
+    ptvsd.enable_attach(address=('0.0.0.0', 3000))
+except:
+    print('ptvsd disabled')
 
 framework = os.environ.get('FRAMEWORK', 'falcon')
 print('Running {} app'.format(framework))

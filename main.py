@@ -1,8 +1,11 @@
 import os
 
-# TODO: import conditionally, when ENVIRONMENT is in DEBUG mode
-import ptvsd
-ptvsd.enable_attach(address=('0.0.0.0', 3000))
+try:
+    # try importing Python debugger package for use with Visual Studio Code
+    import ptvsd
+    ptvsd.enable_attach(address=('0.0.0.0', 3000))
+except:
+    print('ptvsd disabled')
 
 framework = os.environ.get('FRAMEWORK', 'falcon')
 print('Running {} app'.format(framework))

@@ -8,6 +8,7 @@ authors = ["Przemysław Górecki <przemyslaw.gorecki@gmail.com>"]
 python = "^3.9"
 pytest = "^6.2.4"
 pydantic = "^1.8.2"
+black = "^21.5b1"
 
 [tool.poetry.dev-dependencies]
 

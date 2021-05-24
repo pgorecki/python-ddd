@@ -1,0 +1,1 @@
+This directory contains all modules related to bounded contexts.

@@ -143,3 +143,13 @@ References:
 * Command design pattern: https://www.youtube.com/watch?v=9qA5kw8dcSU
 
 * https://skillsmatter.com/skillscasts/5025-domain-driven-design-with-python(python-ddd)
+
+
+
+## About Ermlab Software
+
+__Ermlab__ - Polish python and machine learning company 
+
+:owl: [Website](https://ermlab.com/en/?utm_source=github&utm_medium=readme&utm_campaign=python-ddd)   |   :octocat: [Repository](https://github.com/ermlab)  
+
+<img src="/images/ermlab_software.png" width="800">.

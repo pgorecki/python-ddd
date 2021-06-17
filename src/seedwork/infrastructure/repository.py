@@ -16,5 +16,13 @@ class InMemoryRepository(Repository):
         except KeyError:
             raise EntityNotFoundException
 
-    def persist(self, entity: Entity):
+    def insert(self, entity: Entity):
+        assert issubclass(entity.__class__, Entity)
         self.objects[entity.id] = entity
+
+    def update(self, entity: Entity):
+        assert issubclass(entity.__class__, Entity)
+        self.objects[entity.id] = entity
+
+    def delete(self, entity_id):
+        del self.objects[entity_id]

@@ -1,4 +1,4 @@
-from modules.listing.domain.rules import AuctionItemPriceMustBeGreaterThanZero
+from modules.catalog.domain.rules import AuctionItemPriceMustBeGreaterThanZero
 
 
 def test_AuctionItemPriceMustBeGreaterThanZero_rule():

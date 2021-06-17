@@ -13,7 +13,7 @@ def test_InMemoryRepository_persist_one():
     repository = InMemoryRepository()
 
     # act
-    repository.persist(person)
+    repository.insert(person)
 
     # assert
     assert repository.get_by_id(person.id) == person
@@ -26,8 +26,8 @@ def test_InMemoryRepository_persist_two():
     repository = InMemoryRepository()
 
     # act
-    repository.persist(person1)
-    repository.persist(person2)
+    repository.insert(person1)
+    repository.insert(person2)
 
     # assert
     assert repository.get_by_id(person1.id) == person1

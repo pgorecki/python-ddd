@@ -9,6 +9,6 @@ def command_handler(fn):
         try:
             return fn(*args, **kwargs)
         except ValidationError as e:
-            return CommandResult.fail(errors=[e])
+            return CommandResult.error(errors=[e])
 
     return decorator

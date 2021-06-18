@@ -19,11 +19,11 @@ class CommandResult:
         self.__errors.append(error)
 
     @classmethod
-    def succed(cls, **kwargs):
+    def ok(cls, **kwargs):
         return CommandResult(**kwargs)
 
     @classmethod
-    def fail(cls, errors):
+    def error(cls, errors):
         result = CommandResult()
         for error in errors:
             result.add_error(error)

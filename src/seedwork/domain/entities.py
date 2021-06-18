@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
-import uuid
+from .value_objects import UUID
 
 
 class Entity(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    id: UUID = Field(default_factory=UUID.v4)

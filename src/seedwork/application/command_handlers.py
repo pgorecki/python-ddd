@@ -18,12 +18,22 @@ class CommandResult:
     def add_error(self, error):
         self.__errors.append(error)
 
+    def is_ok(self):
+        return not self.has_errors()
+
     @classmethod
     def ok(cls, **kwargs):
         return CommandResult(**kwargs)
 
     @classmethod
-    def error(cls, errors):
+    def errors(cls, errors):
+        result = CommandResult()
+        for error in errors:
+            result.add_error(error)
+        return result
+
+    @classmethod
+    def errors(cls, errors):
         result = CommandResult()
         for error in errors:
             result.add_error(error)

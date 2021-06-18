@@ -1,3 +1,6 @@
+from datetime import datetime
+
+from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.domain.value_objects import Currency, UUID
 
@@ -9,18 +12,9 @@ class CreateListingDraftCommand(Command):
     seller_id: UUID
 
 
-# class UpdateAuctionItemCommand(Command):
-#     title: str
-#     description: str
-
-
-# class DeleteAuctionItemCommand(Command):
-#     pass
-
-
-# class PublishAuctionItemCommand(Command):
-#     pass
-
-
-# class UnpublishAuctionItemCommand(Command):
-#     pass
+class UpdateListingDraftCommand(Command):
+    listing_id: UUID
+    title: str
+    description: str
+    price: Currency
+    modify_user_id: UUID

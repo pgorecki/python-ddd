@@ -61,3 +61,12 @@ Event storming technique was used to discover the business domain and the most i
 ### Bidding process
 
 ![](docs/images/bidding_process.png)
+
+
+## Context Map
+
+`Lising`, `Bidding` and `Payment` bounded contexts were identified as a result of event storming. Relationship between these bounded contexts is presented in the following context map.
+
+![](docs/images/auctions_ContextMap.png)
+
+Since `Payment` context will be provided by a 3rd party payments provider (via REST API), the downstream context (`Bidding`) must conform to whatever the upstream provides.

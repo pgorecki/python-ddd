@@ -1,0 +1,36 @@
+ContextMap OnlineAuctionsContextMap {
+    type = SYSTEM_LANDSCAPE
+    state = TO_BE
+    contains ListingContext
+    contains BiddingContext
+    contains PaymentContext
+
+    BiddingContext [SK]<->[SK] ListingContext
+
+    BiddingContext [D, CF] <- PaymentContext
+}
+
+BoundedContext ListingContext implements ListingDomain
+
+BoundedContext BiddingContext implements BiddingDomain
+
+BoundedContext PaymentContext implements PaymentDomain
+
+Domain OnlineAuctionsDomain {
+    Subdomain ListingDomain {
+        type = SUPPORTING_DOMAIN
+        domainVisionStatement = "Subdomain managing all listings of items for sale"
+    }
+
+    Subdomain BiddingDomain {
+        type = CORE_DOMAIN
+        domainVisionStatement = "Subdomain managing ongoing bidding"
+    }
+
+    Subdomain PaymentDomain {
+        type = GENERIC_SUBDOMAIN
+        domainVisionStatement = "Subdomain managing payments"
+    }
+
+}
+

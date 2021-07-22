@@ -2,10 +2,16 @@ from pydantic import BaseModel
 
 
 class BusinessRule(BaseModel):
-    message: str = "This is an error message for broken business rule"
+    """This is a base class for implementing domain rules"""
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    # This is an error message that broken rule reports back
+    __message: str = "Business rule is broken"
 
     def get_message(self) -> str:
-        return self.message
+        return self.__message
 
     def is_broken(self) -> bool:
         pass

@@ -12,11 +12,12 @@ class CommandResult:
         ), f"Cannot access '{attr}'. CommandResult has errors.\n  Errors: {self.__errors}"
         return self.__kwargs[attr]
 
-    def has_errors(self):
-        return len(self.__errors) > 0
-
     def add_error(self, error):
         self.__errors.append(error)
+        return self
+
+    def has_errors(self):
+        return len(self.__errors) > 0
 
     def is_ok(self):
         return not self.has_errors()

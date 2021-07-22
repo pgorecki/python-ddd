@@ -18,3 +18,8 @@ class UpdateListingDraftCommand(Command):
     description: str
     price: Currency
     modify_user_id: UUID
+
+
+class PublishListingCommand(Command):
+    listing_id: UUID
+    seller_id: UUID

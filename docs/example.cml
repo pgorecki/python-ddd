@@ -1,0 +1,70 @@
+/* Example Context Map written with 'ContextMapper DSL' */
+ContextMap InsuranceContextMap {
+    type = SYSTEM_LANDSCAPE
+    state = TO_BE
+    /* Add bounded contexts to this context map: */
+    contains CustomerManagementContext
+    contains CustomerSelfServiceContext
+    contains PrintingContext
+    contains PolicyManagementContext
+    contains RiskManagementContext
+    contains DebtCollection
+
+    /* Define the context relationships: */
+    CustomerSelfServiceContext <- CustomerManagementContext
+
+    CustomerManagementContext <- PrintingContext
+
+    PrintingContext -> PolicyManagementContext
+
+    RiskManagementContext <-> PolicyManagementContext
+
+    PolicyManagementContext <- CustomerManagementContext
+
+    DebtCollection <- PrintingContext
+
+    PolicyManagementContext <-> DebtCollection
+}
+
+/* Bounded Context Definitions */
+BoundedContext CustomerManagementContext implements CustomerManagementDomain
+
+BoundedContext CustomerSelfServiceContext implements CustomerManagementDomain
+
+BoundedContext PrintingContext implements PrintingDomain
+
+BoundedContext PolicyManagementContext implements PolicyManagementDomain
+
+BoundedContext RiskManagementContext implements RiskManagementDomain
+
+BoundedContext DebtCollection implements DebtsDomain
+
+/* Domain & Subdomain Definitions */
+Domain InsuranceDomain {
+    Subdomain CustomerManagementDomain {
+        type = CORE_DOMAIN
+        domainVisionStatement = "Subdomain managing everything customer-related."
+    }
+
+    Subdomain PolicyManagementDomain {
+        type = CORE_DOMAIN
+        domainVisionStatement = "Subdomain managing contracts and policies."
+    }
+
+    Subdomain PrintingDomain {
+        type = SUPPORTING_DOMAIN
+        domainVisionStatement = "Service (external system) to solve printing for all kinds of documents (debts, policies, etc.)"
+    }
+
+    Subdomain RiskManagementDomain {
+        type = GENERIC_SUBDOMAIN
+        domainVisionStatement = "Subdomain supporting everything which relates to risk management."
+    }
+
+    Subdomain DebtsDomain {
+        type = GENERIC_SUBDOMAIN
+        domainVisionStatement = "Subomain including everything related to the incoming money (debts, dunning, etc.)"
+    }
+
+}
+

@@ -26,3 +26,6 @@ class InMemoryRepository(Repository):
 
     def delete(self, entity_id):
         del self.objects[entity_id]
+
+    def __len__(self):
+        return len(self.objects)

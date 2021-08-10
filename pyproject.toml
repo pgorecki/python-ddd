@@ -12,9 +12,12 @@ black = "^21.5b1"
 fastapi = "^0.67.0"
 uvicorn = "^0.14.0"
 starlette-context = "^0.3.3"
+SQLAlchemy = "^1.4.22"
+psycopg2 = "^2.9.1"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"
+pytest-cov = "^2.12.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -22,5 +25,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poe.tasks]
-test = "pytest src"
+test = { shell = "DATABASE_URL=postgresql://postgres:password@localhost:5433/postgres pytest src" }
+test_coverage = "pytest --cov=src --cov-report=html"
 start = "uvicorn src.api.main:app --reload"
+compose_up = "docker-compose -f docker-compose.dev.yml up"

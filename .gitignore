@@ -1,3 +1,6 @@
 __pycache__
 .vscode
 src-gen/
+.coverage
+.env
+htmlcov/

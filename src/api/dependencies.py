@@ -1,8 +1,7 @@
 from fastapi import Header, HTTPException
 from pydantic import BaseModel
-from seedwork.domain.value_objects import UUID
-
 from dataclasses import dataclass
+from seedwork.domain.value_objects import UUID
 
 
 class CurrentUser(BaseModel):

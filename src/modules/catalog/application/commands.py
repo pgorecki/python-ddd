@@ -1,11 +1,10 @@
-from datetime import datetime
-
-from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.domain.value_objects import Currency, UUID
 
 
 class CreateListingDraftCommand(Command):
+    """A command for creating new listing in draft state"""
+
     title: str
     description: str
     price: Currency
@@ -13,6 +12,8 @@ class CreateListingDraftCommand(Command):
 
 
 class UpdateListingDraftCommand(Command):
+    """A command for updating a listing"""
+
     listing_id: UUID
     title: str
     description: str
@@ -21,5 +22,7 @@ class UpdateListingDraftCommand(Command):
 
 
 class PublishListingCommand(Command):
+    """A command for publishing a listing in draft state"""
+
     listing_id: UUID
     seller_id: UUID

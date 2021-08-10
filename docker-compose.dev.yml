@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:12.3
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./tmp/db/data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - internal-network
+      - external-network
+  test_db:
+    image: postgres:12.3
+    environment:
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./tmp/test_db/data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - internal-network
+      - external-network
+
+networks:
+  internal-network:
+    internal: true
+  external-network:
+

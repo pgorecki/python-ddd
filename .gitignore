@@ -4,3 +4,4 @@ src-gen/
 .coverage
 .env
 htmlcov/
+logs.json

@@ -12,7 +12,7 @@ from modules.catalog.application.command_handlers import create_listing_draft
 
 from api.routers import catalog, users
 from api.middleware import DependencyInjecionPlugin
-from api.container import Container
+from api.container import Container, RequestContainer
 
 from config.api_config import ApiConfig
 
@@ -50,12 +50,26 @@ async def root():
 
 def request_container():
     container = context.get("container")
-    with container.override():
-        yield container
+    print("container.engine() ", id(container.dummy_singleton()))
+
+    from dependency_injector import containers
+
+    request_container = RequestContainer()
+    print("request_container.engine() ", id(request_container.dummy_singleton()))
+    # request_container = RequestContainer()
+    # container.override(request_container)
+    # with container.override(request_container):
+    #     yield container
+    yield container
+
+
+def request_logger(container=Depends(request_container)):
+    print("rl", container)
+    return None
 
 
 @app.get("/test")
-async def test(container=Depends(request_container)):
+async def test(container=Depends(request_container), logger=Depends(request_logger)):
     service = container.dummy_service()
     return {"service response": service.serve()}
 

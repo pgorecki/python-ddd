@@ -3,12 +3,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from seedwork.infrastructure.database import Base
 
-from api.config import Config
+from config.api_config import ApiConfig
 
 
 @pytest.fixture
 def db_session():
-    config = Config()
+    config = ApiConfig()
     engine = create_engine(config.DATABASE_URL, echo=config.DEBUG)
     with engine.begin() as connection:
         Base.metadata.drop_all(connection)

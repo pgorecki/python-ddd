@@ -1,3 +1,5 @@
+import logging
+from os import getenv
 from fastapi import FastAPI, Depends
 from starlette.middleware import Middleware
 from starlette_context import context, plugins
@@ -12,7 +14,7 @@ from modules.catalog.application.command_handlers import create_listing_draft
 
 from api.routers import catalog, users
 from api.middleware import DependencyInjecionPlugin
-from api.container import Container
+from api.container import Container, RequestContainer
 
 from config.api_config import ApiConfig
 
@@ -49,15 +51,18 @@ async def root():
 
 
 def request_container():
-    container = context.get("container")
-    with container.override():
-        yield container
+    return RequestContainer.create(app.container)
+
+
+def request_logger(container=Depends(request_container)):
+    return container.request_logger()
 
 
 @app.get("/test")
-async def test(container=Depends(request_container)):
+async def test(container=Depends(request_container), logger=Depends(request_logger)):
+    logger.debug("test")
     service = container.dummy_service()
-    return {"service response": service.serve()}
+    return {"service response": service.serve(), "request_id": container.request_id()}
 
 
 # ####

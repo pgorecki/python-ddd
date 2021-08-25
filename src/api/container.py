@@ -1,6 +1,8 @@
+import uuid
+import logging
 from sqlalchemy import create_engine
 from dependency_injector import containers, providers
-from dependency_injector.wiring import inject, Provide
+from api.dependencies import RequestContext
 from seedwork.infrastructure.logging import create_logger
 
 
@@ -21,4 +23,30 @@ class Container(containers.DeclarativeContainer):
     config = providers.Configuration()
     engine = providers.Singleton(create_engine, config.DATABASE_URL, echo=config.DEBUG)
     dummy_service = providers.Factory(DummyService, config)
-    logger = providers.Singleton(create_logger, config.APP_NAME)
+    dummy_singleton = providers.Singleton(DummyService, config)
+    logger = providers.Singleton(create_logger, config.LOGGER_NAME)
+
+
+class RequestContainer(Container):
+    """Request container provides per-request objects (i.e. request_id, request_logger)
+    as well as all dependencies provided by the parent.
+
+    Request container should be instantiated once per reqest using `create` factory method
+
+
+    """
+
+    __self__ = providers.Self()
+
+    request_id = providers.Singleton(lambda: uuid.uuid4())
+
+    request_logger = providers.Singleton(
+        lambda request_id, logger: logger.getChild(f"request.{request_id}"),
+        request_id,
+        __self__.provided.logger.call(),
+    )
+
+    @staticmethod
+    def create(parent_container: Container):
+        """Use this method instead of __init__"""
+        return RequestContainer(**parent_container.providers)

@@ -16,6 +16,7 @@ class ApiConfig(BaseSettings):
         env="DATABASE_URL",
         default="postgresql://postgres:password@localhost:5432/postgres",
     )
+    LOGGER_NAME = "api"
 
 
 # SECRET_KEY = config("SECRET_KEY", cast=Secret, default="secret")

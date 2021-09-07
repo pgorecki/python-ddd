@@ -23,6 +23,7 @@ class Listing(Entity):
 
 
 class Seller(Entity):
+    id: UUID
     is_new: bool = True
     currently_published_listings_count: int = 0
 

@@ -6,6 +6,7 @@ class RequestContext:
     _correlation_id: ContextVar[uuid.UUID] = ContextVar(
         "correlation_id", default=uuid.UUID("00000000-0000-0000-0000-000000000000")
     )
+    db_session = None
 
     @property
     def correlation_id(self):

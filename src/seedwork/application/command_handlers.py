@@ -12,34 +12,30 @@ class CommandResult:
         ), f"Cannot access '{attr}'. CommandResult has errors.\n  Errors: {self.__errors}"
         return self.__kwargs[attr]
 
-    def add_error(self, error):
-        self.__errors.append(error)
+    def add_error(self, message, exception):
+        self.__errors.append((message, exception))
         return self
 
     def has_errors(self):
         return len(self.__errors) > 0
+
+    def get_errors(self):
+        return self.__errors
 
     def is_ok(self):
         return not self.has_errors()
 
     @classmethod
     def ok(cls, **kwargs):
+        """Creates successful command result"""
         return CommandResult(**kwargs)
 
     @classmethod
-    def errors(cls, errors):
+    def error(cls, message, exception):
+        """Creates command result with error"""
         result = CommandResult()
-        for error in errors:
-            result.add_error(error)
+        result.add_error(message, exception)
         return result
-
-    @classmethod
-    def errors(cls, errors):
-        result = CommandResult()
-        for error in errors:
-            result.add_error(error)
-        return result
-
 
 class CommandHandler:
     pass

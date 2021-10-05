@@ -20,12 +20,9 @@ from .application.command_handlers import create_listing_draft
 
 
 class CatalogModule(BusinessModule):
-    listing_repository: ListingRepository
-
-    @inject
     def __init__(
         self,
-        listing_repository: ListingRepository = Provide["listing_repository"],
+        listing_repository: ListingRepository,
     ) -> None:
         self.listing_repository = listing_repository
 

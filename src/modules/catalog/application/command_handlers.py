@@ -16,8 +16,8 @@ def create_listing_draft(
     listing = Listing(**command.dict())
     try:
         repository.insert(listing)
-    except:
-        return CommandResult.error("Failed to create listing")
+    except Exception as e:
+        return CommandResult.error(message="Failed to create listing", exception=e)
 
     return CommandResult.ok(id=listing.id)
 

@@ -1,24 +1,13 @@
 import logging
-from os import getenv
-from fastapi import FastAPI, Depends
+import time
+from fastapi import FastAPI, Request
 from seedwork.infrastructure.request_context import request_context
-from starlette.middleware import Middleware
-from starlette_context import context, plugins
-from starlette_context.middleware import ContextMiddleware
-
-
-from seedwork.domain.value_objects import UUID
-from seedwork.infrastructure.repository import InMemoryRepository
 from seedwork.infrastructure.logging import logger, LoggerFactory
-from modules.catalog.domain.entities import Listing
-from modules.catalog.application.commands import CreateListingDraftCommand
-from modules.catalog.application.command_handlers import create_listing_draft
 
 from api.routers import catalog, users
-from api.middleware import RequestContextPlugin
 from config.api_config import ApiConfig
 from config.container import Container
-
+import api.routers.catalog
 
 # configure logger prior to first usage
 LoggerFactory.configure(logger_name="cli")
@@ -26,16 +15,9 @@ LoggerFactory.configure(logger_name="cli")
 # dependency injection container
 container = Container()
 container.config.from_pydantic(ApiConfig())
+container.wire(modules=[api.routers.catalog])
 
-# API middleware
-middleware = [
-    Middleware(
-        ContextMiddleware,
-        plugins=(RequestContextPlugin(container),),
-    )
-]
-
-app = FastAPI(debug=container.config.DEBUG, middleware=middleware)
+app = FastAPI(debug=container.config.DEBUG)
 
 app.include_router(catalog.router)
 app.include_router(users.router)
@@ -43,6 +25,20 @@ app.container = container
 
 
 logger.info("using db engine %s" % str(container.engine()))
+
+
+@app.middleware("http")
+async def add_request_context(request: Request, call_next):
+    start_time = time.time()
+    request_context.begin_request()
+    logger.info("middleware")
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        response.headers["X-Process-Time"] = str(process_time)
+        return response
+    finally:
+        request_context.end_request()
 
 
 @app.get("/")

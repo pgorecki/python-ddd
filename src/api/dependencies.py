@@ -9,20 +9,3 @@ class CurrentUser(BaseModel):
     username = "fake_current_user"
     email = "fake@email.com"
     is_admin = True
-
-
-class Logger:
-    ...
-
-
-@dataclass
-class RequestContext:
-    current_user: CurrentUser
-    logger: Logger
-
-
-def request_context():
-    return RequestContext(
-        current_user=CurrentUser(id=UUID("{12345678-1234-5678-1234-567812345678}")),
-        logger=Logger(),
-    )

@@ -15,7 +15,7 @@ class RequestContextFilter(logging.Filter):
         self.request_context = request_context
 
     def filter(self, record):
-        record.correlation_id = self.request_context.correlation_id
+        record.correlation_id = self.request_context.correlation_id.get()
         return True
 
 

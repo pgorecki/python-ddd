@@ -1,5 +1,4 @@
-import pytest
-from modules.catalog.application.commands import (
+from modules.catalog.application.create_listing_draft.commands import (
     CreateListingDraftCommand,
     UpdateListingDraftCommand,
     PublishListingCommand,

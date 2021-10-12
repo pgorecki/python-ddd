@@ -1,41 +1,53 @@
-from pydantic import errors
-
-
 class CommandResult:
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, result) -> None:
+        self.__result = result
         self.__errors = []
-        self.__kwargs = kwargs
 
-    def __getattr__(self, attr):
-        assert (
-            not self.has_errors()
-        ), f"Cannot access '{attr}'. CommandResult has errors.\n  Errors: {self.__errors}"
-        return self.__kwargs[attr]
-
-    def add_error(self, message, exception):
+    # commands
+    def add_error(self, message, exception=None):
         self.__errors.append((message, exception))
         return self
 
-    def has_errors(self):
-        return len(self.__errors) > 0
+    # queries
+    @property
+    def result(self):
+        """Shortcut to get_result()"""
+        return self.get_result()
+
+    def get_result(self):
+        """Gets result"""
+        assert (
+            not self.has_errors()
+        ), f"Cannot access result. QueryResult has errors.\n  Errors: {self.__errors}"
+        return self.__result
 
     def get_errors(self):
         return self.__errors
+
+    def has_errors(self):
+        return len(self.__errors) > 0
 
     def is_ok(self):
         return not self.has_errors()
 
     @classmethod
-    def ok(cls, **kwargs):
-        """Creates successful command result"""
-        return CommandResult(**kwargs)
+    def ok(cls, result):
+        """Creates a successful result"""
+        return cls(result=result)
 
     @classmethod
-    def error(cls, message, exception):
-        """Creates command result with error"""
-        result = CommandResult()
+    def failed(cls, message="Failure", exception=None):
+        """Creates a failed result"""
+        result = cls(result=None)
         result.add_error(message, exception)
         return result
+
+
+class QueryHandler:
+    """
+    Base query handler class
+    """
+
 
 class CommandHandler:
     pass

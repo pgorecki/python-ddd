@@ -19,6 +19,7 @@ colorlog = "^5.0.1"
 python-json-logger = "^2.0.2"
 alembic = "^1.7.3"
 sqlalchemy-json = "^0.4.0"
+typed-ast = "^1.4.3"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"

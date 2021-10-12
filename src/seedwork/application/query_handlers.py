@@ -1,20 +1,25 @@
-from pydantic import errors
-
-
 class QueryResult:
-    def __init__(self, data) -> None:
-        self.data = data
+    def __init__(self, result) -> None:
+        self.__result = result
         self.__errors = []
 
-    def __getattr__(self, attr):
+    # commands
+    def add_error(self, message, exception=None):
+        self.__errors.append((message, exception))
+        return self
+
+    # queries
+    @property
+    def result(self):
+        """Shortcut to get_result()"""
+        return self.get_result()
+
+    def get_result(self):
+        """Gets result"""
         assert (
             not self.has_errors()
-        ), f"Cannot access '{attr}'. QueryResult has errors.\n  Errors: {self.__errors}"
-        return self.__kwargs[attr]
-
-    def add_error(self, error):
-        self.__errors.append(error)
-        return self
+        ), f"Cannot access result. QueryResult has errors.\n  Errors: {self.__errors}"
+        return self.__result
 
     def has_errors(self):
         return len(self.__errors) > 0
@@ -23,21 +28,15 @@ class QueryResult:
         return not self.has_errors()
 
     @classmethod
-    def ok(cls, data):
-        return QueryResult(data)
+    def ok(cls, result):
+        """Creates a successful result"""
+        return cls(result=result)
 
     @classmethod
-    def errors(cls, errors):
-        result = QueryResult()
-        for error in errors:
-            result.add_error(error)
-        return result
-
-    @classmethod
-    def errors(cls, errors):
-        result = QueryResult()
-        for error in errors:
-            result.add_error(error)
+    def failed(cls, message="Failure", exception=None):
+        """Creates a failed result"""
+        result = cls()
+        result.add_error(message, exception)
         return result
 
 

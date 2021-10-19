@@ -12,6 +12,20 @@ from seedwork.infrastructure.request_context import RequestContext
 from dependency_injector.wiring import inject
 
 
+def _default(val):
+    import uuid
+
+    if isinstance(val, uuid.UUID):
+        return str(val)
+    raise TypeError()
+
+
+def dumps(d):
+    import json
+
+    return json.dumps(d, default=_default)
+
+
 class DummyService:
     def __init__(self, config) -> None:
         self.config = config
@@ -21,7 +35,6 @@ class DummyService:
 
 
 def create_request_context(engine):
-    print("create_request_context")
     from seedwork.infrastructure.request_context import request_context
 
     request_context.setup(engine)
@@ -29,7 +42,9 @@ def create_request_context(engine):
 
 
 def create_engine_once(config):
-    engine = create_engine(config["DATABASE_URL"], echo=config["DEBUG"])
+    engine = create_engine(
+        config["DATABASE_URL"], echo=config["DEBUG"], json_serializer=dumps
+    )
     from seedwork.infrastructure.database import Base
 
     # TODO: it seems like a hack, but it works...

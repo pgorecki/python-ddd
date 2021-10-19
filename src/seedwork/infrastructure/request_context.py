@@ -19,12 +19,13 @@ class RequestContext:
         "_correlation_id", default=uuid.UUID("00000000-0000-0000-0000-000000000000")
     )
     _db_session: ContextVar[Session] = ContextVar("_db_session", default=None)
+    _current_user: ContextVar = ContextVar("_current_user", default=None)
 
     def __init__(self):
         self._engine = None
 
     def setup(self, engine):
-        """Use this method for late initialization (via dependency injection container)"""
+        """Use this method for late initialization (via dependency injection container) to set up singleton variables"""
         self._engine = engine
 
     @property
@@ -37,15 +38,18 @@ class RequestContext:
         """Get current db session as ContextVar"""
         return self._db_session
 
-    def begin_request(self):
-        print("beg req")
+    @property
+    def current_user(self):
+        return self._current_user.get()
+
+    def begin_request(self, current_user=None):
+        self._current_user.set(current_user)
         self._correlation_id.set(uuid.uuid4())
         session = Session(self._engine)
         session.begin()
         self._db_session.set(session)
 
     def end_request(self, commit=True):
-        print("end req")
         if commit:
             self.db_session.get().commit()
         else:

@@ -27,9 +27,9 @@ def command_handler(fn):
             )
             return fn(*args, **kwargs)
         except ValidationError as e:
-            return CommandResult.errors(errors=[e])
+            return CommandResult.failed("Validation error", exception=e)
         except BusinessRuleValidationException as e:
-            return CommandResult.errors(errors=[e])
+            return CommandResult.failed("Business rule validation error", exception=e)
 
     return decorator
 
@@ -44,8 +44,8 @@ def query_handler(fn):
             print("handling query", f"{type(query).__module__}.{type(query).__name__}")
             return fn(*args, **kwargs)
         except ValidationError as e:
-            return QueryResult.errors(errors=[e])
+            return QueryResult.failed("Validation error", exception=e)
         except BusinessRuleValidationException as e:
-            return QueryResult.errors(errors=[e])
+            return QueryResult.failed("Business rule validation error", exception=e)
 
     return decorator

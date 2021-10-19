@@ -5,6 +5,7 @@ from seedwork.infrastructure.request_context import request_context
 from seedwork.infrastructure.logging import logger, LoggerFactory
 
 from api.routers import catalog, users
+from api.models import CurrentUser
 from config.api_config import ApiConfig
 from config.container import Container
 import api.routers.catalog
@@ -30,8 +31,7 @@ logger.info("using db engine %s" % str(container.engine()))
 @app.middleware("http")
 async def add_request_context(request: Request, call_next):
     start_time = time.time()
-    request_context.begin_request()
-    logger.info("middleware")
+    request_context.begin_request(current_user=CurrentUser.fake_user())
     try:
         response = await call_next(request)
         process_time = time.time() - start_time

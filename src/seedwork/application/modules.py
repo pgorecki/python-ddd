@@ -5,17 +5,17 @@ from .command_handlers import CommandResult
 
 
 def logging_handler(fn):
-    def handle(query_or_command, *args, **kwargs):
-        logger.debug("%s handling started" % type(query_or_command).__name__)
-        result = fn(query_or_command, *args, **kwargs)
+    def handle(module, query_or_command, *args, **kwargs):
+        module_name = type(module).__name__
+        name = type(query_or_command).__name__
+        logger.debug(f"handling {name} by {module_name}")
+        result = fn(module, query_or_command, *args, **kwargs)
         if result.is_ok():
             logger.debug(
-                f"{type(query_or_command).__name__} handling succeeded with result: {result.get_result()}"
+                f"{name} handling succeeded with result: {result.get_result()}"
             )
         else:
-            logger.warn(
-                f"{type(query_or_command).__name__} handling failed with errors: {result.get_errors()}"
-            )
+            logger.warn(f"{name} handling failed with errors: {result.get_errors()}")
         return result
 
     return handle
@@ -46,7 +46,9 @@ class BusinessModule:
         try:
             handler = self.query_handlers[type(query)]
         except KeyError:
-            raise NotImplementedError(f"No query handler for {type(query)} in {type(self)}")
+            raise NotImplementedError(
+                f"No query handler for {type(query)} in {type(self)}"
+            )
 
         return handler(self, query)
 
@@ -56,6 +58,8 @@ class BusinessModule:
         try:
             handler = self.command_handlers[type(command)]
         except KeyError:
-            raise NotImplementedError(f"No command handler for {type(command)} in {type(self)}")
+            raise NotImplementedError(
+                f"No command handler for {type(command)} in {type(self)}"
+            )
 
         return handler(self, command)

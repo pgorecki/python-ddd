@@ -19,10 +19,10 @@ class CreateListingDraftCommand(Command):
 def create_listing_draft(
     command: CreateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:
-    listing = Listing(**command.dict())
+    listing = Listing(id=repository.next_id(), **command.dict())
     try:
         repository.insert(listing)
     except Exception as e:
         return CommandResult.failed(message="Failed to create listing", exception=e)
 
-    return CommandResult.ok(id=listing.id)
+    return CommandResult.ok(result=listing.id)

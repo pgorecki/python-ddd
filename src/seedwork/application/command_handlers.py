@@ -1,11 +1,14 @@
+import sys
+
+
 class CommandResult:
     def __init__(self, result) -> None:
         self.__result = result
         self.__errors = []
 
     # commands
-    def add_error(self, message, exception=None):
-        self.__errors.append((message, exception))
+    def add_error(self, message, exception=None, exception_info=None):
+        self.__errors.append((message, exception, exception_info))
         return self
 
     # queries
@@ -39,7 +42,8 @@ class CommandResult:
     def failed(cls, message="Failure", exception=None):
         """Creates a failed result"""
         result = cls(result=None)
-        result.add_error(message, exception)
+        exception_info = sys.exc_info()
+        result.add_error(message, exception, exception_info)
         return result
 
 

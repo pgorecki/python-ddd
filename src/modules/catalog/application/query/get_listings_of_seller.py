@@ -13,9 +13,8 @@ class GetListingsOfSeller(Query):
 def get_listings_of_seller(
     query: GetListingsOfSeller, listing_repository: ListingRepository
 ) -> QueryResult:
-    queryset = listing_repository.session.query(listing_repository.model)\
-        # .filter(
-        #     listing_repository.model.data['seller'].astext.cast(UUID) == query.seller_id
-        # )
+    queryset = listing_repository.session.query(listing_repository.model)  # .filter(
+    #     listing_repository.model.data['seller'].astext.cast(UUID) == query.seller_id
+    # )
     result = [dict(id=row.id, **row.data) for row in queryset.all()]
     return QueryResult.ok(result)

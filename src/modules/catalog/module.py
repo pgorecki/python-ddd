@@ -30,7 +30,9 @@ class CatalogModule(BusinessModule):
         GetListingDetails: lambda self, q: get_listing_details(
             q, self.listing_repository
         ),
-        GetListingsOfSeller: lambda self, q: get_listings_of_seller(q, self.listing_repository)
+        GetListingsOfSeller: lambda self, q: get_listings_of_seller(
+            q, self.listing_repository
+        ),
     }
     command_handlers = {
         CreateListingDraftCommand: lambda self, c: create_listing_draft(

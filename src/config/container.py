@@ -2,14 +2,17 @@ import uuid
 import logging
 from sqlalchemy import create_engine
 from dependency_injector import containers, providers
+from dependency_injector.wiring import inject  # noqa
 
+from modules.catalog.module import CatalogModule
 from modules.catalog.infrastructure.listing_repository import (
     PostgresJsonListingRepository,
 )
-from modules.catalog.module import CatalogModule
-from seedwork.infrastructure.request_context import RequestContext
+from modules.iam.module import IdentityAndAccessModule
+from modules.iam.application.services import AuthenticationService
+from modules.iam.infrastructure.user_repository import PostgresJsonUserRepository
 
-from dependency_injector.wiring import inject
+from seedwork.infrastructure.request_context import RequestContext
 
 
 def _default(val):
@@ -80,3 +83,10 @@ class Container(containers.DeclarativeContainer):
     catalog_module = providers.Factory(
         CatalogModule, listing_repository=listing_repository
     )
+
+    # iam module and it's dependencies
+    user_repository = providers.Factory(
+        PostgresJsonUserRepository, db_session=request_context.provided.db_session
+    )
+    authentication_service = providers.Factory(AuthenticationService, user_repository=user_repository)
+    iam_module = providers.Factory(IdentityAndAccessModule, authentication_service=authentication_service)

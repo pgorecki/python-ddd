@@ -1,10 +1,11 @@
-import logging
 import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
 from seedwork.infrastructure.request_context import request_context
 from seedwork.infrastructure.logging import logger, LoggerFactory
 
-from api.routers import catalog, users
+from api.routers import catalog, iam
 from api.models import CurrentUser
 from config.api_config import ApiConfig
 from config.container import Container
@@ -16,12 +17,11 @@ LoggerFactory.configure(logger_name="cli")
 # dependency injection container
 container = Container()
 container.config.from_pydantic(ApiConfig())
-container.wire(modules=[api.routers.catalog])
+container.wire(modules=[api.routers.catalog, api.routers.iam])
 
 app = FastAPI(debug=container.config.DEBUG)
-
 app.include_router(catalog.router)
-app.include_router(users.router)
+app.include_router(iam.router)
 app.container = container
 
 

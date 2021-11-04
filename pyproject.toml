@@ -20,6 +20,7 @@ python-json-logger = "^2.0.2"
 alembic = "^1.7.3"
 sqlalchemy-json = "^0.4.0"
 typed-ast = "^1.4.3"
+python-multipart = "^0.0.5"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"

@@ -4,9 +4,9 @@
 [![codecov](https://codecov.io/gh/Ermlab/python-ddd/branch/master/graph/badge.svg)](https://codecov.io/gh/Ermlab/python-ddd)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Disclaimer: this is a work in progress project, stay tuned for updates.
+Disclaimer: this is a work in progress project, stay tuned for updates (*).
 
-
+(*) *This project is is accompanied by my blog https://dddinpython.com/ where I introduce some of the concepts and patterns implemented this repository.*
 
 ## The goal of this project
 
@@ -14,8 +14,6 @@ AUCTION APPLICATION
 
 The goal is to implement an automatic bidding system using DDD tactical patterns, 
 described here: https://www.ebay.co.uk/pages/help/buy/bidding-overview.html
-
-This project is is accompanied by my blog https://dddinpython.com/ where I introduce some of the concepts and patterns implemented this repository.
 
 ## Domain
 

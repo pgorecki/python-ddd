@@ -6,6 +6,8 @@
 
 Disclaimer: this is a work in progress project, stay tuned for updates.
 
+
+
 ## The goal of this project
 
 AUCTION APPLICATION
@@ -13,7 +15,7 @@ AUCTION APPLICATION
 The goal is to implement an automatic bidding system using DDD tactical patterns, 
 described here: https://www.ebay.co.uk/pages/help/buy/bidding-overview.html
 
-
+This project is is accompanied by my blog https://dddinpython.com/ where I introduce some of the concepts and patterns implemented this repository.
 
 ## Domain
 

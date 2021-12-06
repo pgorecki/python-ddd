@@ -13,7 +13,6 @@ fastapi = "^0.67.0"
 uvicorn = "^0.14.0"
 starlette-context = "^0.3.3"
 SQLAlchemy = "^1.4.22"
-psycopg2 = "^2.9.1"
 dependency-injector = "^4.35.2"
 colorlog = "^5.0.1"
 python-json-logger = "^2.0.2"
@@ -21,10 +20,12 @@ alembic = "^1.7.3"
 sqlalchemy-json = "^0.4.0"
 typed-ast = "^1.4.3"
 python-multipart = "^0.0.5"
+psycopg2-binary = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"
 pytest-cov = "^2.12.1"
+mypy = "^0.910"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

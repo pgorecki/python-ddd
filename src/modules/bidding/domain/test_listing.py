@@ -1,11 +1,19 @@
+import pytest
+from datetime import datetime, timedelta
 from modules.bidding.domain.entities import Seller, Listing, Money
 from modules.bidding.domain.value_objects import Bidder, Bid
 from seedwork.domain.value_objects import UUID
+from seedwork.domain.exceptions import BusinessRuleValidationException
 
 
 def test_listing_initial_price():
     seller = Seller(uuid=UUID.v4())
-    listing = Listing(id=Listing.next_id(), seller=seller, initial_price=Money(10))
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
     assert listing.winning_bid == None
 
 
@@ -13,21 +21,80 @@ def test_place_one_bid():
     seller = Seller(uuid=UUID.v4())
     bidder = Bidder(uuid=UUID.v4())
     bid = Bid(price=Money(20), bidder=bidder)
-    listing = Listing(id=Listing.next_id(), seller=seller, initial_price=Money(10))
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
     listing.place_bid(bid)
-    assert listing.winning_bid == Bid(Money(10), bidder=bidder)
+    assert (
+        listing.winning_bid.ignore_time() == Bid(Money(20), bidder=bidder).ignore_time()
+    )
 
 
 def test_place_two_bids():
     seller = Seller(uuid=UUID.v4())
     bidder1 = Bidder(uuid=UUID.v4())
-    bid1 = Bid(price=Money(20), bidder=bidder1)
     bidder2 = Bidder(uuid=UUID.v4())
-    bid2 = Bid(price=Money(30), bidder=bidder2)
-    listing = Listing(id=Listing.next_id(), seller=seller, initial_price=Money(10))
-    listing.place_bid(bid1)
-    listing.place_bid(bid2)
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
+    listing.place_bid(Bid(price=Money(20), bidder=bidder1))
+    listing.place_bid(Bid(price=Money(30), bidder=bidder2))
     assert listing.winning_bid == Bid(Money(30), bidder=bidder2)
+
+
+def test_place_two_bids_by_same_bidder():
+    seller = Seller(uuid=UUID.v4())
+    bidder = Bidder(uuid=UUID.v4())
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
+    listing.place_bid(Bid(price=Money(20), bidder=bidder))
+    listing.place_bid(Bid(price=Money(30), bidder=bidder))
+
+    assert len(listing.bids) == 1
+    assert listing.winning_bid == Bid(price=Money(30), bidder=bidder)
+
+
+def test_cannot_place_bid_if_listing_ended():
+    seller = Seller(uuid=UUID.v4())
+    bidder = Bidder(uuid=UUID.v4())
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
+    bid = Bid(
+        price=Money(10), bidder=bidder, placed_at=datetime.now() + timedelta(seconds=1)
+    )
+    with pytest.raises(BusinessRuleValidationException):
+        listing.place_bid(bid)
+
+
+def test_retract_bid():
+    seller = Seller(uuid=UUID.v4())
+    bidder = Bidder(uuid=UUID.v4())
+    listing = Listing(
+        id=Listing.next_id(),
+        seller=seller,
+        initial_price=Money(10),
+        ends_at=datetime.now(),
+    )
+    bid = Bid(
+        price=Money(10), bidder=bidder, placed_at=datetime.now() - timedelta(seconds=1)
+    )
+    listing.place_bid(bid)
+    with pytest.raises(BusinessRuleValidationException):
+        listing.retract_bid_of(bidder=bidder)
 
     """
     Here's an example:

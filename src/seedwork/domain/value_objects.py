@@ -27,3 +27,6 @@ class Money(ValueObject):
     def __lt__(self, other):
         assert self.currency == other.currency
         return self.amount < other.amount
+
+    def __repr__(self) -> str:
+        return f"{self.amount}{self.currency}"

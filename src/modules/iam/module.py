@@ -3,13 +3,8 @@ from seedwork.application.modules import BusinessModule
 from modules.iam.application.services import AuthenticationService
 
 
-
-
-
 class IdentityAndAccessModule(BusinessModule):
-    def __init__(
-        self, authentication_service: AuthenticationService
-    ):
+    def __init__(self, authentication_service: AuthenticationService):
         self.authentication_service = authentication_service
 
     # @staticmethod

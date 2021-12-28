@@ -18,9 +18,10 @@ def test_listing_initial_price():
 
 
 def test_place_one_bid():
+    now = datetime.utcnow()
     seller = Seller(uuid=UUID.v4())
     bidder = Bidder(uuid=UUID.v4())
-    bid = Bid(price=Money(20), bidder=bidder)
+    bid = Bid(price=Money(20), bidder=bidder, placed_at=now)
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -29,11 +30,12 @@ def test_place_one_bid():
     )
     listing.place_bid(bid)
     assert (
-        listing.winning_bid.ignore_time() == Bid(Money(20), bidder=bidder).ignore_time()
+        listing.winning_bid == Bid(Money(20), bidder=bidder, placed_at=now)
     )
 
 
 def test_place_two_bids():
+    now = datetime.utcnow()
     seller = Seller(uuid=UUID.v4())
     bidder1 = Bidder(uuid=UUID.v4())
     bidder2 = Bidder(uuid=UUID.v4())
@@ -43,12 +45,13 @@ def test_place_two_bids():
         initial_price=Money(10),
         ends_at=datetime.now(),
     )
-    listing.place_bid(Bid(price=Money(20), bidder=bidder1))
-    listing.place_bid(Bid(price=Money(30), bidder=bidder2))
-    assert listing.winning_bid == Bid(Money(30), bidder=bidder2)
+    listing.place_bid(Bid(price=Money(20), bidder=bidder1, placed_at=now))
+    listing.place_bid(Bid(price=Money(30), bidder=bidder2, placed_at=now))
+    assert listing.winning_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
 
 
 def test_place_two_bids_by_same_bidder():
+    now = datetime.utcnow()
     seller = Seller(uuid=UUID.v4())
     bidder = Bidder(uuid=UUID.v4())
     listing = Listing(
@@ -57,11 +60,11 @@ def test_place_two_bids_by_same_bidder():
         initial_price=Money(10),
         ends_at=datetime.now(),
     )
-    listing.place_bid(Bid(price=Money(20), bidder=bidder))
-    listing.place_bid(Bid(price=Money(30), bidder=bidder))
+    listing.place_bid(Bid(price=Money(20), bidder=bidder, placed_at=now))
+    listing.place_bid(Bid(price=Money(30), bidder=bidder, placed_at=now))
 
     assert len(listing.bids) == 1
-    assert listing.winning_bid == Bid(price=Money(30), bidder=bidder)
+    assert listing.winning_bid == Bid(price=Money(30), bidder=bidder, placed_at=now)
 
 
 def test_cannot_place_bid_if_listing_ended():
@@ -90,7 +93,7 @@ def test_retract_bid():
         ends_at=datetime.now(),
     )
     bid = Bid(
-        price=Money(10), bidder=bidder, placed_at=datetime.now() - timedelta(seconds=1)
+        price=Money(100), bidder=bidder, placed_at=datetime.utcnow() - timedelta(seconds=1)
     )
     listing.place_bid(bid)
     with pytest.raises(BusinessRuleValidationException):

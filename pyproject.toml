@@ -5,7 +5,7 @@ description = ""
 authors = ["Przemysław Górecki <przemyslaw.gorecki@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10.0"
 pytest = "^6.2.4"
 pydantic = "^1.8.2"
 black = "^21.5b1"

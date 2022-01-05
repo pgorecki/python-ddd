@@ -38,3 +38,17 @@ class BidCanBeRetracted(BusinessRule):
             less_than_12_hours_before_bidding_ends
             and less_than_1_hour_since_bid_was_placed
         )
+
+
+class ListingCanBeCancelled(BusinessRule):
+    __message = "Listing cannot be cancelled"
+
+    time_left_in_listing: timedelta
+    no_bids_were_placed: int
+
+    def is_broken(self) -> bool:
+        can_be_cancelled = self.time_left_in_listing > timedelta(hours=12) or (
+            self.time_left_in_listing <= timedelta(hours=12)
+            and self.no_bids_were_placed
+        )
+        return not can_be_cancelled

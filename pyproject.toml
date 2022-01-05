@@ -21,6 +21,7 @@ sqlalchemy-json = "^0.4.0"
 typed-ast = "^1.4.3"
 python-multipart = "^0.0.5"
 psycopg2-binary = "^2.9.2"
+freezegun = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"

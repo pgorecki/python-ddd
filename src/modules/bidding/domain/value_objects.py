@@ -18,8 +18,3 @@ class Bid(ValueObject):
     price: Money
     bidder: Bidder
     placed_at: datetime = Field(default_factory=datetime.utcnow)
-
-    def ignore_time(self):
-        return Bid(
-            price=self.price, bidder=self.bidder, placed_at=datetime.date(year=1980)
-        )

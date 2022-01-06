@@ -6,6 +6,7 @@ from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from modules.bidding.domain.rules import (
     PlacedBidMustBeGreaterThanCurrentWinningBid,
     BidCanBeRetracted,
+    ListingCanBeCancelled,
 )
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.events import DomainEvent
@@ -76,10 +77,18 @@ class Listing(AggregateRoot):
         return [BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)]
 
     def cancel_listing(self) -> Sequence[DomainEvent]:
-        raise NotImplementedError()
+        self.check_rule(
+            ListingCanBeCancelled(
+                time_left_in_listing=self.time_left_in_listing,
+                no_bids_were_placed=len(self.bids) == 0,
+            )
+        )
+        self.ends_at = datetime.utcnow()
+        return [ListingCancelledEvent(listing_id=self.id)]
 
     def end_bidding(self) -> Sequence[DomainEvent]:
         raise NotImplementedError()
+        return []
 
     # public queries
     def get_bid_of(self, bidder: Bidder) -> Bid:
@@ -90,6 +99,7 @@ class Listing(AggregateRoot):
         return bid
 
     def has_bid_placed_by(self, bidder: Bidder) -> bool:
+        """Checks if listing has a bid placed by a bidder"""
         try:
             self.get_bid_of(bidder=bidder)
         except BidderIsNotBiddingListing:
@@ -104,6 +114,12 @@ class Listing(AggregateRoot):
             # nobody is bidding
             return None
         return highest_bid
+
+    @property
+    def time_left_in_listing(self):
+        now = datetime.utcnow()
+        zero_seconds = timedelta()
+        return max(self.ends_at - now, zero_seconds)
 
     # private commands and queries
     def _add_bid(self, bid: Bid):

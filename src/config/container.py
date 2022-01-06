@@ -88,5 +88,9 @@ class Container(containers.DeclarativeContainer):
     user_repository = providers.Factory(
         PostgresJsonUserRepository, db_session=request_context.provided.db_session
     )
-    authentication_service = providers.Factory(AuthenticationService, user_repository=user_repository)
-    iam_module = providers.Factory(IdentityAndAccessModule, authentication_service=authentication_service)
+    authentication_service = providers.Factory(
+        AuthenticationService, user_repository=user_repository
+    )
+    iam_module = providers.Factory(
+        IdentityAndAccessModule, authentication_service=authentication_service
+    )

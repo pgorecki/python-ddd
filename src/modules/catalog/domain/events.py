@@ -1,5 +1,8 @@
+from dataclasses import dataclass
 from seedwork.domain.events import DomainEvent
+from seedwork.domain.value_objects import UUID
 
 
-class DraftCreatedEvent(DomainEvent):
-    pass
+@dataclass
+class ListingDraftCreatedEvent(DomainEvent):
+    listing_id: UUID

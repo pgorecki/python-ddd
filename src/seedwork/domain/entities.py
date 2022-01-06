@@ -1,13 +1,17 @@
-from pydantic import BaseModel, Field
+from dataclasses import dataclass, field
 from .value_objects import UUID
 from .mixins import BusinessRuleValidationMixin
 
 
-class Entity(BusinessRuleValidationMixin, BaseModel):
-    id: UUID = Field(default_factory=UUID.v4)
+@dataclass
+class Entity:
+    id: UUID = field(hash=True)
+
+    @classmethod
+    def next_id(cls) -> UUID:
+        return UUID.v4()
 
 
-class Aggregate(Entity):
+@dataclass
+class AggregateRoot(BusinessRuleValidationMixin, Entity):
     """Consits of 1+ entities. Spans transaction boundaries."""
-
-    ...

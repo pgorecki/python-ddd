@@ -4,7 +4,8 @@ from seedwork.domain.value_objects import UUID
 from modules.iam.domain.value_objects import Session
 
 
-ANONYMOUS_ID = UUID('00000000-0000-0000-0000-000000000000')
+ANONYMOUS_ID = UUID("00000000-0000-0000-0000-000000000000")
+
 
 class User(Aggregate):
     id: UUID
@@ -51,5 +52,5 @@ class User(Aggregate):
     def Anonymous(cls):
         return User(
             id=ANONYMOUS_ID,
-            username='anonymous',
+            username="anonymous",
         )

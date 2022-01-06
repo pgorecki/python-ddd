@@ -1,5 +1,5 @@
 from seedwork.domain.rules import BusinessRule
-from seedwork.domain.value_objects import Currency
+from seedwork.domain.value_objects import Money
 from .value_objects import ListingStatus
 
 # import modules.catalog.domain.entities as entities
@@ -17,10 +17,10 @@ class ListingMustBeInDraftState(BusinessRule):
 class ListingPriceMustBeGreaterThanZero(BusinessRule):
     __message = "Listing price must be greater that zero"
 
-    price: Currency
+    price: Money
 
     def is_broken(self) -> bool:
-        return self.price <= 0
+        return self.price.amount <= 0
 
 
 class SellerMustBeEligibleForAddingNextListing(BusinessRule):

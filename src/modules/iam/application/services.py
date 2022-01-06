@@ -3,6 +3,7 @@ from modules.iam.domain.entities import User
 
 class AuthenticationService:
     """Used to authenticate users"""
+
     def __init__(self, user_repository):
         self.user_repository = user_repository
 

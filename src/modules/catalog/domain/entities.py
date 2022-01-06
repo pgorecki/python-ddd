@@ -1,7 +1,8 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
 from seedwork.domain.entities import Entity
-from seedwork.domain.value_objects import Currency, UUID
+from seedwork.domain.value_objects import Money, UUID
 from modules.catalog.domain.rules import ListingPriceMustBeGreaterThanZero
 from .value_objects import ListingStatus
 
@@ -9,11 +10,11 @@ from .value_objects import ListingStatus
 class Listing(Entity):
     title: str
     description: str
-    price: Currency
+    price: Money
     seller_id: UUID
     status = ListingStatus.DRAFT
 
-    def change_main_attributes(self, title: str, description: str, price: Currency):
+    def change_main_attributes(self, title: str, description: str, price: Money):
         self.title = title
         self.description = description
         self.price = price

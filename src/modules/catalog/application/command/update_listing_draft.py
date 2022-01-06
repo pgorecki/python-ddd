@@ -1,5 +1,5 @@
 from seedwork.application.commands import Command
-from seedwork.domain.value_objects import Currency, UUID
+from seedwork.domain.value_objects import Money, UUID
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
@@ -11,7 +11,7 @@ class UpdateListingDraftCommand(Command):
     listing_id: UUID
     title: str
     description: str
-    price: Currency
+    price: Money
     modify_user_id: UUID
 
 

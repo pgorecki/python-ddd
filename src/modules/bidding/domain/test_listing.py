@@ -8,7 +8,7 @@ from seedwork.domain.exceptions import BusinessRuleValidationException
 
 
 def test_listing_initial_price():
-    seller = Seller(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -20,8 +20,8 @@ def test_listing_initial_price():
 
 def test_place_one_bid():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     bid = Bid(price=Money(20), bidder=bidder, placed_at=now)
     listing = Listing(
         id=Listing.next_id(),
@@ -35,9 +35,9 @@ def test_place_one_bid():
 
 def test_place_two_bids():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
-    bidder1 = Bidder(uuid=UUID.v4())
-    bidder2 = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder1 = Bidder(id=UUID.v4())
+    bidder2 = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -51,8 +51,8 @@ def test_place_two_bids():
 
 def test_place_two_bids_by_same_bidder():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -67,8 +67,8 @@ def test_place_two_bids_by_same_bidder():
 
 
 def test_cannot_place_bid_if_listing_ended():
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -88,8 +88,8 @@ def test_cannot_place_bid_if_listing_ended():
 
 
 def test_retract_bid():
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -108,7 +108,7 @@ def test_retract_bid():
 
 def test_cancel_listing():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -123,8 +123,8 @@ def test_cancel_listing():
 
 def test_can_cancel_listing_with_bids():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -145,8 +145,8 @@ def test_can_cancel_listing_with_bids():
 
 def test_cannot_cancel_listing_with_bids():
     now = datetime.utcnow()
-    seller = Seller(uuid=UUID.v4())
-    bidder = Bidder(uuid=UUID.v4())
+    seller = Seller(id=UUID.v4())
+    bidder = Bidder(id=UUID.v4())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,

@@ -1,7 +1,8 @@
+from dataclasses import dataclass
 from seedwork.infrastructure.repository import InMemoryRepository
 from seedwork.domain.entities import Entity
 
-
+@dataclass
 class Person(Entity):
     first_name: str
     last_name: str
@@ -9,7 +10,7 @@ class Person(Entity):
 
 def test_InMemoryRepository_persist_one():
     # arrange
-    person = Person(first_name="John", last_name="Doe")
+    person = Person(id=Person.next_id(), first_name="John", last_name="Doe")
     repository = InMemoryRepository()
 
     # act
@@ -21,8 +22,8 @@ def test_InMemoryRepository_persist_one():
 
 def test_InMemoryRepository_persist_two():
     # arrange
-    person1 = Person(first_name="John", last_name="Doe")
-    person2 = Person(first_name="Mary", last_name="Doe")
+    person1 = Person(id=Person.next_id(), first_name="John", last_name="Doe")
+    person2 = Person(id=Person.next_id(), first_name="Mary", last_name="Doe")
     repository = InMemoryRepository()
 
     # act

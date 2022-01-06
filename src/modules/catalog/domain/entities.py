@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import date
 from typing import Any
 from seedwork.domain.entities import Entity

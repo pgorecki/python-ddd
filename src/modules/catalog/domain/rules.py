@@ -20,7 +20,7 @@ class ListingPriceMustBeGreaterThanZero(BusinessRule):
     price: Money
 
     def is_broken(self) -> bool:
-        return self.price <= 0
+        return self.price.amount <= 0
 
 
 class SellerMustBeEligibleForAddingNextListing(BusinessRule):

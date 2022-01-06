@@ -5,12 +5,12 @@ from seedwork.domain.value_objects import ValueObject, Money, UUID
 
 @dataclass
 class Bidder(ValueObject):
-    uuid: UUID
+    id: UUID
 
 
 @dataclass
 class Seller(ValueObject):
-    uuid: UUID
+    id: UUID
 
 
 @dataclass

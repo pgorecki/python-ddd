@@ -16,7 +16,7 @@ class CreateUserCommand(Command):
 def create_user(
     command: CreateUserCommand, repository: UserRepository
 ) -> CommandResult:
-    listing = Listing(id=repository.next_id(), **command.dict())
+    listing = Listing(id=Listing.next_id(), **command.dict())
     try:
         repository.insert(listing)
     except Exception as e:

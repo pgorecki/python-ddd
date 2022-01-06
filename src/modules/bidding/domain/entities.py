@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import List, Optional
-from collections.abc import Sequence
 from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from modules.bidding.domain.rules import (
     PlacedBidMustBeGreaterThanCurrentWinningBid,
@@ -9,10 +8,9 @@ from modules.bidding.domain.rules import (
     ListingCanBeCancelled,
 )
 from seedwork.domain.entities import AggregateRoot
-from seedwork.domain.events import DomainEvent
 from seedwork.domain.exceptions import DomainException
 from seedwork.domain.events import DomainEvent
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import Money
 
 
 class BidderIsNotBiddingListing(DomainException):
@@ -51,7 +49,7 @@ class Listing(AggregateRoot):
         self.current_price = self.initial_price
 
     # public commands
-    def place_bid(self, bid: Bid) -> Sequence[DomainEvent]:
+    def place_bid(self, bid: Bid) -> List[DomainEvent]:
         """Public method"""
         self.check_rule(
             PlacedBidMustBeGreaterThanCurrentWinningBid(
@@ -66,7 +64,7 @@ class Listing(AggregateRoot):
 
         return [BidPlacedEvent(listing_id=self.id, bidder=bid.bidder, price=bid.price)]
 
-    def retract_bid_of(self, bidder: Bidder) -> Sequence[DomainEvent]:
+    def retract_bid_of(self, bidder: Bidder) -> List[DomainEvent]:
         """Public method"""
         bid = self.get_bid_of(bidder)
         self.check_rule(
@@ -76,7 +74,7 @@ class Listing(AggregateRoot):
         self._remove_bid_of(bidder=bidder)
         return [BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)]
 
-    def cancel_listing(self) -> Sequence[DomainEvent]:
+    def cancel_listing(self) -> List[DomainEvent]:
         self.check_rule(
             ListingCanBeCancelled(
                 time_left_in_listing=self.time_left_in_listing,
@@ -86,7 +84,7 @@ class Listing(AggregateRoot):
         self.ends_at = datetime.utcnow()
         return [ListingCancelledEvent(listing_id=self.id)]
 
-    def end_bidding(self) -> Sequence[DomainEvent]:
+    def end_bidding(self) -> List[DomainEvent]:
         raise NotImplementedError()
         return []
 

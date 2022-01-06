@@ -3,6 +3,7 @@ from seedwork.domain.value_objects import UUID, Money
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
 from modules.catalog.domain.entities import Listing
+from modules.catalog.domain.events import ListingDraftCreatedEvent
 from modules.catalog.domain.repositories import ListingRepository
 
 
@@ -19,10 +20,6 @@ class CreateListingDraftCommand(Command):
 def create_listing_draft(
     command: CreateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:
-    listing = Listing(id=repository.next_id(), **command.dict())
-    try:
-        repository.insert(listing)
-    except Exception as e:
-        return CommandResult.failed(message="Failed to create listing", exception=e)
-
-    return CommandResult.ok(result=listing.id)
+    listing = Listing(id=Listing.next_id(), **command.dict())
+    repository.insert(listing)
+    return CommandResult.ok(result=listing.id, events=[ListingDraftCreatedEvent(listing_id=listing.id)])

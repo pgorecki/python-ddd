@@ -1,8 +1,9 @@
 from seedwork.application.commands import Command
 from seedwork.domain.value_objects import UUID
-from modules.catalog.domain.repositories import ListingRepository, SellerRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
+from modules.catalog.domain.entities import Listing, Seller
+from modules.catalog.domain.repositories import ListingRepository, SellerRepository
 
 
 class PublishListingCommand(Command):
@@ -18,12 +19,12 @@ def publish_listing(
     listing_repository: ListingRepository,
     seller_repository: SellerRepository,
 ):
-    listing = listing_repository.get_by_id(command.listing_id)
-    seller = seller_repository.get_by_id(command.seller_id)
+    listing: Listing = listing_repository.get_by_id(command.listing_id)
+    seller: Seller = seller_repository.get_by_id(command.seller_id)
 
-    seller.publish_listing(listing)
+    events = seller.publish_listing(listing)
 
     # TODO: for now we need to manually persist the changes, but it should be handled automatically using "Unit of Work"
     listing_repository.update(listing)
 
-    return CommandResult.ok()
+    return CommandResult.ok(events=events)

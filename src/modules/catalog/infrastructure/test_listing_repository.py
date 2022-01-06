@@ -14,12 +14,12 @@ def test_listing_repo_is_empty(db_session):
 
 
 def test_listing_persistence(db_session):
-    original = Listing(title="red dragon", description="", price=1, seller_id=UUID.v4())
-    repo = PostgresJsonListingRepository(db_session=db_session)
+    original = Listing(id=Listing.next_id(), title="red dragon", description="", price=1, seller_id=UUID.v4())
+    repository = PostgresJsonListingRepository(db_session=db_session)
 
-    repo.insert(original)
+    repository.insert(original)
     db_session.commit()
 
-    persisted = repo.get_by_id(original.id)
+    persisted = repository.get_by_id(original.id)
 
     assert original == persisted

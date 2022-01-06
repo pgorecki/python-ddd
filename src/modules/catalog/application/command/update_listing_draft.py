@@ -1,8 +1,9 @@
 from seedwork.application.commands import Command
-from seedwork.domain.value_objects import Money, UUID
-from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
+from seedwork.domain.value_objects import Money, UUID
+from modules.catalog.domain.entities import Listing
+from modules.catalog.domain.repositories import ListingRepository
 
 
 class UpdateListingDraftCommand(Command):
@@ -19,13 +20,9 @@ class UpdateListingDraftCommand(Command):
 def update_listing_draft(
     command: UpdateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:
-    listing = repository.get_by_id(command.listing_id)
-    listing.change_main_attributes(
+    listing: Listing = repository.get_by_id(command.listing_id)
+    events = listing.change_main_attributes(
         title=command.title, description=command.description, price=command.price
     )
-    try:
-        repository.update(listing)
-    except:
-        return CommandResult.error("Failed to update listing")
-
-    return CommandResult.ok()
+    repository.update(listing)
+    return CommandResult.ok(events=events)

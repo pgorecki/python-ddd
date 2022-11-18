@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from seedwork.application.commands import Command
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
@@ -5,14 +6,14 @@ from seedwork.domain.value_objects import Money, UUID
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
 
-
+@dataclass
 class UpdateListingDraftCommand(Command):
     """A command for updating a listing"""
 
     listing_id: UUID
     title: str
     description: str
-    price: Money
+    ask_price: Money
     modify_user_id: UUID
 
 
@@ -22,7 +23,6 @@ def update_listing_draft(
 ) -> CommandResult:
     listing: Listing = repository.get_by_id(command.listing_id)
     events = listing.change_main_attributes(
-        title=command.title, description=command.description, price=command.price
+        title=command.title, description=command.description, ask_price=command.ask_price
     )
-    repository.update(listing)
     return CommandResult.ok(events=events)

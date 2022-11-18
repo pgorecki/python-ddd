@@ -1,5 +1,5 @@
 from typing import Optional, List
-from seedwork.domain.entities import Aggregate
+from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import UUID
 from modules.iam.domain.value_objects import Session
 
@@ -7,7 +7,7 @@ from modules.iam.domain.value_objects import Session
 ANONYMOUS_ID = UUID("00000000-0000-0000-0000-000000000000")
 
 
-class User(Aggregate):
+class User(AggregateRoot):
     id: UUID
     username: str
     email: str = ""

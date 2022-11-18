@@ -37,7 +37,7 @@ class PostgresJsonUserRepository(UserRepository):
         entity = self.mapper.data_to_entity(data, User)
         return entity
 
-    def insert(self, entity: User):
+    def add(self, entity: User):
         data = self.mapper.entity_to_data(entity, self.model)
         self.session.add(data)
 

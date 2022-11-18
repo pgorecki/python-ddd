@@ -21,6 +21,26 @@ from modules.catalog.application.command.create_listing_draft import (
     CreateListingDraftCommand,
     create_listing_draft,
 )
+from modules.catalog.infrastructure.listing_repository import (
+    PostgresJsonListingRepository,
+)
+
+
+class BusinessTransaction:
+    def __init__(self):
+        ...
+
+    #
+    # def __enter__(self):
+    #     self._correlation_id.set(uuid.uuid4())
+    #     session = Session(self._engine)
+    #     session.begin()
+    #     self._db_session.set(session)
+    #     return self
+    #
+    # def __exit__(self, exc_type, exc_value, traceback):
+    #     commit = exc_type is None
+    #     self.end_request(commit=commit)
 
 
 class CatalogModule(BusinessModule):

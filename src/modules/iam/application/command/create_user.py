@@ -16,10 +16,10 @@ class CreateUserCommand(Command):
 def create_user(
     command: CreateUserCommand, repository: UserRepository
 ) -> CommandResult:
-    listing = Listing(id=Listing.next_id(), **command.dict())
+    user = User(id=User.next_id(), **command.dict())
     try:
-        repository.insert(listing)
+        repository.add(user)
     except Exception as e:
-        return CommandResult.failed(message="Failed to create listing", exception=e)
+        return CommandResult.failed(message="Failed to create user", exception=e)
 
-    return CommandResult.ok(result=listing.id)
+    return CommandResult.ok(result=user.id)

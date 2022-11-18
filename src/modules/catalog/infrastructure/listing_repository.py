@@ -1,16 +1,15 @@
-from contextvars import ContextVar
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.orm import Session
 from sqlalchemy_json import mutable_json_type
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from typing import Type
+from sqlalchemy_utils import UUIDType
+
+from sqlalchemy.dialects.postgresql import JSONB
 import uuid
 
-from seedwork.domain.entities import Entity
 from seedwork.infrastructure.database import Base
+from seedwork.infrastructure.repository import SqlAlchemyGenericRepository
 
 from modules.catalog.domain.repositories import ListingRepository
-from modules.catalog.domain.entities import Listing
+from modules.catalog.domain.entities import Listing, Money
 
 """
 References:
@@ -19,59 +18,43 @@ https://youtu.be/sO7FFPNvX2s?t=7214
 """
 
 
-class CatalogListingModel(Base):
+class ListingModel(Base):
+    """Data model for listing domain object"""
+
     __tablename__ = "catalog_listing"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType(binary=False), primary_key=True, default=uuid.uuid4)
     data = Column(mutable_json_type(dbtype=JSONB, nested=True))
 
 
-class JSONDataMapper:
-    def data_to_entity(self, data: dict, entity_class: Type[Entity]) -> Entity:
-        entity_id = uuid.UUID(data.pop("id"))
-        entity_dict = {
-            "id": entity_id,
-            **data,
-        }
-        return entity_class(**entity_dict)
+class ListingDataMapper:
+    def model_to_entity(self, instance: ListingModel) -> Listing:
+        d = instance.data
+        return Listing(
+            id=instance.id,
+            title=d['title'],
+            description=d['description'],
+            ask_price=Money(**d['ask_price']),
+            seller_id=uuid.UUID(d['seller_id']),
+        )
 
-    def entity_to_data(self, entity: Entity, model_class):
-        data = dict(**entity.__dict__)
-        entity_id = str(data.pop("id"))
-        return model_class(
-            **{
-                "id": entity_id,
-                "data": data,
-            }
+    def entity_to_model(self, entity: Listing) -> ListingModel:
+        return ListingModel(
+            id=entity.id,
+            data={
+                "title": entity.title,
+                "description": entity.description,
+                "ask_price": {
+                    'amount': entity.ask_price.amount,
+                    'currency':  entity.ask_price.currency,
+                },
+                "seller_id": str(entity.seller_id),
+                "status": entity.status,
+            },
         )
 
 
-class PostgresJsonListingRepository(ListingRepository):
+class PostgresJsonListingRepository(SqlAlchemyGenericRepository, ListingRepository):
     """Listing repository implementation"""
 
-    model = CatalogListingModel
-
-    def __init__(self, db_session: ContextVar, mapper=JSONDataMapper()):
-        self._session_cv = db_session
-        self.mapper = mapper
-
-    @property
-    def session(self) -> Session:
-        return self._session_cv.get()
-
-    def get_by_id(self, listing_id: UUID) -> Listing:
-        data = self.session.query(self.model).filter_by(id=str(listing_id)).one()
-        entity = self.mapper.data_to_entity(data, Listing)
-        return entity
-
-    def insert(self, entity: Listing):
-        data = self.mapper.entity_to_data(entity, self.model)
-        self.session.add(data)
-
-    def update(self, entity: Listing):
-        raise NotImplementedError()
-
-    def delete(self, entity: Listing):
-        raise NotImplementedError()
-
-    def count(self) -> int:
-        return self.session.query(self.model).count()
+    data_mapper = ListingDataMapper()
+    model_class = ListingModel

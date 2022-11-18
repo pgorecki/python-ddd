@@ -20,13 +20,13 @@ from seedwork.domain.value_objects import UUID, Money
 def test_create_listing_draft():
     # arrange
     command = CreateListingDraftCommand(
-        title="foo", description="bar", price=Money(1), seller_id=Seller.next_id()
+        title="foo", description="bar", ask_price=Money(1), seller_id=Seller.next_id()
     )
     repository = InMemoryRepository()
 
     # act
     result = create_listing_draft(command, repository)
-    
+
     # assert
     assert repository.get_by_id(result.result).title == "foo"
     assert result.has_errors() is False
@@ -39,16 +39,16 @@ def test_update_listing_draft():
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
-        price=Money(1),
+        ask_price=Money(1),
         seller_id=UUID.v4(),
     )
-    repository.insert(listing)
+    repository.add(listing)
 
     command = UpdateListingDraftCommand(
         listing_id=listing.id,
         title="Tiny golden dragon",
         description=listing.description,
-        price=listing.price,
+        ask_price=listing.ask_price,
         modify_user_id=listing.seller_id,
     )
 
@@ -63,17 +63,17 @@ def test_publish_listing():
     # arrange
     seller_repository = InMemoryRepository()
     seller = Seller(id=Seller.next_id())
-    seller_repository.insert(seller)
+    seller_repository.add(seller)
 
     listing_repository = InMemoryRepository()
     listing = Listing(
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
-        price=Money(1),
+        ask_price=Money(1),
         seller_id=seller.id,
     )
-    listing_repository.insert(listing)
+    listing_repository.add(listing)
 
     command = PublishListingCommand(
         listing_id=listing.id,
@@ -86,8 +86,6 @@ def test_publish_listing():
         listing_repository=listing_repository,
         seller_repository=seller_repository,
     )
-    
-    print(result)
 
     # assert
     assert result.is_ok()
@@ -98,17 +96,17 @@ def test_publish_listing_and_break_business_rule():
     # arrange
     seller_repository = InMemoryRepository()
     seller = Seller(id=Seller.next_id())
-    seller_repository.insert(seller)
+    seller_repository.add(seller)
 
     listing_repository = InMemoryRepository()
     listing = Listing(
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
-        price=Money(0),  # this will break the rule
+        ask_price=Money(0),  # this will break the rule
         seller_id=seller.id,
     )
-    listing_repository.insert(listing)
+    listing_repository.add(listing)
 
     command = PublishListingCommand(
         listing_id=listing.id,

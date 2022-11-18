@@ -14,13 +14,13 @@ class ListingMustBeInDraftState(BusinessRule):
         return self.listing_status != ListingStatus.DRAFT
 
 
-class ListingPriceMustBeGreaterThanZero(BusinessRule):
+class ListingAskPriceMustBeGreaterThanZero(BusinessRule):
     __message = "Listing price must be greater that zero"
 
-    price: Money
+    ask_price: Money
 
     def is_broken(self) -> bool:
-        return self.price.amount <= 0
+        return self.ask_price.amount <= 0
 
 
 class SellerMustBeEligibleForAddingNextListing(BusinessRule):

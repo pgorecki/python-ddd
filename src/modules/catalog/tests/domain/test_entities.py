@@ -11,7 +11,7 @@ def test_seller_publishes_listing_happy_path():
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
-        price=Money(1),
+        ask_price=Money(1),
         seller_id=seller.id,
     )
 
@@ -26,7 +26,7 @@ def test_seller_fails_to_publish_listing_with_zero_price():
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
-        price=Money(0),
+        ask_price=Money(0),
         seller_id=seller.id,
     )
 

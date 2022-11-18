@@ -1,5 +1,7 @@
-from pydantic import BaseModel
+from abc import ABC
 
 
-class Command(BaseModel):
+class Command(ABC):
+    """Abstract base class for all commands"""
+
     pass

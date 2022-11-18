@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from seedwork.infrastructure.repository import InMemoryRepository
 from seedwork.domain.entities import Entity
 
+
 @dataclass
 class Person(Entity):
     first_name: str
@@ -14,7 +15,7 @@ def test_InMemoryRepository_persist_one():
     repository = InMemoryRepository()
 
     # act
-    repository.insert(person)
+    repository.add(person)
 
     # assert
     assert repository.get_by_id(person.id) == person
@@ -27,8 +28,8 @@ def test_InMemoryRepository_persist_two():
     repository = InMemoryRepository()
 
     # act
-    repository.insert(person1)
-    repository.insert(person2)
+    repository.add(person1)
+    repository.add(person2)
 
     # assert
     assert repository.get_by_id(person1.id) == person1

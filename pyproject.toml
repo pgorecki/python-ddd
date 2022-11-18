@@ -22,6 +22,7 @@ typed-ast = "^1.4.3"
 python-multipart = "^0.0.5"
 psycopg2-binary = "^2.9.2"
 freezegun = "^1.1.0"
+SQLAlchemy-Utils = "^0.38.3"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"
@@ -37,6 +38,7 @@ build-backend = "poetry.core.masonry.api"
 test = { shell = "DATABASE_URL=postgresql://postgres:password@localhost:5433/postgres pytest src" }
 test_coverage = "pytest --cov=src --cov-report=html"
 start = "uvicorn src.api.main:app --reload"
+start_cli = { shell = "cd src && python -v" }
 compose_up = "docker-compose -f docker-compose.dev.yml up"
 
 [tool.black]

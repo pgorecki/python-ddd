@@ -72,3 +72,16 @@ Event storming technique was used to discover the business domain and the most i
 ![](docs/images/auctions_ContextMap.png)
 
 Since `Payment` context will be provided by a 3rd party payments provider (via REST API), the downstream context (`Bidding`) must conform to whatever the upstream provides.
+
+
+## How to run this project
+
+`poetry shell`
+
+`poetry install`
+
+`poe compose_up` - run in a separate shell to start the database
+
+`poe start`
+
+`poe test`

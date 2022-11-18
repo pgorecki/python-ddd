@@ -2,19 +2,18 @@ from modules.catalog.application.command.create_listing_draft import (
     CreateListingDraftCommand,
     create_listing_draft,
 )
-from modules.catalog.application.command.update_listing_draft import (
-    UpdateListingDraftCommand,
-    update_listing_draft,
-)
 from modules.catalog.application.command.publish_listing import (
     PublishListingCommand,
     publish_listing,
 )
-
+from modules.catalog.application.command.update_listing_draft import (
+    UpdateListingDraftCommand,
+    update_listing_draft,
+)
 from modules.catalog.domain.entities import Listing, Seller
 from modules.catalog.domain.value_objects import ListingStatus
-from seedwork.infrastructure.repository import InMemoryRepository
 from seedwork.domain.value_objects import UUID, Money
+from seedwork.infrastructure.repository import InMemoryRepository
 
 
 def test_create_listing_draft():

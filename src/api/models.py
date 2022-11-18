@@ -1,5 +1,5 @@
-from typing import List
 from uuid import UUID, uuid4
+
 from pydantic import BaseModel
 
 
@@ -22,4 +22,4 @@ class ListingReadModel(BaseModel):
 
 
 class ListingIndexModel(BaseModel):
-    data: List[ListingReadModel]
+    data: list[ListingReadModel]

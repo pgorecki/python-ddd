@@ -1,7 +1,6 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -16,7 +15,6 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 from modules.catalog.infrastructure.listing_repository import CatalogListingModel
-from seedwork.infrastructure.database import Base
 
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata

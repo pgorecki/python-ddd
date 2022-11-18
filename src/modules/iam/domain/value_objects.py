@@ -1,5 +1,6 @@
 from datetime import datetime
-from seedwork.domain.value_objects import ValueObject, UUID
+
+from seedwork.domain.value_objects import UUID, ValueObject
 
 
 class Session(ValueObject):

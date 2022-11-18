@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
+
 from pydantic import Field
-from typing import Optional
-from datetime import date, datetime, timedelta
-from seedwork.domain.rules import BusinessRule
+
 from modules.bidding.domain.value_objects import Bid
+from seedwork.domain.rules import BusinessRule
 from seedwork.domain.value_objects import Money
 
 

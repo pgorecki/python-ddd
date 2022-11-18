@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.value_objects import UUID
 

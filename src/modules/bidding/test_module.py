@@ -1,8 +1,8 @@
-from seedwork.infrastructure.repository import InMemoryRepository
-from modules.bidding.module import BiddingModule
 from modules.bidding.application.query.get_pastdue_listings import (
     GetPastdueListingsQuery,
 )
+from modules.bidding.module import BiddingModule
+from seedwork.infrastructure.repository import InMemoryRepository
 
 
 class DummyEventPublisher:

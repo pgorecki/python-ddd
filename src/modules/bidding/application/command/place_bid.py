@@ -1,9 +1,10 @@
 from decimal import Decimal
+
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.decorators import command_handler
 from src.modules.bidding.domain.entities import Listing
-from src.modules.bidding.domain.value_objects import Bid, Bidder, Money
 from src.modules.bidding.domain.repositories import ListingRepository
+from src.modules.bidding.domain.value_objects import Bid, Bidder, Money
 
 
 class PlaceBidCommand:

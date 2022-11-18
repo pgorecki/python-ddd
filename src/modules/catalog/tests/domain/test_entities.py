@@ -1,8 +1,9 @@
 import pytest
+
+from modules.catalog.domain.entities import Listing, Seller
+from modules.catalog.domain.value_objects import ListingStatus
 from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.domain.value_objects import Money
-from modules.catalog.domain.entities import Seller, Listing
-from modules.catalog.domain.value_objects import ListingStatus
 
 
 def test_seller_publishes_listing_happy_path():

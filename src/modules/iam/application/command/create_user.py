@@ -1,7 +1,7 @@
-from seedwork.application.commands import Command
 from modules.iam.domain.entities import User
 from modules.iam.domain.repository import UserRepository
 from seedwork.application.command_handlers import CommandResult
+from seedwork.application.commands import Command
 from seedwork.application.decorators import command_handler
 
 

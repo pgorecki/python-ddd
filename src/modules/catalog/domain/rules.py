@@ -1,5 +1,6 @@
 from seedwork.domain.rules import BusinessRule
 from seedwork.domain.value_objects import Money
+
 from .value_objects import ListingStatus
 
 # import modules.catalog.domain.entities as entities

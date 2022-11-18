@@ -1,12 +1,12 @@
-from typing import Type
 import uuid
+
 from seedwork.domain.entities import Entity
 
 
 class JSONDataMapper:
     """Used to serialize/deserialize entities from/to JSON data format"""
 
-    def data_to_entity(self, data: dict, entity_class: Type[Entity]) -> Entity:
+    def data_to_entity(self, data: dict, entity_class: type[Entity]) -> Entity:
         """Creates business entity from dictionary with a `data` attribute"""
         entity_id = uuid.UUID(data.pop("id"))
         entity_dict = {

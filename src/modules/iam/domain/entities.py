@@ -1,8 +1,7 @@
-from typing import Optional, List
+from typing import Optional
+
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import UUID
-from modules.iam.domain.value_objects import Session
-
 
 ANONYMOUS_ID = UUID("00000000-0000-0000-0000-000000000000")
 

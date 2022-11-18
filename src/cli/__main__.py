@@ -1,28 +1,20 @@
-from seedwork.infrastructure.request_context import request_context
-from seedwork.infrastructure.logging import logger, LoggerFactory
-from config.container import Container
-from modules.catalog.domain.repositories import SellerRepository
-from modules.catalog.application.query.get_all_listings import GetAllListings
-from modules.catalog.application.query.get_listings_of_seller import GetListingsOfSeller
-from modules.catalog.application.command.create_listing_draft import (
-    CreateListingDraftCommand,
-)
+# configure logger prior to first usage
+import uuid
 
+from sqlalchemy.orm import Session
+
+from config.container import Container
+from modules.catalog.domain.entities import Listing, Money
+from modules.catalog.infrastructure.listing_repository import (
+    Base,
+    PostgresJsonListingRepository,
+)
+from seedwork.infrastructure.logging import LoggerFactory, logger
+from seedwork.infrastructure.request_context import request_context
 
 # a sample command line script to print all listings
 # run with "cd src && python -m cli"
 
-# configure logger prior to first usage
-import uuid
-from sqlalchemy.orm import Session
-
-from modules.catalog.infrastructure.listing_repository import (
-    PostgresJsonListingRepository,
-    Base,
-)
-
-
-from modules.catalog.domain.entities import Listing, Money
 
 LoggerFactory.configure(logger_name="cli")
 

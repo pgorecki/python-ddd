@@ -1,10 +1,11 @@
-from freezegun import freeze_time
-import pytest
 from datetime import datetime, timedelta
-from modules.bidding.domain.entities import Seller, Listing, Money
-from modules.bidding.domain.value_objects import Bidder, Bid
-from seedwork.domain.value_objects import UUID
+
+import pytest
+
+from modules.bidding.domain.entities import Listing, Money, Seller
+from modules.bidding.domain.value_objects import Bid, Bidder
 from seedwork.domain.exceptions import BusinessRuleValidationException
+from seedwork.domain.value_objects import UUID
 
 
 def test_listing_initial_price():

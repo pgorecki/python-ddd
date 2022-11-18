@@ -1,16 +1,15 @@
-from contextvars import ContextVar
-from sqlalchemy.sql.schema import Column
-from sqlalchemy.orm import Session
-from sqlalchemy_json import mutable_json_type
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from typing import Type
 import uuid
+from contextvars import ContextVar
 
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.schema import Column
+from sqlalchemy_json import mutable_json_type
+
+from modules.iam.domain.entities import User
+from modules.iam.domain.repositories import UserRepository
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.json_data_mapper import JSONDataMapper
-
-from modules.iam.domain.repositories import UserRepository
-from modules.iam.domain.entities import User
 
 
 class UserModel(Base):

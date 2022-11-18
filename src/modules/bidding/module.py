@@ -1,10 +1,10 @@
-from seedwork.application.modules import BusinessModule
-from seedwork.domain.events import EventPublisher
-from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.application.query.get_pastdue_listings import (
     GetPastdueListingsQuery,
     get_past_due_listings,
 )
+from modules.bidding.domain.repositories import ListingRepository
+from seedwork.application.modules import BusinessModule
+from seedwork.domain.events import EventPublisher
 
 
 class BiddingModule(BusinessModule):

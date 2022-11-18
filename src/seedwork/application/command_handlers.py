@@ -1,13 +1,15 @@
 import sys
-from typing import Any, List
+from typing import Any
+
 from pydantic import BaseModel
+
 from seedwork.domain.type_hints import DomainEvent
 
 
 class CommandResult(BaseModel):
     result: Any = None
-    events: List[DomainEvent] = []
-    errors: List[Any] = []
+    events: list[DomainEvent] = []
+    errors: list[Any] = []
 
     # # commands
     # def add_error(self, message, exception=None, exception_info=None):

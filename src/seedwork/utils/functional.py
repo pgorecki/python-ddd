@@ -77,8 +77,6 @@ class Promise:
     It's used to recognize promises in code.
     """
 
-    pass
-
 
 def lazy(func, *resultclasses):
     """

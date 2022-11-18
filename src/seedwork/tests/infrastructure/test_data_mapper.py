@@ -1,5 +1,6 @@
-from uuid import UUID
 from dataclasses import dataclass
+from uuid import UUID
+
 from seedwork.domain.entities import Entity
 from seedwork.infrastructure.data_mapper import JSONDataMapper
 

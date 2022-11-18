@@ -1,7 +1,8 @@
 from seedwork.infrastructure.logging import logger
+
+from .command_handlers import CommandResult
 from .commands import Command
 from .queries import Query
-from .command_handlers import CommandResult
 
 
 def logging_handler(fn):

@@ -1,17 +1,14 @@
-import uuid
-import logging
-from sqlalchemy import create_engine
 from dependency_injector import containers, providers
 from dependency_injector.wiring import inject  # noqa
+from sqlalchemy import create_engine
 
-from modules.catalog.module import CatalogModule
 from modules.catalog.infrastructure.listing_repository import (
     PostgresJsonListingRepository,
 )
-from modules.iam.module import IdentityAndAccessModule
+from modules.catalog.module import CatalogModule
 from modules.iam.application.services import AuthenticationService
 from modules.iam.infrastructure.user_repository import PostgresJsonUserRepository
-
+from modules.iam.module import IdentityAndAccessModule
 from seedwork.infrastructure.request_context import RequestContext
 
 

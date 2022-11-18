@@ -1,5 +1,5 @@
-from fastapi import Depends
 from dependency_injector.wiring import Provide
+from fastapi import Depends
 
 
 def dependency(provider):

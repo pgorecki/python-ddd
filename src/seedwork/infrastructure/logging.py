@@ -1,10 +1,11 @@
-from pythonjsonlogger import jsonlogger
-from datetime import datetime
 import logging
-from logging import Logger
+from datetime import datetime
 from logging.config import dictConfig
-from seedwork.utils.functional import SimpleLazyObject
+
+from pythonjsonlogger import jsonlogger
+
 from seedwork.infrastructure.request_context import request_context
+from seedwork.utils.functional import SimpleLazyObject
 
 
 class RequestContextFilter(logging.Filter):

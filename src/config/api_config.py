@@ -1,5 +1,3 @@
-from typing import cast
-import os
 from pydantic import BaseSettings, Field
 
 # env_filename = os.getenv("ENV_FILENAME", ".env")

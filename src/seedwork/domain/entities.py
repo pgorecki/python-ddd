@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from .value_objects import UUID
+
 from .mixins import BusinessRuleValidationMixin
+from .value_objects import UUID
 
 
 @dataclass

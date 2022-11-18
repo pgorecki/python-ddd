@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from api.shared import dependency
 from config.container import Container, inject
-from modules.iam.module import IdentityAndAccessModule
 from modules.iam.application.exceptions import (
-    UserNotFoundException,
     UsernamePasswordMismatchException,
+    UserNotFoundException,
 )
 from modules.iam.domain.entities import User
-from api.shared import dependency
+from modules.iam.module import IdentityAndAccessModule
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 router = APIRouter()

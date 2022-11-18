@@ -1,8 +1,9 @@
 from datetime import datetime
-from seedwork.application.queries import Query, Field
-from seedwork.application.query_handlers import QueryResult
-from seedwork.application.decorators import query_handler
+
 from modules.bidding.domain.repositories import ListingRepository
+from seedwork.application.decorators import query_handler
+from seedwork.application.queries import Field, Query
+from seedwork.application.query_handlers import QueryResult
 
 
 class GetPastdueListingsQuery(Query):

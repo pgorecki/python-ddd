@@ -1,15 +1,14 @@
 import time
-from fastapi import FastAPI, Request, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from seedwork.infrastructure.request_context import request_context
-from seedwork.infrastructure.logging import logger, LoggerFactory
+from fastapi import FastAPI, Request
 
-from api.routers import catalog, iam
+import api.routers.catalog
 from api.models import CurrentUser
+from api.routers import catalog, iam
 from config.api_config import ApiConfig
 from config.container import Container
-import api.routers.catalog
+from seedwork.infrastructure.logging import LoggerFactory, logger
+from seedwork.infrastructure.request_context import request_context
 
 # configure logger prior to first usage
 LoggerFactory.configure(logger_name="cli")

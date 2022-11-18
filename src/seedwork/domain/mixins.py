@@ -1,5 +1,5 @@
-from .rules import BusinessRule
 from .exceptions import BusinessRuleValidationException
+from .rules import BusinessRule
 
 
 class BusinessRuleValidationMixin:

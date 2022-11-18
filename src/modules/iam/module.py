@@ -1,6 +1,5 @@
-from seedwork.application.modules import BusinessModule
-
 from modules.iam.application.services import AuthenticationService
+from seedwork.application.modules import BusinessModule
 
 
 class IdentityAndAccessModule(BusinessModule):

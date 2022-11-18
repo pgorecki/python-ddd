@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from seedwork.infrastructure.database import Base
 
 from config.api_config import ApiConfig
+from seedwork.infrastructure.database import Base
 
 
 @pytest.fixture

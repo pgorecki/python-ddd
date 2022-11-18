@@ -1,15 +1,16 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import List, Optional
-from modules.bidding.domain.value_objects import Bid, Bidder, Seller
+from typing import Optional
+
 from modules.bidding.domain.rules import (
-    PlacedBidMustBeGreaterThanCurrentWinningBid,
     BidCanBeRetracted,
     ListingCanBeCancelled,
+    PlacedBidMustBeGreaterThanCurrentWinningBid,
 )
+from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from seedwork.domain.entities import AggregateRoot
-from seedwork.domain.exceptions import DomainException
 from seedwork.domain.events import DomainEvent
+from seedwork.domain.exceptions import DomainException
 from seedwork.domain.value_objects import Money
 
 
@@ -42,14 +43,14 @@ class Listing(AggregateRoot):
     seller: Seller
     initial_price: Money
     ends_at: datetime
-    bids: List[Bid] = field(default_factory=list)
+    bids: list[Bid] = field(default_factory=list)
     current_price: Money = field(init=False)
 
     def __post_init__(self) -> None:
         self.current_price = self.initial_price
 
     # public commands
-    def place_bid(self, bid: Bid) -> List[DomainEvent]:
+    def place_bid(self, bid: Bid) -> list[DomainEvent]:
         """Public method"""
         self.check_rule(
             PlacedBidMustBeGreaterThanCurrentWinningBid(
@@ -64,7 +65,7 @@ class Listing(AggregateRoot):
 
         return [BidPlacedEvent(listing_id=self.id, bidder=bid.bidder, price=bid.price)]
 
-    def retract_bid_of(self, bidder: Bidder) -> List[DomainEvent]:
+    def retract_bid_of(self, bidder: Bidder) -> list[DomainEvent]:
         """Public method"""
         bid = self.get_bid_of(bidder)
         self.check_rule(
@@ -74,7 +75,7 @@ class Listing(AggregateRoot):
         self._remove_bid_of(bidder=bidder)
         return [BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)]
 
-    def cancel_listing(self) -> List[DomainEvent]:
+    def cancel_listing(self) -> list[DomainEvent]:
         self.check_rule(
             ListingCanBeCancelled(
                 time_left_in_listing=self.time_left_in_listing,
@@ -84,7 +85,7 @@ class Listing(AggregateRoot):
         self.ends_at = datetime.utcnow()
         return [ListingCancelledEvent(listing_id=self.id)]
 
-    def end_bidding(self) -> List[DomainEvent]:
+    def end_bidding(self) -> list[DomainEvent]:
         raise NotImplementedError()
         return []
 

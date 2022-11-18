@@ -1,29 +1,22 @@
-from seedwork.application.modules import BusinessModule
-
-from .domain.repositories import ListingRepository
-
-from modules.catalog.application.query.get_all_listings import (
-    GetAllListings,
-    get_all_listings,
-)
-
-from modules.catalog.application.query.get_listings_of_seller import (
-    GetListingsOfSeller,
-    get_listings_of_seller,
-)
-
-from modules.catalog.application.query.get_listing_details import (
-    GetListingDetails,
-    get_listing_details,
-)
-
 from modules.catalog.application.command.create_listing_draft import (
     CreateListingDraftCommand,
     create_listing_draft,
 )
-from modules.catalog.infrastructure.listing_repository import (
-    PostgresJsonListingRepository,
+from modules.catalog.application.query.get_all_listings import (
+    GetAllListings,
+    get_all_listings,
 )
+from modules.catalog.application.query.get_listing_details import (
+    GetListingDetails,
+    get_listing_details,
+)
+from modules.catalog.application.query.get_listings_of_seller import (
+    GetListingsOfSeller,
+    get_listings_of_seller,
+)
+from seedwork.application.modules import BusinessModule
+
+from .domain.repositories import ListingRepository
 
 
 class BusinessTransaction:

@@ -1,25 +1,25 @@
 from abc import ABC, abstractmethod
-from sqlalchemy.orm import Session
-from contextvars import ContextVar
-from typing import Type
 
+from sqlalchemy.orm import Session
+
+from seedwork.application.exceptions import EntityNotFoundException
 from seedwork.domain.entities import Entity
 from seedwork.domain.value_objects import UUID
-from seedwork.application.exceptions import EntityNotFoundException
 
 
 class Repository(ABC):
     """Base class for all repositories"""
+
     @abstractmethod
-    def add(self, entity: Type[Entity]):
+    def add(self, entity: type[Entity]):
         ...
 
     @abstractmethod
-    def remove(self, entity: Type[Entity]):
+    def remove(self, entity: type[Entity]):
         ...
 
     @abstractmethod
-    def get_by_id(self, id: Type[UUID]):
+    def get_by_id(self, id: type[UUID]):
         ...
 
     @abstractmethod
@@ -34,17 +34,17 @@ class InMemoryRepository(Repository):
     def __init__(self) -> None:
         self.objects = {}
 
-    def get_by_id(self, id: Type[UUID]) -> Type[Entity]:
+    def get_by_id(self, id: type[UUID]) -> type[Entity]:
         try:
             return self.objects[id]
         except KeyError:
             raise EntityNotFoundException
 
-    def add(self, entity: Type[Entity]):
+    def add(self, entity: type[Entity]):
         assert issubclass(entity.__class__, Entity)
         self.objects[entity.id] = entity
 
-    def remove(self, entity: Type[Entity]):
+    def remove(self, entity: type[Entity]):
         del self.objects[entity.id]
 
     def count(self):
@@ -65,7 +65,7 @@ REMOVED = Removed()
 
 class SqlAlchemyGenericRepository(Repository):
     data_mapper = None
-    model_class: Type[Entity] = None
+    model_class: type[Entity] = None
 
     def __init__(self, db_session: Session, identity_map=None):
         self._session = db_session

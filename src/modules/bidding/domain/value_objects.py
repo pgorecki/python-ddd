@@ -1,6 +1,8 @@
 from datetime import datetime
-from pydantic.dataclasses import dataclass, Field
-from seedwork.domain.value_objects import ValueObject, Money, UUID
+
+from pydantic.dataclasses import Field, dataclass
+
+from seedwork.domain.value_objects import UUID, Money, ValueObject
 
 
 @dataclass

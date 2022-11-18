@@ -1,4 +1,5 @@
 import abc
+
 from seedwork.domain.entities import Entity
 from seedwork.domain.value_objects import UUID
 

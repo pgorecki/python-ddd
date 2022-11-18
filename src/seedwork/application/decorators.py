@@ -1,8 +1,11 @@
 import functools
+
 from pydantic.error_wrappers import ValidationError
-from seedwork.application.queries import Query
+
 from seedwork.application.commands import Command
+from seedwork.application.queries import Query
 from seedwork.domain.exceptions import BusinessRuleValidationException
+
 from .command_handlers import CommandResult
 from .query_handlers import QueryResult
 

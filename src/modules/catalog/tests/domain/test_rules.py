@@ -1,5 +1,5 @@
-from seedwork.domain.value_objects import Money
 from modules.catalog.domain.rules import ListingAskPriceMustBeGreaterThanZero
+from seedwork.domain.value_objects import Money
 
 
 def test_AuctionItemPriceMustBeGreaterThanZero_rule():

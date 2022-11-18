@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from seedwork.infrastructure.repository import InMemoryRepository
+
 from seedwork.domain.entities import Entity
+from seedwork.infrastructure.repository import InMemoryRepository
 
 
 @dataclass

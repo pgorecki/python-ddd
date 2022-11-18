@@ -1,7 +1,7 @@
-import uuid
 import functools
-from pydantic.dataclasses import dataclass
+import uuid
 
+from pydantic.dataclasses import dataclass
 
 UUID = uuid.UUID
 UUID.v4 = uuid.uuid4

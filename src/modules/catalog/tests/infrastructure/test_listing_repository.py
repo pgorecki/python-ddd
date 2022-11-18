@@ -1,11 +1,10 @@
-from sqlalchemy import engine
-from seedwork.domain.value_objects import UUID
 from modules.catalog.domain.entities import Listing, Money
 from modules.catalog.infrastructure.listing_repository import (
-    ListingModel,
     ListingDataMapper,
+    ListingModel,
     PostgresJsonListingRepository,
 )
+from seedwork.domain.value_objects import UUID
 
 # engine = sqlalchemy.create_engine("")
 
@@ -24,34 +23,40 @@ def test_listing_data_mapper_maps_entity_to_model():
         seller_id=UUID("00000000000000000000000000000002"),
     )
     mapper = ListingDataMapper()
-    
+
     actual = mapper.entity_to_model(listing)
-    
-    expected = ListingModel(id=UUID("00000000000000000000000000000001"), data={
-        'title': 'Foo',
-        'description': '...',
-        'ask_price': {
-            'amount': 10,
-            'currency': 'USD',
+
+    expected = ListingModel(
+        id=UUID("00000000000000000000000000000001"),
+        data={
+            "title": "Foo",
+            "description": "...",
+            "ask_price": {
+                "amount": 10,
+                "currency": "USD",
+            },
+            "seller_id": "00000000-0000-0000-0000-000000000002",
+            "status": "draft",
         },
-        'seller_id': '00000000-0000-0000-0000-000000000002',
-        'status': 'draft',
-    })
+    )
     assert actual.id == expected.id
     assert actual.data == expected.data
 
 
 def test_listing_data_mapper_maps_model_to_entity():
-    instance = ListingModel(id=UUID("00000000000000000000000000000001"), data={
-        'title': 'Foo',
-        'description': '...',
-        'ask_price': {
-            'amount': 10,
-            'currency': 'USD',
+    instance = ListingModel(
+        id=UUID("00000000000000000000000000000001"),
+        data={
+            "title": "Foo",
+            "description": "...",
+            "ask_price": {
+                "amount": 10,
+                "currency": "USD",
+            },
+            "seller_id": "00000000-0000-0000-0000-000000000002",
+            "status": "draft",
         },
-        'seller_id': '00000000-0000-0000-0000-000000000002',
-        'status': 'draft',
-    })
+    )
     mapper = ListingDataMapper()
 
     actual = mapper.model_to_entity(instance)

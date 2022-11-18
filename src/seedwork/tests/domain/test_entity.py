@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from seedwork.domain.entities import Entity, AggregateRoot
+from seedwork.domain.entities import AggregateRoot, Entity
 
 
 @dataclass

@@ -1,13 +1,15 @@
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from modules.bidding.domain.repositories import ListingRepository
 from seedwork.application.decorators import query_handler
-from seedwork.application.queries import Field, Query
+from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
 
 
+@dataclass
 class GetPastdueListingsQuery(Query):
-    now: datetime = Field(default_factory=datetime.utcnow)
+    now: datetime = field(default_factory=datetime.utcnow)
 
 
 @query_handler

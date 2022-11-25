@@ -6,3 +6,5 @@ src-gen/
 htmlcov/
 logs.json
 tmp/
+.idea/
+poetry.lock

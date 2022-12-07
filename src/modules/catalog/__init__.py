@@ -2,6 +2,7 @@ import uuid
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -44,6 +45,7 @@ def get_arg(name, kwargs1, kwargs2):
 
 @dataclass
 class UnitOfWork:
+    module: Any  # FIXME: type
     db_session: Session
     correlation_id: uuid.UUID
     listing_repository: ListingRepository
@@ -64,6 +66,7 @@ class CatalogModule:
         db_session = None
         with Session(engine) as db_session:
             uow = UnitOfWork(
+                module=self,
                 correlation_id=correlation_id,
                 db_session=db_session,
                 listing_repository=PostgresJsonListingRepository(db_session=db_session),
@@ -96,7 +99,19 @@ class CatalogModule:
                 if isinstance(attr, param_type):
                     kwargs[param_name] = attr
 
-        return handler(command=command, **kwargs)
+        return handler(command, **kwargs)
+
+    def execute_query(self, query):
+        query_class = type(query)
+        handler = registry.get_query_handler_for(query_class)
+        kwargs = registry.get_query_handler_parameters_for(query_class)
+
+        for param_name, param_type in kwargs.items():
+            for attr in self.uow.__dict__.values():
+                if isinstance(attr, param_type):
+                    kwargs[param_name] = attr
+
+        return handler(query, **kwargs)
 
     @property
     def uow(self) -> UnitOfWork:

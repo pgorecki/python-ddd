@@ -23,7 +23,6 @@ app.include_router(catalog.router)
 app.include_router(iam.router)
 app.container = container
 
-
 logger.info("using db engine %s" % str(container.engine()))
 
 

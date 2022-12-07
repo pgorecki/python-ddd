@@ -16,6 +16,7 @@ from .query_handlers import QueryResult
 class Registry:
     def __init__(self):
         self.command_handlers = {}
+        self.query_handlers = {}
 
     def register_command_handler(
         self, command_class: type[Command], handler: Callable, handler_parameters
@@ -31,6 +32,21 @@ class Registry:
 
     def get_command_handler_parameters_for(self, command_class) -> Callable:
         return self.command_handlers[command_class][1].copy()
+
+    def register_query_handler(
+        self, query_class: type[Query], handler: Callable, handler_parameters
+    ):
+        logger.info(f"registering query handler for {query_class} as {handler}")
+        self.query_handlers[query_class] = (handler, handler_parameters)
+
+    def get_query_handler_for(self, query_class) -> Callable:
+        assert (
+            query_class in self.query_handlers
+        ), f"handler for {query_class} not registered"
+        return self.query_handlers[query_class][0]
+
+    def get_query_handler_parameters_for(self, query_class) -> Callable:
+        return self.query_handlers[query_class][1].copy()
 
     def clear(self):
         self.command_handlers.clear()
@@ -91,4 +107,13 @@ def query_handler(fn):
         except BusinessRuleValidationException as e:
             return QueryResult.failed("Business rule validation error", exception=e)
 
+    handler_signature = signature(fn)
+    kwargs_iterator = iter(handler_signature.parameters.items())
+    _, first_param = next(kwargs_iterator)
+    query_class = first_param.annotation
+    assert issubclass(query_class, Query), "The first parameter must be of type Command"
+    handler_parameters = {}
+    for name, param in kwargs_iterator:
+        handler_parameters[name] = param.annotation
+    registry.register_query_handler(query_class, decorator, handler_parameters)
     return decorator

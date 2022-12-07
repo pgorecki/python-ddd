@@ -3,6 +3,7 @@ from dependency_injector.wiring import inject  # noqa
 from sqlalchemy import create_engine
 
 from modules.catalog import CatalogModule
+from modules.iam import IamModule
 
 
 def _default(val):
@@ -58,5 +59,10 @@ class Container(containers.DeclarativeContainer):
 
     catalog_module = providers.Factory(
         CatalogModule,
+        engine=engine,
+    )
+
+    iam_module = providers.Factory(
+        IamModule,
         engine=engine,
     )

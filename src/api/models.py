@@ -14,11 +14,17 @@ class CurrentUser(BaseModel):
 
 class ListingWriteModel(BaseModel):
     title: str
+    description: str
+    ask_price_amount: float
+    ask_price_currency: str = "USD"
 
 
 class ListingReadModel(BaseModel):
     id: UUID
     title: str = ""
+    description: str
+    ask_price_amount: float
+    ask_price_currency: str
 
 
 class ListingIndexModel(BaseModel):

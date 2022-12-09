@@ -1,0 +1,54 @@
+name: Test
+  workflow_dispatch:
+  push:
+  pull_request:
+    
+jobs:
+  # Label of the container job
+  container-job:
+    # Containers must run in Linux based operating systems
+    runs-on: ubuntu-latest
+    container: python:3.10
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: password
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Poetry setup
+        # You may pin to the exact commit or the version.
+        # uses: ClementWalter/poetry-action@845abd0cfcc6671c045a2f9df189360bb73e64c4
+        uses: ClementWalter/poetry-action@v1
+        with:
+          # 
+          os: 
+          # 
+          python-version: 
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Connect to PostgreSQL
+        # Runs a script that creates a PostgreSQL table, populates
+        # the table with data, and then retrieves the data.
+        run: pytest src
+        # Environment variables used by the `client.js` script to create a new PostgreSQL table.
+        env:
+          # The hostname used to communicate with the PostgreSQL service container
+          DATABASE_URL: postgresql://postgres:password@postgres:5432/postgres 

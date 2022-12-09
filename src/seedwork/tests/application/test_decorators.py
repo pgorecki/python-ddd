@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler, registry
+from seedwork.application.decorators import command_handler, query_handler, registry
 from seedwork.application.queries import Query
 
 
@@ -45,9 +45,9 @@ def test_query_handler_decorator_registers_query_handler():
     class FooQuery(Query):
         ...
 
-    @command_handler
-    def foo_query_handler(command: FooQuery):
+    @query_handler
+    def foo_query_handler(query: FooQuery):
         ...
 
-    assert registry.get_command_handler_for(FooQuery) == foo_query_handler
-    assert registry.get_command_handler_parameters_for(FooQuery) == {}
+    assert registry.get_query_handler_for(FooQuery) == foo_query_handler
+    assert registry.get_query_handler_parameters_for(FooQuery) == {}

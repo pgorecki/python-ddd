@@ -1,7 +1,7 @@
 name: Test
-  workflow_dispatch:
-  push:
-  pull_request:
+on: [workflow_dispatch]
+#  push
+#  pull_request
     
 jobs:
   # Label of the container job

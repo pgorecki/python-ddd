@@ -14,16 +14,15 @@ jobs:
 
     runs-on: ubuntu-latest
     
-    # Service containers to run with `container-job`
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
-        image: postgres
-        # Provide the password for postgres
+        image: postgres:latest
         env:
-          POSTGRES_PASSWORD: password
-        # Set health checks to wait until postgres has started
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432        
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -44,4 +43,4 @@ jobs:
         poetry run pytest src
       env:
         # The hostname used to communicate with the PostgreSQL service container
-        DATABASE_URL: postgresql://postgres:password@postgres:5432/postgres                
+        DATABASE_URL: postgresql://postgres:password@postgres:5432/test_db                

@@ -41,6 +41,7 @@ jobs:
       run: poetry install
     - name: Run all tests
       run: |
+        poetry shell
         pytest src
       env:
         # The hostname used to communicate with the PostgreSQL service container

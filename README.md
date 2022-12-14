@@ -1,7 +1,7 @@
 # Python Domain Driven Design (DDD) example project
 
-[![Build Status](https://travis-ci.org/Ermlab/python-ddd.svg?branch=master)](https://travis-ci.org/Ermlab/python-ddd)
-[![codecov](https://codecov.io/gh/Ermlab/python-ddd/branch/master/graph/badge.svg)](https://codecov.io/gh/Ermlab/python-ddd)
+[![Build Status](https://github.com/pgorecki/python-ddd/actions/workflows/pytest.yml/badge.svg?branch=main)](https://github.com/pgorecki/python-ddd/actions/workflows/pytest.yml)
+[![codecov](https://codecov.io/gh/pgorecki/python-ddd/branch/master/graph/badge.svg)](https://codecov.io/gh/pgorecki/python-ddd)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Disclaimer: this is a work in progress project, stay tuned for updates (*).

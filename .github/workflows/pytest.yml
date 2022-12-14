@@ -41,8 +41,7 @@ jobs:
       run: poetry install
     - name: Run all tests
       run: |
-        poetry shell
-        pytest src
+        poetry run pytest src
       env:
         # The hostname used to communicate with the PostgreSQL service container
         DATABASE_URL: postgresql://postgres:password@postgres:5432/postgres                

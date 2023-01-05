@@ -29,4 +29,4 @@ def update_listing_draft(
         description=command.description,
         ask_price=command.ask_price,
     )
-    return CommandResult.ok(events=events)
+    return CommandResult.success(entity_id=listing.id, events=events)

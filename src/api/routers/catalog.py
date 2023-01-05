@@ -26,7 +26,7 @@ async def get_all_listings(
     query = GetAllListings()
     with module.unit_of_work():
         query_result = module.execute_query(query)
-        return dict(data=query_result.result)
+        return dict(data=query_result.payload)
 
 
 @router.get("/catalog/{listing_id}", tags=["catalog"], response_model=ListingReadModel)
@@ -41,7 +41,7 @@ async def get_listing_details(
     query = GetListingDetails(listing_id=listing_id)
     with module.unit_of_work():
         query_result = module.execute_query(query)
-        return query_result.result
+        return query_result.payload
 
 
 @router.post(
@@ -66,7 +66,7 @@ async def create_listing(
 
         query = GetListingDetails(listing_id=command_result.result)
         query_result = module.execute_query(query)
-        return query_result.result
+        return query_result.payload
 
 
 #

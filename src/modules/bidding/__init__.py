@@ -5,14 +5,6 @@ from modules.bidding.infrastructure.listing_repository import (
 )
 from seedwork.application.modules import BusinessModule
 
-#
-# @dataclass
-# class UnitOfWork:
-#     module: Any  # FIXME: type
-#     db_session: Session
-#     correlation_id: uuid.UUID
-#     listing_repository: ListingRepository
-
 
 class BiddingModule(BusinessModule):
     supported_commands = (PlaceBidCommand, RetractBidCommand)

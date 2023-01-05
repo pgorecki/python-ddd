@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import pytest
+
 from seedwork.domain.entities import Entity
 from seedwork.infrastructure.repository import InMemoryRepository
 
@@ -10,6 +12,7 @@ class Person(Entity):
     last_name: str
 
 
+@pytest.mark.unit
 def test_InMemoryRepository_persist_one():
     # arrange
     person = Person(id=Person.next_id(), first_name="John", last_name="Doe")
@@ -22,6 +25,7 @@ def test_InMemoryRepository_persist_one():
     assert repository.get_by_id(person.id) == person
 
 
+@pytest.mark.unit
 def test_InMemoryRepository_persist_two():
     # arrange
     person1 = Person(id=Person.next_id(), first_name="John", last_name="Doe")

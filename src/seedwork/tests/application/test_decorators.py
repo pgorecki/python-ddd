@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 
+import pytest
+
 from seedwork.application.commands import Command
 from seedwork.application.decorators import command_handler, query_handler, registry
 from seedwork.application.queries import Query
 
 
+@pytest.mark.unit
 def test_command_handler_decorator_registers_command_handler():
     registry.clear()
 
@@ -20,6 +23,7 @@ def test_command_handler_decorator_registers_command_handler():
     assert registry.get_command_handler_parameters_for(FooCommand) == {}
 
 
+@pytest.mark.unit
 def test_command_handler_decorator_does_not_register_command_handler_if_type_mismatch():
     registry.clear()
 
@@ -38,6 +42,7 @@ def test_command_handler_decorator_does_not_register_command_handler_if_type_mis
     assert FooCommand not in registry.command_handlers
 
 
+@pytest.mark.unit
 def test_query_handler_decorator_registers_query_handler():
     registry.clear()
 

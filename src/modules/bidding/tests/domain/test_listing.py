@@ -8,6 +8,7 @@ from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.domain.value_objects import UUID
 
 
+@pytest.mark.unit
 def test_listing_initial_price():
     seller = Seller(id=UUID.v4())
     listing = Listing(
@@ -19,6 +20,7 @@ def test_listing_initial_price():
     assert listing.winning_bid is None
 
 
+@pytest.mark.unit
 def test_place_one_bid():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
@@ -34,6 +36,7 @@ def test_place_one_bid():
     assert listing.winning_bid == Bid(Money(20), bidder=bidder, placed_at=now)
 
 
+@pytest.mark.unit
 def test_place_two_bids():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
@@ -50,6 +53,7 @@ def test_place_two_bids():
     assert listing.winning_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
 
 
+@pytest.mark.unit
 def test_place_two_bids_by_same_bidder():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
@@ -67,6 +71,7 @@ def test_place_two_bids_by_same_bidder():
     assert listing.winning_bid == Bid(price=Money(30), bidder=bidder, placed_at=now)
 
 
+@pytest.mark.unit
 def test_cannot_place_bid_if_listing_ended():
     seller = Seller(id=UUID.v4())
     bidder = Bidder(id=UUID.v4())
@@ -88,6 +93,7 @@ def test_cannot_place_bid_if_listing_ended():
         listing.place_bid(bid)
 
 
+@pytest.mark.unit
 def test_retract_bid():
     seller = Seller(id=UUID.v4())
     bidder = Bidder(id=UUID.v4())
@@ -107,6 +113,7 @@ def test_retract_bid():
         listing.retract_bid_of(bidder=bidder)
 
 
+@pytest.mark.unit
 def test_cancel_listing():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
@@ -122,6 +129,7 @@ def test_cancel_listing():
     assert listing.time_left_in_listing == timedelta()
 
 
+@pytest.mark.unit
 def test_can_cancel_listing_with_bids():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
@@ -144,6 +152,7 @@ def test_can_cancel_listing_with_bids():
     assert listing.time_left_in_listing == timedelta()
 
 
+@pytest.mark.unit
 def test_cannot_cancel_listing_with_bids():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())

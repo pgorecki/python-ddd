@@ -27,4 +27,4 @@ def publish_listing(
 
     events = seller.publish_listing(listing)
 
-    return CommandResult.ok(events=events)
+    return CommandResult.success(entity_id=listing.id, events=events)

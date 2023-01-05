@@ -40,6 +40,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
 test = { shell = "DATABASE_URL=postgresql://postgres:password@localhost:5433/postgres pytest src" }
+test_domain = "pytest -k domain"
+test_infrastructure = "pytest -k infrastructure"
+test_application = "pytest -k application"
+test_unit = "pytest -m unit"
+test_integration = "pytest -m 'not unit'"
 test_coverage = "pytest --cov=src --cov-report=html"
 start = "uvicorn src.api.main:app --reload"
 start_cli = { shell = "cd src && python -m cli" }

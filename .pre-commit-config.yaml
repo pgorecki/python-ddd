@@ -19,7 +19,7 @@ repos:
           - --ignore-init-module-imports
 
   - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
+    rev: 5.11.2
     hooks:
       - id: isort
         name: isort (python)

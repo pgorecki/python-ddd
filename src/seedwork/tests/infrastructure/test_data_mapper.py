@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+import pytest
+
 from seedwork.domain.entities import Entity
 from seedwork.infrastructure.data_mapper import JSONDataMapper
 
@@ -17,6 +19,7 @@ class PersonJSONDataMapper(JSONDataMapper):
     model_class = dict
 
 
+@pytest.mark.unit
 def test_data_mapper_maps_entity_to_json():
     mapper = PersonJSONDataMapper()
     entity_instance = PersonEntity(
@@ -30,6 +33,7 @@ def test_data_mapper_maps_entity_to_json():
     assert actual == expected
 
 
+@pytest.mark.unit
 def test_data_mapper_maps_json_to_entity():
     mapper = PersonJSONDataMapper()
     model_instance = {

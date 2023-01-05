@@ -1,46 +1,34 @@
+import sys
+from dataclasses import dataclass, field
+from typing import Any
+
+
+@dataclass
 class QueryResult:
-    def __init__(self, result) -> None:
-        self.__result = result
-        self.__errors = []
-
-    # commands
-    def add_error(self, message, exception=None):
-        self.__errors.append((message, exception))
-        return self
-
-    # queries
-    @property
-    def result(self):
-        """Shortcut to get_result()"""
-        return self.get_result()
-
-    def get_result(self):
-        """Gets result"""
-        assert (
-            not self.has_errors()
-        ), f"Cannot access result. QueryResult has errors.\n  Errors: {self.__errors}"
-        return self.__result
+    payload: Any = None
+    errors: list[Any] = field(default_factory=list)
 
     def has_errors(self):
-        return len(self.__errors) > 0
+        return len(self.errors) > 0
 
-    def is_ok(self):
+    def is_success(self) -> bool:
         return not self.has_errors()
 
     @classmethod
-    def ok(cls, result):
-        """Creates a successful result"""
-        return cls(result=result)
+    def failure(cls, message="Failure", exception=None) -> "QueryResult":
+        """Creates a failed result"""
+        exception_info = sys.exc_info()
+        errors = [(message, exception, exception_info)]
+        result = cls(errors=errors)
+        return result
 
     @classmethod
-    def failed(cls, message="Failure", exception=None):
-        """Creates a failed result"""
-        result = cls()
-        result.add_error(message, exception)
-        return result
+    def success(cls, payload=None) -> "QueryResult":
+        """Creates a successful result"""
+        return cls(payload=payload)
 
 
 class QueryHandler:
     """
-    Base query handler class
+    Base class for query handlers
     """

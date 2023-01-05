@@ -75,9 +75,9 @@ def command_handler(fn):
             )
             return fn(*args, **kwargs)
         except ValidationError as e:
-            return CommandResult.failed("Validation error", exception=e)
+            return CommandResult.failure("Validation error", exception=e)
         except BusinessRuleValidationException as e:
-            return CommandResult.failed("Business rule validation error", exception=e)
+            return CommandResult.failure("Business rule validation error", exception=e)
 
     handler_signature = signature(fn)
     kwargs_iterator = iter(handler_signature.parameters.items())

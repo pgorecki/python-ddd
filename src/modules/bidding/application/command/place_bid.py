@@ -23,6 +23,6 @@ def place_bid(
     bid = Bid(bidder=bidder, price=Money(command.amount))
 
     listing: Listing = listing_repository.get_by_id(id=command.listing_id)
-    events = listing.place_bid(bid)
+    listing.place_bid(bid)
 
-    return CommandResult.ok(events=events)
+    return CommandResult.ok()

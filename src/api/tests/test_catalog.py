@@ -1,13 +1,17 @@
+import pytest
+
 from modules.catalog.application.command import CreateListingDraftCommand
 from seedwork.domain.value_objects import Money
 
 
+@pytest.mark.integration
 def test_empty_catalog_list(api_client):
     response = api_client.get("/catalog")
     assert response.status_code == 200
     assert response.json() == {"data": []}
 
 
+@pytest.mark.integration
 def test_catalog_list_with_one_item(api, api_client):
     # arrange
     catalog_module = api.container.catalog_module()
@@ -28,7 +32,7 @@ def test_catalog_list_with_one_item(api, api_client):
     assert response.json() == {
         "data": [
             {
-                "id": str(command_result.result),
+                "id": str(command_result.entity_id),
                 "title": "Foo",
                 "description": "Bar",
                 "ask_price_amount": 10.0,
@@ -38,6 +42,7 @@ def test_catalog_list_with_one_item(api, api_client):
     }
 
 
+@pytest.mark.integration
 def test_catalog_list_with_two_items(api, api_client):
     # arrange
     catalog_module = api.container.catalog_module()

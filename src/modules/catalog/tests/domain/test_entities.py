@@ -6,6 +6,7 @@ from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.domain.value_objects import Money
 
 
+@pytest.mark.unit
 def test_seller_publishes_listing_happy_path():
     seller = Seller(id=Seller.next_id())
     listing = Listing(
@@ -21,6 +22,7 @@ def test_seller_publishes_listing_happy_path():
     assert listing.status == ListingStatus.PUBLISHED
 
 
+@pytest.mark.unit
 def test_seller_fails_to_publish_listing_with_zero_price():
     seller = Seller(id=Seller.next_id())
     listing = Listing(

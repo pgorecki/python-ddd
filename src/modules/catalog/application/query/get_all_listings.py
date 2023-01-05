@@ -19,6 +19,6 @@ def get_all_listings(
     session: Session,
 ) -> QueryResult:
     queryset = session.query(ListingModel)
-    result = [map_listing_model_to_dao(row) for row in queryset.all()]
+    payload = [map_listing_model_to_dao(row) for row in queryset.all()]
     # TODO: add error handling
-    return QueryResult.ok(result)
+    return QueryResult.success(payload)

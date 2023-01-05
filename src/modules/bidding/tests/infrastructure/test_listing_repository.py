@@ -1,6 +1,8 @@
 import datetime
 import uuid
 
+import pytest
+
 from modules.bidding.domain.entities import Bid, Bidder, Listing, Money, Seller
 from modules.bidding.infrastructure.listing_repository import (
     ListingDataMapper,
@@ -10,11 +12,13 @@ from modules.bidding.infrastructure.listing_repository import (
 from seedwork.domain.value_objects import UUID
 
 
+@pytest.mark.integration
 def test_listing_repo_is_empty(db_session):
     repo = PostgresJsonListingRepository(db_session=db_session)
     assert repo.count() == 0
 
 
+@pytest.mark.unit
 def test_listing_data_mapper_maps_entity_to_model():
     listing = Listing(
         id=UUID("00000000000000000000000000000001"),
@@ -58,6 +62,7 @@ def test_listing_data_mapper_maps_entity_to_model():
     assert actual.data == expected.data
 
 
+@pytest.mark.unit
 def test_listing_data_mapper_maps_model_to_entity():
     instance = ListingModel(
         id=UUID("00000000000000000000000000000001"),
@@ -83,6 +88,7 @@ def test_listing_data_mapper_maps_model_to_entity():
     assert actual == expected
 
 
+@pytest.mark.integration
 def test_listing_persistence(db_session):
     original = Listing(
         id=Listing.next_id(),

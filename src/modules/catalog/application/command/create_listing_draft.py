@@ -31,6 +31,6 @@ def create_listing_draft(
         seller_id=command.seller_id,
     )
     repository.add(listing)
-    return CommandResult.ok(
-        result=listing.id, events=[ListingDraftCreatedEvent(listing_id=listing.id)]
+    return CommandResult.success(
+        entity_id=listing.id, events=[ListingDraftCreatedEvent(listing_id=listing.id)]
     )

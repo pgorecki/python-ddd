@@ -1,13 +1,14 @@
 from decimal import Decimal
 
+from modules.bidding.domain.entities import Listing
+from modules.bidding.domain.repositories import ListingRepository
+from modules.bidding.domain.value_objects import Bidder
 from seedwork.application.command_handlers import CommandResult
+from seedwork.application.commands import Command
 from seedwork.application.decorators import command_handler
-from src.modules.bidding.domain.entities import Listing
-from src.modules.bidding.domain.repositories import ListingRepository
-from src.modules.bidding.domain.value_objects import Bidder
 
 
-class RetractBidCommand:
+class RetractBidCommand(Command):
     listing_id: str
     bidder_id: str
     amount: Decimal
@@ -16,12 +17,11 @@ class RetractBidCommand:
 
 @command_handler
 def retract_bid(
-    command: RetractBidCommand, repository: ListingRepository
+    command: RetractBidCommand, listing_repository: ListingRepository
 ) -> CommandResult:
     bidder = Bidder(id=command.bidder_id)
 
-    listing: Listing = repository.get_by_id(id=command.listing_id)
+    listing: Listing = listing_repository.get_by_id(id=command.listing_id)
     events = listing.retract_bid_of(bidder)
-    repository.update(listing)
 
     return CommandResult.ok(events=events)

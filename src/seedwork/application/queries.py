@@ -1,5 +1,2 @@
-from pydantic import BaseModel
-
-
-class Query(BaseModel):
-    pass
+class Query:
+    """Base class for all queries"""

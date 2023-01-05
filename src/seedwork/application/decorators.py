@@ -30,7 +30,7 @@ class Registry:
         ), f"handler for {command_class} not registered"
         return self.command_handlers[command_class][0]
 
-    def get_command_handler_parameters_for(self, command_class) -> Callable:
+    def get_command_handler_parameters_for(self, command_class) -> dict:
         return self.command_handlers[command_class][1].copy()
 
     def register_query_handler(
@@ -39,7 +39,7 @@ class Registry:
         logger.info(f"registering query handler for {query_class} as {handler}")
         self.query_handlers[query_class] = (handler, handler_parameters)
 
-    def get_query_handler_for(self, query_class) -> Callable:
+    def get_query_handler_for(self, query_class) -> dict:
         assert (
             query_class in self.query_handlers
         ), f"handler for {query_class} not registered"

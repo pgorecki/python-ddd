@@ -1,12 +1,14 @@
 import time
 
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 import api.routers.catalog
 from api.models import CurrentUser
 from api.routers import catalog, iam
 from config.api_config import ApiConfig
 from config.container import Container
+from seedwork.domain.exceptions import DomainException, EntityNotFoundException
 from seedwork.infrastructure.logging import LoggerFactory, logger
 from seedwork.infrastructure.request_context import request_context
 
@@ -24,6 +26,24 @@ app.include_router(iam.router)
 app.container = container
 
 logger.info("using db engine %s" % str(container.engine()))
+
+
+@app.exception_handler(DomainException)
+async def unicorn_exception_handler(request: Request, exc: DomainException):
+    return JSONResponse(
+        status_code=500,
+        content={"message": f"Oops! {exc.name} did something. There goes a rainbow..."},
+    )
+
+
+@app.exception_handler(EntityNotFoundException)
+async def unicorn_exception_handler(request: Request, exc: EntityNotFoundException):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "message": f"Entity {exc.entity_id} not found in {exc.repository.__class__.__name__}"
+        },
+    )
 
 
 @app.middleware("http")

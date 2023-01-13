@@ -1,5 +1,6 @@
 from modules.catalog.application.command import (
     CreateListingDraftCommand,
+    DeleteListingDraftCommand,
     PublishListingCommand,
     UpdateListingDraftCommand,
 )
@@ -19,6 +20,7 @@ class CatalogModule(BusinessModule):
     supported_commands = (
         CreateListingDraftCommand,
         UpdateListingDraftCommand,
+        DeleteListingDraftCommand,
         PublishListingCommand,
     )
     supported_queries = (GetAllListings, GetListingDetails, GetListingsOfSeller)

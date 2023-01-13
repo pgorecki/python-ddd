@@ -10,5 +10,9 @@ class ListingDraftUpdatedEvent(DomainEvent):
     listing_id: UUID
 
 
+class ListingDraftDeletedEvent(DomainEvent):
+    listing_id: UUID
+
+
 class ListingPublishedEvent(DomainEvent):
     listing_id: UUID

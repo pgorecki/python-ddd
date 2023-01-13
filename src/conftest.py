@@ -16,6 +16,7 @@ def engine():
     with engine.begin() as connection:
         Base.metadata.drop_all(connection)
         Base.metadata.create_all(connection)
+        print("---- engine ready ----")
         return engine
 
 

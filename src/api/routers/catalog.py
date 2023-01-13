@@ -4,8 +4,9 @@ from api.models import ListingIndexModel, ListingReadModel, ListingWriteModel
 from api.shared import dependency
 from config.container import Container, inject
 from modules.catalog import CatalogModule
-from modules.catalog.application.command.create_listing_draft import (
+from modules.catalog.application.command import (
     CreateListingDraftCommand,
+    DeleteListingDraftCommand,
 )
 from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
@@ -69,7 +70,19 @@ async def create_listing(
         return query_result.payload
 
 
-#
-#     # TODO: for now we return just the id, but in the future we should return
-#     # a representation of a newly created listing resource
-#     return {"id": result.id}
+@router.delete(
+    "/catalog/{listing_id}", tags=["catalog"], status_code=204, response_model=None
+)
+@inject
+async def delete_listing(
+    listing_id,
+    module: CatalogModule = dependency(Container.catalog_module),
+):
+    """
+    Delete listing
+    """
+    command = DeleteListingDraftCommand(
+        listing_id=listing_id,
+    )
+    with module.unit_of_work():
+        module.execute_command(command)

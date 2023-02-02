@@ -76,6 +76,17 @@ def test_catalog_list_with_two_items(api, api_client):
     assert len(response_data) == 2
 
 
+# @pytest.mark.integration
+# def test_catalog_create_draft(api, api_client):
+#     response = api_client.post("/catalog")
+#     assert False
+
+
+def test_catalog_create_draft_fails_due_to_incomplete_data(api, api_client):
+    response = api_client.post("/catalog")
+    assert response.status_code == 422
+
+
 @pytest.mark.integration
 def test_catalog_delete_draft(api, api_client):
     catalog_module = api.container.catalog_module()

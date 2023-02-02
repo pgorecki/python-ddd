@@ -1,3 +1,4 @@
+from seedwork.application.event_dispatcher import EventDispatcher
 from seedwork.infrastructure.logging import logger
 
 
@@ -26,7 +27,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from seedwork.application.decorators import registry
+from seedwork.application.decorators import registry as default_registry
+from seedwork.domain.events import DomainEvent
 from seedwork.domain.repositories import GenericRepository
 from seedwork.infrastructure.request_context import request_context
 
@@ -61,11 +63,34 @@ class BusinessModule:
     unit_of_work_class = UnitOfWork
     supported_commands = ()
     supported_queries = ()
-    supported_events = ()
+    event_handlers = ()
+    registry = default_registry
 
-    def __init__(self, **kwargs):
+    def __init__(self, domain_event_dispatcher: type[EventDispatcher], **kwargs):
         self._uow: ContextVar[UnitOfWork] = ContextVar("_uow", default=None)
         self.init_kwargs = kwargs
+        self._domain_event_dispatcher = domain_event_dispatcher
+        self.register_event_handlers()
+
+    def register_event_handlers(self):
+        """Registers all event handlers declared in this module"""
+        if self._domain_event_dispatcher is None:
+            return
+
+        for event_class in self.get_handleable_domain_events():
+            self._domain_event_dispatcher.add_event_handler(
+                event_class=event_class, event_handler=self.handle_domain_event
+            )
+
+    def get_handleable_domain_events(self) -> list[type[DomainEvent]]:
+        """Returns a list of domain event classes that this module is capable of handling"""
+        handled_event_types = set()
+        for handler in self.event_handlers:
+            event_class, handler_parameters = self.registry.inspect_handler_parameters(
+                handler
+            )
+            handled_event_types.add(event_class)
+        return handled_event_types
 
     @contextmanager
     def unit_of_work(self, **kwargs):
@@ -84,7 +109,7 @@ class BusinessModule:
             request_context.correlation_id.set(None)
 
     def create_unit_of_work(self, correlation_id, db_session):
-        """Unit of Work factory"""
+        """Unit of Work factory, creates new unit of work"""
         uow = self.unit_of_work_class(
             module=self,
             correlation_id=correlation_id,
@@ -94,11 +119,11 @@ class BusinessModule:
         return uow
 
     def get_unit_of_work_init_kwargs(self):
-        """Provide additional kwargs for Unit of Work if you are using a custom one"""
+        """Returns additional kwargs used for initialization of new Unit of Work"""
         return dict()
 
     def configure_unit_of_work(self, uow):
-        """Allows to alter Unit of Work (i.e. add extra attributes)"""
+        """Allows to alter Unit of Work (i.e. add extra attributes) after it is instantiated"""
 
     def end_unit_of_work(self, uow):
         uow.db_session.commit()
@@ -107,35 +132,54 @@ class BusinessModule:
         self.init_kwargs = kwargs
 
     def execute_command(self, command):
+        """Module entrypoint. Use it to change the state of the module by passing a command object"""
         command_class = type(command)
         assert (
             command_class in self.supported_commands
         ), f"{command_class} is not included in {type(self).__name__}.supported_commands"
-        handler = registry.get_command_handler_for(command_class)
-        kwarg_params = registry.get_command_handler_parameters_for(command_class)
+        handler = self.registry.get_command_handler_for(command_class)
+        kwarg_params = self.registry.get_command_handler_parameters_for(command_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
-        return handler(command, **kwargs)
+        command_result = handler(command, **kwargs)
+        if command_result.is_success():
+            self.publish_domain_events(command_result.events)
+        return command_result
 
     def execute_query(self, query):
+        """Module entrypoint. Use it to read the state of the module by passing a query object"""
         query_class = type(query)
         assert (
             query_class in self.supported_queries
         ), f"{query_class} is not included in {type(self).__name__}.supported_queries"
-        handler = registry.get_query_handler_for(query_class)
-        kwarg_params = registry.get_query_handler_parameters_for(query_class)
+        handler = self.registry.get_query_handler_for(query_class)
+        kwarg_params = self.registry.get_query_handler_parameters_for(query_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
         return handler(query, **kwargs)
 
     @property
     def uow(self) -> UnitOfWork:
+        """Get current unit of work. Use self.unit_of_work() to create a new instance of UoW"""
         uow = self._uow.get()
         assert uow, "Unit of work not set, use context manager"
         return uow
 
     def resolve_handler_kwargs(self, kwarg_params) -> dict:
+        """Match kwargs required by a function to attributes available in a unit of work"""
         kwargs = {}
         for param_name, param_type in kwarg_params.items():
             for attr in self.uow.__dict__.values():
                 if isinstance(attr, param_type):
                     kwargs[param_name] = attr
         return kwargs
+
+    def publish_domain_events(self, events):
+        ...
+
+    def handle_domain_event(self, event: type[DomainEvent]):
+        """Execute all registered handlers within this module for this event type"""
+        for handler in self.event_handlers:
+            event_class, handler_parameters = self.registry.inspect_handler_parameters(
+                handler
+            )
+            if event_class is type(event):
+                handler(event, self)

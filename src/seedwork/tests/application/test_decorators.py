@@ -3,19 +3,19 @@ from dataclasses import dataclass
 import pytest
 
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler, query_handler, registry
 from seedwork.application.queries import Query
+from seedwork.application.registry import Registry
 
 
 @pytest.mark.unit
 def test_command_handler_decorator_registers_command_handler():
-    registry.clear()
+    registry = Registry()
 
     @dataclass
     class FooCommand(Command):
         ...
 
-    @command_handler
+    @registry.command_handler
     def foo_command_handler(command: FooCommand):
         ...
 
@@ -25,7 +25,7 @@ def test_command_handler_decorator_registers_command_handler():
 
 @pytest.mark.unit
 def test_command_handler_decorator_does_not_register_command_handler_if_type_mismatch():
-    registry.clear()
+    registry = Registry()
 
     @dataclass
     class FooCommand(Command):
@@ -35,7 +35,7 @@ def test_command_handler_decorator_does_not_register_command_handler_if_type_mis
     class BarCommand(Command):
         ...
 
-    @command_handler
+    @registry.command_handler
     def foo_command_handler(command: BarCommand):
         ...
 
@@ -44,13 +44,13 @@ def test_command_handler_decorator_does_not_register_command_handler_if_type_mis
 
 @pytest.mark.unit
 def test_query_handler_decorator_registers_query_handler():
-    registry.clear()
+    registry = Registry()
 
     @dataclass
     class FooQuery(Query):
         ...
 
-    @query_handler
+    @registry.query_handler
     def foo_query_handler(query: FooQuery):
         ...
 

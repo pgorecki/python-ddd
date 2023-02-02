@@ -24,7 +24,6 @@ class CatalogModule(BusinessModule):
         PublishListingCommand,
     )
     supported_queries = (GetAllListings, GetListingDetails, GetListingsOfSeller)
-    supported_events = ()
 
     def configure_unit_of_work(self, uow):
         """Here we have a chance to add extra UOW attributes to be injected into command/query handers"""

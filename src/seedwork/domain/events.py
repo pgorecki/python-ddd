@@ -1,13 +1,13 @@
-from abc import ABCMeta, abstractmethod
-
 from pydantic import BaseModel
 
 
-class DomainEvent(BaseModel):
+class Event(BaseModel):
     pass
 
 
-class EventPublisher(metaclass=ABCMeta):
-    @abstractmethod
-    def publish(self, event: DomainEvent):
-        ...
+class DomainEvent(Event):
+    pass
+
+
+class IntegrationEvent(Event):
+    pass

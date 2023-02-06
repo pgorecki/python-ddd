@@ -98,7 +98,7 @@ class BusinessModule:
         engine = get_arg("engine", kwargs, self.init_kwargs)
         correlation_id = uuid.uuid4()
         with Session(engine) as db_session:
-            uow = self.create_unit_of_work(correlation_id, db_session)
+            uow = self.create_unit_of_work(correlation_id, db_session, kwargs)
             self.configure_unit_of_work(uow)
             request_context.correlation_id.set(correlation_id)
             self._uow.set(uow)
@@ -108,28 +108,26 @@ class BusinessModule:
             self._uow.set(None)
             request_context.correlation_id.set(None)
 
-    def create_unit_of_work(self, correlation_id, db_session):
+    def create_unit_of_work(self, correlation_id, db_session, kwargs):
         """Unit of Work factory, creates new unit of work"""
         uow = self.unit_of_work_class(
             module=self,
             correlation_id=correlation_id,
             db_session=db_session,
             **self.get_unit_of_work_init_kwargs(),
+            **kwargs,
         )
         return uow
 
     def get_unit_of_work_init_kwargs(self):
         """Returns additional kwargs used for initialization of new Unit of Work"""
-        return dict()
+        return self.init_kwargs
 
     def configure_unit_of_work(self, uow):
         """Allows to alter Unit of Work (i.e. add extra attributes) after it is instantiated"""
 
     def end_unit_of_work(self, uow):
         uow.db_session.commit()
-
-    def configure(self, **kwargs):
-        self.init_kwargs = kwargs
 
     def execute_command(self, command):
         """Module entrypoint. Use it to change the state of the module by passing a command object"""
@@ -160,26 +158,43 @@ class BusinessModule:
     def uow(self) -> UnitOfWork:
         """Get current unit of work. Use self.unit_of_work() to create a new instance of UoW"""
         uow = self._uow.get()
-        assert uow, "Unit of work not set, use context manager"
+        assert uow, f"Unit of work not set in {self}, use context manager"
         return uow
 
     def resolve_handler_kwargs(self, kwarg_params) -> dict:
         """Match kwargs required by a function to attributes available in a unit of work"""
         kwargs = {}
         for param_name, param_type in kwarg_params.items():
-            for attr in self.uow.__dict__.values():
-                if isinstance(attr, param_type):
-                    kwargs[param_name] = attr
+            for attr_name, attr_value in self.uow.__dict__.items():
+                if attr_name == param_name or isinstance(attr_value, param_type):
+                    kwargs[param_name] = attr_value
         return kwargs
 
     def publish_domain_events(self, events):
-        ...
+        for event in events:
+            self._domain_event_dispatcher.dispatch(event=event, sender=self)
 
-    def handle_domain_event(self, event: type[DomainEvent]):
+    def handle_domain_event(
+        self, event: type[DomainEvent], sender: type["BusinessModule"]
+    ):
         """Execute all registered handlers within this module for this event type"""
+        event_was_sent_by_other_module = self is not sender
+
+        if event_was_sent_by_other_module:
+            # The sender executed the command that resulted in an event being published.
+            # as a rule of thumb we want to handle the domain event within same transaction,
+            # thus within same Unit of Work.
+            # Therefore, the receiver must use UoW of sender
+            original_uow = self._uow.get()
+            self._uow.set(sender.uow)
+
         for handler in self.event_handlers:
             event_class, handler_parameters = self.registry.inspect_handler_parameters(
                 handler
             )
             if event_class is type(event):
                 handler(event, self)
+
+        if event_was_sent_by_other_module:
+            # restore the original UoW
+            self._uow.set(original_uow)

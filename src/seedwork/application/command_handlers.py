@@ -28,8 +28,14 @@ class CommandResult:
         return result
 
     @classmethod
-    def success(cls, entity_id=None, payload=None, events=[]) -> "CommandResult":
+    def success(
+        cls, entity_id=None, payload=None, event=None, events=None
+    ) -> "CommandResult":
         """Creates a successful result"""
+        if events is None:
+            events = []
+        if event:
+            events.append(event)
         return cls(entity_id=entity_id, payload=payload, events=events)
 
 

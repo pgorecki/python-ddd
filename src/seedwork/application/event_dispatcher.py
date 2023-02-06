@@ -23,7 +23,7 @@ class InMemoryEventDispatcher(EventDispatcher):
     def add_event_handler(self, event_class: type[Event], event_handler: callable):
         self._handlers[event_class].add(event_handler)
 
-    def dispatch(self, event: type[Event]):
+    def dispatch(self, event: type[Event], sender: any = None):
         event_class = type(event)
         for event_handler in self._handlers[event_class]:
-            event_handler(event)
+            event_handler(event, sender)

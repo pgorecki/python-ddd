@@ -131,7 +131,11 @@ class Registry:
 
         @functools.wraps(fn)
         def decorator(*args, **kwargs):
-            raise not NotImplementedError()
+            event = find_object_of_class(args, DomainEvent) or find_object_of_class(
+                kwargs.items(), DomainEvent
+            )
+            print("handling event", f"{type(event).__module__}.{type(event).__name__}")
+            return fn(*args, **kwargs)
 
         domain_event_class, handler_parameters = self.inspect_handler_parameters(fn)
         assert issubclass(

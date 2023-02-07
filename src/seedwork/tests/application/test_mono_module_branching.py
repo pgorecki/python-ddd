@@ -118,6 +118,9 @@ class MonoModule(BusinessModule):
         when_order_is_shipped_sit_and_relax_policy,
     )
 
+    def get_unit_of_work_init_kwargs(self):
+        return dict(history=self.init_kwargs["history"])
+
 
 @pytest.mark.integration
 def test_mono_module_command_branching_flow():

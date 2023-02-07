@@ -12,7 +12,7 @@ class BiddingModule(BusinessModule):
     supported_events = ()
 
     def configure_unit_of_work(self, uow):
-        """Here we have a chance to add extra UOW attributes to be injected into command/query handers"""
+        """Here we have a chance to add extra UOW attributes to be injected into command/query handlers"""
         uow.listing_repository = PostgresJsonListingRepository(
             db_session=uow.db_session
         )

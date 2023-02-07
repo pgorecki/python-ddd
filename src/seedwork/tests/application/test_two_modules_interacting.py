@@ -5,6 +5,7 @@ import pytest
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.event_dispatcher import InMemoryEventDispatcher
+from seedwork.application.exceptions import UnitOfWorkNotSetException
 from seedwork.application.modules import BusinessModule, UnitOfWork
 from seedwork.application.registry import Registry
 from seedwork.domain.events import DomainEvent
@@ -73,6 +74,9 @@ class PingModule(BusinessModule):
     supported_queries = ()
     event_handlers = (when_pong_received_sit_and_relax_policy,)
 
+    def get_unit_of_work_init_kwargs(self):
+        return dict(history=self.init_kwargs["history"])
+
 
 class PongModule(BusinessModule):
     registry = registry
@@ -83,18 +87,19 @@ class PongModule(BusinessModule):
 
 
 @pytest.mark.integration
-def test_ping_pong_flow():
-    """This tests the linear code flow:
-    CompleteOrderCommand → OrderCompletedEvent → when_order_is_completed_process_payment_policy →
-        → ProcessPaymentCommand → PaymentProcessedEvent → when_payment_is_processed_ship_order_policy →
-            → ShipOrderCommand → OrderShippedEvent → when_order_is_shipped_sit_and_relax_policy
+def test_handing_of_domain_event_across_modules_is_not_possible():
+    """
+    In this scenario, a domain event published by ping module,
+    cannot be handled by pong module, because these modules
+    have separate unit of works. This is by design.
+    If such inter module communication is requires, is should be carried out
+    by integration events.
     """
     history = []
     dispatcher = InMemoryEventDispatcher()
     ping_module = PingModule(domain_event_dispatcher=dispatcher, history=history)
     pong_module = PongModule(domain_event_dispatcher=dispatcher, history=history)
 
-    with ping_module.unit_of_work():
-        ping_module.execute_command(SendPing())
-
-    assert history == ["SendPing", "PingSent", "SendPong", "PongSent"]
+    with pytest.raises(UnitOfWorkNotSetException):
+        with ping_module.unit_of_work():
+            ping_module.execute_command(SendPing())

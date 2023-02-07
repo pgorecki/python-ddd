@@ -1,4 +1,5 @@
 from seedwork.application.event_dispatcher import EventDispatcher
+from seedwork.application.exceptions import UnitOfWorkNotSetException
 from seedwork.infrastructure.logging import logger
 
 
@@ -110,18 +111,19 @@ class BusinessModule:
 
     def create_unit_of_work(self, correlation_id, db_session, kwargs):
         """Unit of Work factory, creates new unit of work"""
-        uow = self.unit_of_work_class(
+        uow_kwargs = dict(
             module=self,
             correlation_id=correlation_id,
             db_session=db_session,
             **self.get_unit_of_work_init_kwargs(),
             **kwargs,
         )
+        uow = self.unit_of_work_class(**uow_kwargs)
         return uow
 
     def get_unit_of_work_init_kwargs(self):
         """Returns additional kwargs used for initialization of new Unit of Work"""
-        return self.init_kwargs
+        return {}
 
     def configure_unit_of_work(self, uow):
         """Allows to alter Unit of Work (i.e. add extra attributes) after it is instantiated"""
@@ -158,7 +160,10 @@ class BusinessModule:
     def uow(self) -> UnitOfWork:
         """Get current unit of work. Use self.unit_of_work() to create a new instance of UoW"""
         uow = self._uow.get()
-        assert uow, f"Unit of work not set in {self}, use context manager"
+        if uow is None:
+            raise UnitOfWorkNotSetException(
+                f"Unit of work not set in {self}, use context manager"
+            )
         return uow
 
     def resolve_handler_kwargs(self, kwarg_params) -> dict:
@@ -172,21 +177,10 @@ class BusinessModule:
 
     def publish_domain_events(self, events):
         for event in events:
-            self._domain_event_dispatcher.dispatch(event=event, sender=self)
+            self._domain_event_dispatcher.dispatch(event=event)
 
-    def handle_domain_event(
-        self, event: type[DomainEvent], sender: type["BusinessModule"]
-    ):
+    def handle_domain_event(self, event: type[DomainEvent]):
         """Execute all registered handlers within this module for this event type"""
-        event_was_sent_by_other_module = self is not sender
-
-        if event_was_sent_by_other_module:
-            # The sender executed the command that resulted in an event being published.
-            # as a rule of thumb we want to handle the domain event within same transaction,
-            # thus within same Unit of Work.
-            # Therefore, the receiver must use UoW of sender
-            original_uow = self._uow.get()
-            self._uow.set(sender.uow)
 
         for handler in self.event_handlers:
             event_class, handler_parameters = self.registry.inspect_handler_parameters(
@@ -194,7 +188,3 @@ class BusinessModule:
             )
             if event_class is type(event):
                 handler(event, self)
-
-        if event_was_sent_by_other_module:
-            # restore the original UoW
-            self._uow.set(original_uow)

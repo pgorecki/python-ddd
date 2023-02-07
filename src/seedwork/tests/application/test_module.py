@@ -5,7 +5,7 @@ import pytest
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.event_dispatcher import InMemoryEventDispatcher
-from seedwork.application.modules import BusinessModule
+from seedwork.application.modules import BusinessModule, UnitOfWork
 from seedwork.application.registry import Registry
 from seedwork.domain.events import DomainEvent
 
@@ -33,7 +33,13 @@ def on_user_created(event: UserCreatedEvent, module: type[BusinessModule]):
     module.on_user_created_fired = True
 
 
+@dataclass
+class CustomUnitOfWork(UnitOfWork):
+    prefix: str
+
+
 class SampleModule(BusinessModule):
+    unit_of_work_class = CustomUnitOfWork
     registry = registry
     supported_commands = (CreateUserCommand,)
     supported_queries = ()

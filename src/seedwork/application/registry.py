@@ -8,7 +8,7 @@ from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
-from seedwork.domain.events import DomainEvent
+from seedwork.domain.events import DomainEvent, IntegrationEvent, SystemEvent
 from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.infrastructure.logging import logger
 
@@ -49,9 +49,9 @@ class Registry:
     def get_query_handler_parameters_for(self, query_class) -> Callable:
         return self.query_handlers[query_class][1].copy()
 
-    def register_domain_event_handler(
+    def register_event_handler(
         self,
-        domain_event_class: type[DomainEvent],
+        event_class: type[SystemEvent],
         handler: Callable,
         handler_parameters,
     ):
@@ -126,25 +126,31 @@ class Registry:
         self.register_query_handler(query_class, decorator, handler_parameters)
         return decorator
 
-    def domain_event_handler(self, fn: Callable):
+    def _event_handler(self, fn: Callable, event_class):
         """Domain Event handler decorator"""
 
         @functools.wraps(fn)
         def decorator(*args, **kwargs):
-            event = find_object_of_class(args, DomainEvent) or find_object_of_class(
+            event = find_object_of_class(args, event_class) or find_object_of_class(
                 kwargs.items(), DomainEvent
             )
             print("handling event", f"{type(event).__module__}.{type(event).__name__}")
             return fn(*args, **kwargs)
 
-        domain_event_class, handler_parameters = self.inspect_handler_parameters(fn)
+        handler_event_class, handler_parameters = self.inspect_handler_parameters(fn)
         assert issubclass(
-            domain_event_class, DomainEvent
+            handler_event_class, event_class
         ), "The first parameter must be of type DomainEvent"
-        self.register_domain_event_handler(
-            domain_event_class, decorator, handler_parameters
-        )
+        self.register_event_handler(handler_event_class, decorator, handler_parameters)
         return decorator
+
+    def domain_event_handler(self, fn: Callable):
+        """Domain Event handler decorator"""
+        return self._event_handler(fn, DomainEvent)
+
+    def integration_event_handler(self, fn: Callable):
+        """Integration Event handler decorator"""
+        return self._event_handler(fn, IntegrationEvent)
 
 
 def find_object_of_class(iterable, cls):

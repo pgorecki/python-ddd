@@ -1,13 +1,13 @@
 from pydantic import BaseModel
 
 
-class Event(BaseModel):
+class SystemEvent(BaseModel):
     pass
 
 
-class DomainEvent(Event):
+class DomainEvent(SystemEvent):
     pass
 
 
-class IntegrationEvent(Event):
+class IntegrationEvent(SystemEvent):
     pass

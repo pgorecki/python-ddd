@@ -29,8 +29,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from seedwork.application.decorators import registry as default_registry
-from seedwork.domain.events import DomainEvent
-from seedwork.domain.repositories import GenericRepository
+from seedwork.application.message_broker import Inbox, Outbox
+from seedwork.domain.events import DomainEvent, IntegrationEvent
 from seedwork.infrastructure.request_context import request_context
 
 
@@ -44,10 +44,9 @@ class UnitOfWork:
     db_session: Session
     correlation_id: uuid.UUID
 
-    def get_repositories(self):
-        for attr in self.__dict__.values():
-            if isinstance(attr, GenericRepository):
-                yield attr
+    def handler_arguments(self) -> dict:
+        """Return arguments that are injectable to command/query handlers"""
+        return self.__dict__.items()
 
 
 class BusinessModule:
@@ -67,7 +66,13 @@ class BusinessModule:
     event_handlers = ()
     registry = default_registry
 
-    def __init__(self, domain_event_dispatcher: type[EventDispatcher], **kwargs):
+    def __init__(
+        self,
+        domain_event_dispatcher: EventDispatcher,
+        inbox: Inbox = None,
+        outbox: Outbox = None,
+        **kwargs,
+    ):
         self._uow: ContextVar[UnitOfWork] = ContextVar("_uow", default=None)
         self.init_kwargs = kwargs
         self._domain_event_dispatcher = domain_event_dispatcher
@@ -78,12 +83,19 @@ class BusinessModule:
         if self._domain_event_dispatcher is None:
             return
 
-        for event_class in self.get_handleable_domain_events():
-            self._domain_event_dispatcher.add_event_handler(
-                event_class=event_class, event_handler=self.handle_domain_event
-            )
+        for event_class in self.get_handleable_events():
+            if issubclass(event_class, DomainEvent):
+                self._domain_event_dispatcher.add_event_handler(
+                    event_class=event_class, event_handler=self.handle_domain_event
+                )
+            elif issubclass(event_class, IntegrationEvent):
+                self._integration_event_dispatcher.add_event_handler(
+                    event_class=event_class, event_handler=self.handle_integration_event
+                )
+            else:
+                NotImplementedError(f"Unsupported event class {event_class}")
 
-    def get_handleable_domain_events(self) -> list[type[DomainEvent]]:
+    def get_handleable_events(self) -> list[type[DomainEvent]]:
         """Returns a list of domain event classes that this module is capable of handling"""
         handled_event_types = set()
         for handler in self.event_handlers:
@@ -134,12 +146,13 @@ class BusinessModule:
     def execute_command(self, command):
         """Module entrypoint. Use it to change the state of the module by passing a command object"""
         command_class = type(command)
+        arguments = self.uow.handler_arguments()
         assert (
             command_class in self.supported_commands
         ), f"{command_class} is not included in {type(self).__name__}.supported_commands"
         handler = self.registry.get_command_handler_for(command_class)
-        kwarg_params = self.registry.get_command_handler_parameters_for(command_class)
-        kwargs = self.resolve_handler_kwargs(kwarg_params)
+        handler_params = self.registry.get_command_handler_parameters_for(command_class)
+        kwargs = self.resolve_handler_kwargs(handler_params, arguments)
         command_result = handler(command, **kwargs)
         if command_result.is_success():
             self.publish_domain_events(command_result.events)
@@ -148,12 +161,13 @@ class BusinessModule:
     def execute_query(self, query):
         """Module entrypoint. Use it to read the state of the module by passing a query object"""
         query_class = type(query)
+        arguments = self.uow.handler_arguments()
         assert (
             query_class in self.supported_queries
         ), f"{query_class} is not included in {type(self).__name__}.supported_queries"
         handler = self.registry.get_query_handler_for(query_class)
-        kwarg_params = self.registry.get_query_handler_parameters_for(query_class)
-        kwargs = self.resolve_handler_kwargs(kwarg_params)
+        handler_params = self.registry.get_query_handler_parameters_for(query_class)
+        kwargs = self.resolve_handler_kwargs(handler_params, arguments)
         return handler(query, **kwargs)
 
     @property
@@ -166,20 +180,34 @@ class BusinessModule:
             )
         return uow
 
-    def resolve_handler_kwargs(self, kwarg_params) -> dict:
+    def resolve_handler_kwargs(self, handler_params: dict, arguments: dict) -> dict:
         """Match kwargs required by a function to attributes available in a unit of work"""
         kwargs = {}
-        for param_name, param_type in kwarg_params.items():
-            for attr_name, attr_value in self.uow.__dict__.items():
-                if attr_name == param_name or isinstance(attr_value, param_type):
-                    kwargs[param_name] = attr_value
+        for param_name, param_type in handler_params.items():
+            for arg_name, arg_value in arguments:
+                if arg_name == param_name or isinstance(arg_value, param_type):
+                    kwargs[param_name] = arg_value
         return kwargs
 
     def publish_domain_events(self, events):
         for event in events:
             self._domain_event_dispatcher.dispatch(event=event)
 
+    def publish_integration_events(self, events):
+        for event in events:
+            raise NotImplementedError()
+
     def handle_domain_event(self, event: type[DomainEvent]):
+        """Execute all registered handlers within this module for this event type"""
+
+        for handler in self.event_handlers:
+            event_class, handler_parameters = self.registry.inspect_handler_parameters(
+                handler
+            )
+            if event_class is type(event):
+                handler(event, self)
+
+    def handle_integration_event(self, event: type[IntegrationEvent]):
         """Execute all registered handlers within this module for this event type"""
 
         for handler in self.event_handlers:

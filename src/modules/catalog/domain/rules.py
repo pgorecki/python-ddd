@@ -24,6 +24,15 @@ class ListingAskPriceMustBeGreaterThanZero(BusinessRule):
         return self.ask_price.amount <= 0
 
 
+class ListingMustBeDraft(BusinessRule):
+    __message = "Listing must be in draft state"
+
+    status: str
+
+    def is_broken(self) -> bool:
+        return self.status != ListingStatus.DRAFT
+    
+
 class SellerMustBeEligibleForAddingNextListing(BusinessRule):
     __message = "Seller is not eligible for adding new listing"
 
@@ -32,3 +41,13 @@ class SellerMustBeEligibleForAddingNextListing(BusinessRule):
 
     def is_broken(self) -> bool:
         return self.seller.is_new and self.seller.currently_published_listings_count > 0
+
+
+class PublishedListingMustNotBeDeleted(BusinessRule):
+    __message = "A published listing can not be deleted"
+
+    status: str
+
+    def is_broken(self) -> bool:
+        return self.status == ListingStatus.PUBLISHED
+    

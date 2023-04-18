@@ -1,7 +1,7 @@
 from modules.catalog.application.command import (
     CreateListingDraftCommand,
     DeleteListingDraftCommand,
-    PublishListingCommand,
+    PublishListingDraftCommand,
     UpdateListingDraftCommand,
 )
 from modules.catalog.application.query import (
@@ -21,7 +21,7 @@ class CatalogModule(BusinessModule):
         CreateListingDraftCommand,
         UpdateListingDraftCommand,
         DeleteListingDraftCommand,
-        PublishListingCommand,
+        PublishListingDraftCommand,
     )
     supported_queries = (GetAllListings, GetListingDetails, GetListingsOfSeller)
 

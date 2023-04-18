@@ -3,9 +3,12 @@ from dataclasses import dataclass
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.events import ListingDraftDeletedEvent
 from modules.catalog.domain.repositories import ListingRepository
+from modules.catalog.domain.rules import PublishedListingMustNotBeDeleted
+from modules.catalog.domain.value_objects import ListingStatus
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.decorators import command_handler
+from seedwork.domain.mixins import check_rule
 from seedwork.domain.value_objects import UUID
 
 
@@ -20,7 +23,8 @@ class DeleteListingDraftCommand(Command):
 def delete_listing_draft(
     command: DeleteListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:
-    listing: Listing = repository.get_by_id(command.listing_id)
+    listing: Listing = repository.get_by_id(command.listing_id) 
+    check_rule(PublishedListingMustNotBeDeleted(status=listing.status))
     repository.remove(listing)
     return CommandResult.success(
         entity_id=listing.id, events=[ListingDraftDeletedEvent(listing_id=listing.id)]

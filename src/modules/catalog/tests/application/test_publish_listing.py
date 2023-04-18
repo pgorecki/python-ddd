@@ -1,8 +1,8 @@
 import pytest
 
-from modules.catalog.application.command.publish_listing import (
-    PublishListingCommand,
-    publish_listing,
+from modules.catalog.application.command.publish_listing_draft import (
+    PublishListingDraftCommand,
+    publish_listing_draft,
 )
 from modules.catalog.domain.entities import Listing, Seller
 from modules.catalog.domain.value_objects import ListingStatus
@@ -27,13 +27,13 @@ def test_publish_listing():
     )
     listing_repository.add(listing)
 
-    command = PublishListingCommand(
+    command = PublishListingDraftCommand(
         listing_id=listing.id,
         seller_id=seller.id,
     )
 
     # act
-    result = publish_listing(
+    result = publish_listing_draft(
         command,
         listing_repository=listing_repository,
         seller_repository=seller_repository,
@@ -61,13 +61,13 @@ def test_publish_listing_and_break_business_rule():
     )
     listing_repository.add(listing)
 
-    command = PublishListingCommand(
+    command = PublishListingDraftCommand(
         listing_id=listing.id,
         seller_id=seller.id,
     )
 
     # act
-    result = publish_listing(
+    result = publish_listing_draft(
         command,
         listing_repository=listing_repository,
         seller_repository=seller_repository,

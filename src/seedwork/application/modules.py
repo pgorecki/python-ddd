@@ -1,4 +1,7 @@
 from seedwork.application.event_dispatcher import EventDispatcher
+from seedwork.application.commands import CommandResult
+from seedwork.application.queries import QueryResult
+from seedwork.application.events import EventResult, EventResultSet
 from seedwork.application.exceptions import UnitOfWorkNotSetException
 from seedwork.infrastructure.logging import logger
 
@@ -67,23 +70,11 @@ class BusinessModule:
     event_handlers = ()
     registry = default_registry
 
-    def __init__(self, domain_event_dispatcher: type[EventDispatcher], **kwargs):
+    def __init__(self, **kwargs):
         self._uow: ContextVar[UnitOfWork] = ContextVar("_uow", default=None)
         self.init_kwargs = kwargs
-        self._domain_event_dispatcher = domain_event_dispatcher
-        self.register_event_handlers()
 
-    def register_event_handlers(self):
-        """Registers all event handlers declared in this module"""
-        if self._domain_event_dispatcher is None:
-            return
-
-        for event_class in self.get_handleable_domain_events():
-            self._domain_event_dispatcher.add_event_handler(
-                event_class=event_class, event_handler=self.handle_domain_event
-            )
-
-    def get_handleable_domain_events(self) -> list[type[DomainEvent]]:
+    def get_handleable_events(self) -> list[type[DomainEvent]]:
         """Returns a list of domain event classes that this module is capable of handling"""
         handled_event_types = set()
         for handler in self.event_handlers:
@@ -92,6 +83,9 @@ class BusinessModule:
             )
             handled_event_types.add(event_class)
         return handled_event_types
+    
+    def supports_command(self, command_class):
+        return command_class in self.supported_commands
 
     @contextmanager
     def unit_of_work(self, **kwargs):
@@ -131,7 +125,7 @@ class BusinessModule:
     def end_unit_of_work(self, uow):
         uow.db_session.commit()
 
-    def execute_command(self, command):
+    def execute_command(self, command) -> CommandResult:
         """Module entrypoint. Use it to change the state of the module by passing a command object"""
         command_class = type(command)
         assert (
@@ -141,11 +135,10 @@ class BusinessModule:
         kwarg_params = self.registry.get_command_handler_parameters_for(command_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
         command_result = handler(command, **kwargs)
-        if command_result.is_success():
-            self.publish_domain_events(command_result.events)
+        assert type(command_result) is CommandResult, f"{handler} expected to return CommandResult instance. Got {command_result} instead."
         return command_result
 
-    def execute_query(self, query):
+    def execute_query(self, query) -> QueryResult:
         """Module entrypoint. Use it to read the state of the module by passing a query object"""
         query_class = type(query)
         assert (
@@ -154,7 +147,9 @@ class BusinessModule:
         handler = self.registry.get_query_handler_for(query_class)
         kwarg_params = self.registry.get_query_handler_parameters_for(query_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
-        return handler(query, **kwargs)
+        query_result = handler(query, **kwargs)
+        assert type(query_result) is QueryResult, f"{handler} expected to return QueryResult instance. Got {query_result} instead."
+        return query_result
 
     @property
     def uow(self) -> UnitOfWork:
@@ -175,16 +170,16 @@ class BusinessModule:
                     kwargs[param_name] = attr_value
         return kwargs
 
-    def publish_domain_events(self, events):
-        for event in events:
-            self._domain_event_dispatcher.dispatch(event=event)
-
-    def handle_domain_event(self, event: type[DomainEvent]):
+    def handle_event(self, event: type[DomainEvent]) -> EventResultSet:
         """Execute all registered handlers within this module for this event type"""
-
+        assert self.uow is not None, "Unit of work not set in handle_event"
+        result_set = EventResultSet()
         for handler in self.event_handlers:
             event_class, handler_parameters = self.registry.inspect_handler_parameters(
                 handler
             )
             if event_class is type(event):
-                handler(event, self)
+                event_result = handler(event, self)
+                assert type(event_result) is EventResult, f"{handler} expected to return EventResult instance. Got {event_result} instead."
+                result_set.add(event_result)
+        return result_set

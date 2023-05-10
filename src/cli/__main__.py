@@ -25,7 +25,9 @@ container.config.from_dict(
 engine = container.engine()
 Base.metadata.create_all(engine)
 
-catalog_module = container.catalog_module()
+application = container.application()
+catalog_module = application.catalog_module
+
 
 with catalog_module.unit_of_work() as uow:
     logger.info(f"executing unit of work")
@@ -34,11 +36,12 @@ with catalog_module.unit_of_work() as uow:
 
 with catalog_module.unit_of_work():
     logger.info(f"adding new draft")
-    catalog_module.execute_command(
+    command_result = catalog_module.execute_command(
         CreateListingDraftCommand(
             title="First listing", description=".", ask_price=Money(100), seller_id=None
         )
     )
+    print(command_result)
 
 with catalog_module.unit_of_work() as uow:
     logger.info(f"executing unit of work")

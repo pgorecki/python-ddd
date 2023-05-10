@@ -58,6 +58,12 @@ class SampleModule(BusinessModule):
 @pytest.mark.unit
 def test_sample_module_command_handler():
     a_module = SampleModule.create()
+    assert a_module.supports_command(CreateUserCommand)
+        
+
+@pytest.mark.unit
+def test_sample_module_command_handler():
+    a_module = SampleModule.create()
     with a_module.unit_of_work(prefix="!"):
         # FIXME: use prefix
         result = a_module.execute_command(CreateUserCommand(name="Bob"))

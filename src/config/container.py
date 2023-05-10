@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 
 from modules.catalog import CatalogModule
 from modules.iam import IamModule
+from seedwork.application import Application
 from seedwork.application.event_dispatcher import InMemoryEventDispatcher
 
 
@@ -70,3 +71,13 @@ class Container(containers.DeclarativeContainer):
         engine=engine,
         domain_event_dispatcher=domain_event_dispatcher,
     )
+    
+    application = providers.Factory(
+        Application,
+        name="Bidding",
+        version="0.1.0",
+        config=config,
+        catalog_module=catalog_module,
+        domain_event_dispatcher=domain_event_dispatcher,
+    )
+    

@@ -15,6 +15,9 @@ class CommandResult:
 
     def has_errors(self):
         return len(self.errors) > 0
+    
+    def add_error(self, message, exception, exception_info):
+        self.errors.append((message, exception, exception_info))
 
     def is_success(self) -> bool:
         return not self.has_errors()
@@ -23,8 +26,8 @@ class CommandResult:
     def failure(cls, message="Failure", exception=None) -> "CommandResult":
         """Creates a failed result"""
         exception_info = sys.exc_info()
-        errors = [(message, exception, exception_info)]
-        result = cls(errors=errors)
+        result = cls()
+        result.add_error(message, exception, exception_info)
         return result
 
     @classmethod
@@ -38,8 +41,4 @@ class CommandResult:
             events.append(event)
         return cls(entity_id=entity_id, payload=payload, events=events)
 
-
-class CommandHandler:
-    """
-    Base class for command handlers
-    """
+        

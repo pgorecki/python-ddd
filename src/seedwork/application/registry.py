@@ -8,6 +8,8 @@ from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
+from seedwork.application.events import EventResult
+from seedwork.application.utils import as_event_result
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.infrastructure.logging import logger
@@ -135,7 +137,11 @@ class Registry:
                 kwargs.items(), DomainEvent
             )
             print("handling event", f"{type(event).__module__}.{type(event).__name__}")
-            return fn(*args, **kwargs)
+            result = fn(*args, **kwargs)
+            if type(result) is CommandResult:
+                # translate command result to event result
+                return as_event_result(result)
+            return result
 
         domain_event_class, handler_parameters = self.inspect_handler_parameters(fn)
         assert issubclass(

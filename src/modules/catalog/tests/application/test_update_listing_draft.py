@@ -35,3 +35,28 @@ def test_update_listing_draft():
 
     # assert
     assert result.is_success()
+
+
+@pytest.mark.skip("Not yet implemented")
+@pytest.mark.unit
+def test_partially_update_listing_draft():
+    # arrange
+    repository = InMemoryRepository()
+    listing = Listing(
+        id=Listing.next_id(),
+        title="Tiny dragon",
+        description="Tiny dragon for sale",
+        ask_price=Money(1),
+        seller_id=UUID.v4(),
+    )
+    repository.add(listing)
+
+    # act
+    command = UpdateListingDraftCommand(
+        listing_id=listing.id,
+        title="Tiny golden dragon",
+    )
+    update_listing_draft(command, repository)
+
+    # assert
+    assert repository.get_by_id(listing.id).title == "Tiny golden dragon"

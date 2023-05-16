@@ -26,9 +26,3 @@ class QueryResult:
     def success(cls, payload=None) -> "QueryResult":
         """Creates a successful result"""
         return cls(payload=payload)
-
-
-class QueryHandler:
-    """
-    Base class for query handlers
-    """

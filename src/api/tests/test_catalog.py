@@ -14,16 +14,15 @@ def test_empty_catalog_list(api_client):
 @pytest.mark.integration
 def test_catalog_list_with_one_item(api, api_client):
     # arrange
-    catalog_module = api.container.catalog_module()
-    with catalog_module.unit_of_work():
-        command_result = catalog_module.execute_command(
-            CreateListingDraftCommand(
-                title="Foo",
-                description="Bar",
-                ask_price=Money(10),
-                seller_id=UUID("00000000000000000000000000000002"),
-            )
+    app = api.container.application()
+    command_result = app.execute_command(
+        CreateListingDraftCommand(
+            title="Foo",
+            description="Bar",
+            ask_price=Money(10),
+            seller_id=UUID("00000000000000000000000000000002"),
         )
+    )
 
     # act
     response = api_client.get("/catalog")
@@ -48,24 +47,23 @@ def test_catalog_list_with_one_item(api, api_client):
 @pytest.mark.integration
 def test_catalog_list_with_two_items(api, api_client):
     # arrange
-    catalog_module = api.container.catalog_module()
-    with catalog_module.unit_of_work():
-        catalog_module.execute_command(
-            CreateListingDraftCommand(
-                title="Foo #1",
-                description="Bar",
-                ask_price=Money(10),
-                seller_id=UUID("00000000000000000000000000000002"),
-            )
+    app = api.container.application()
+    app.execute_command(
+        CreateListingDraftCommand(
+            title="Foo #1",
+            description="Bar",
+            ask_price=Money(10),
+            seller_id=UUID("00000000000000000000000000000002"),
         )
-        catalog_module.execute_command(
-            CreateListingDraftCommand(
-                title="Foo #2",
-                description="Bar",
-                ask_price=Money(10),
-                seller_id=UUID("00000000000000000000000000000002"),
-            )
+    )
+    app.execute_command(
+        CreateListingDraftCommand(
+            title="Foo #2",
+            description="Bar",
+            ask_price=Money(10),
+            seller_id=UUID("00000000000000000000000000000002"),
         )
+    )
 
     # act
     response = api_client.get("/catalog")
@@ -89,18 +87,17 @@ def test_catalog_create_draft_fails_due_to_incomplete_data(api, api_client):
 
 @pytest.mark.integration
 def test_catalog_delete_draft(api, api_client):
-    catalog_module = api.container.catalog_module()
-    with catalog_module.unit_of_work():
-        result = catalog_module.execute_command(
-            CreateListingDraftCommand(
-                title="Foo to be deleted",
-                description="Bar",
-                ask_price=Money(10),
-                seller_id=UUID("00000000000000000000000000000002"),
-            )
+    app = api.container.application()
+    command_result = app.execute_command(
+        CreateListingDraftCommand(
+            title="Foo to be deleted",
+            description="Bar",
+            ask_price=Money(10),
+            seller_id=UUID("00000000000000000000000000000002"),
         )
+    )
 
-    response = api_client.delete(f"/catalog/{result.entity_id}")
+    response = api_client.delete(f"/catalog/{command_result.entity_id}")
 
     assert response.status_code == 204
 

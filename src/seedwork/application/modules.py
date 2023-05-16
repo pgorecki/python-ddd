@@ -1,5 +1,7 @@
-from seedwork.application.event_dispatcher import EventDispatcher
+from seedwork.application.commands import CommandResult
+from seedwork.application.events import EventResult, EventResultSet
 from seedwork.application.exceptions import UnitOfWorkNotSetException
+from seedwork.application.query_handlers import QueryResult
 from seedwork.infrastructure.logging import logger
 
 
@@ -31,11 +33,10 @@ from sqlalchemy.orm import Session
 from seedwork.application.decorators import registry as default_registry
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.repositories import GenericRepository
-from seedwork.infrastructure.request_context import request_context
 
 
-def get_arg(name, kwargs1, kwargs2):
-    return kwargs1.get(name, None) or kwargs2.get(name)
+def get_arg(name, kwargs1, kwargs2={}, default=None):
+    return kwargs1.get(name, None) or kwargs2.get(name, None) or default
 
 
 @dataclass
@@ -67,23 +68,11 @@ class BusinessModule:
     event_handlers = ()
     registry = default_registry
 
-    def __init__(self, domain_event_dispatcher: type[EventDispatcher], **kwargs):
+    def __init__(self, **kwargs):
         self._uow: ContextVar[UnitOfWork] = ContextVar("_uow", default=None)
         self.init_kwargs = kwargs
-        self._domain_event_dispatcher = domain_event_dispatcher
-        self.register_event_handlers()
 
-    def register_event_handlers(self):
-        """Registers all event handlers declared in this module"""
-        if self._domain_event_dispatcher is None:
-            return
-
-        for event_class in self.get_handleable_domain_events():
-            self._domain_event_dispatcher.add_event_handler(
-                event_class=event_class, event_handler=self.handle_domain_event
-            )
-
-    def get_handleable_domain_events(self) -> list[type[DomainEvent]]:
+    def get_handleable_events(self) -> list[type[DomainEvent]]:
         """Returns a list of domain event classes that this module is capable of handling"""
         handled_event_types = set()
         for handler in self.event_handlers:
@@ -93,45 +82,50 @@ class BusinessModule:
             handled_event_types.add(event_class)
         return handled_event_types
 
+    def supports_query(self, query_class):
+        return query_class in self.supported_queries
+
+    def supports_command(self, command_class):
+        return command_class in self.supported_commands
+
     @contextmanager
     def unit_of_work(self, **kwargs):
         """Instantiates new unit of work"""
-        engine = get_arg("engine", kwargs, self.init_kwargs)
-        correlation_id = uuid.uuid4()
-        with Session(engine) as db_session:
-            uow = self.create_unit_of_work(correlation_id, db_session, kwargs)
-            self.configure_unit_of_work(uow)
-            request_context.correlation_id.set(correlation_id)
-            self._uow.set(uow)
-            yield uow
-            self.end_unit_of_work(uow)
-            # end unit of work
-            self._uow.set(None)
-            request_context.correlation_id.set(None)
-
-    def create_unit_of_work(self, correlation_id, db_session, kwargs):
-        """Unit of Work factory, creates new unit of work"""
-        uow_kwargs = dict(
-            module=self,
-            correlation_id=correlation_id,
-            db_session=db_session,
-            **self.get_unit_of_work_init_kwargs(),
-            **kwargs,
-        )
-        uow = self.unit_of_work_class(**uow_kwargs)
-        return uow
+        uow = self.enter_uow(**kwargs)
+        yield uow
+        self.exit_uow()
 
     def get_unit_of_work_init_kwargs(self):
         """Returns additional kwargs used for initialization of new Unit of Work"""
         return {}
 
+    def enter_uow(self, **kwargs):
+        """Creates new unit of work and sets it as current UOW"""
+        correlation_id = kwargs.pop("correlation_id", None)
+        db_session = kwargs.pop("db_session", None)
+        uow = self.create_unit_of_work(correlation_id, db_session, **kwargs)
+        self.configure_unit_of_work(uow)
+        self._uow.set(uow)
+        return uow
+
+    def create_unit_of_work(self, correlation_id, db_session, **kwargs):
+        """Unit of Work factory, creates new unit of work"""
+        uow_kwargs = dict(
+            module=self, correlation_id=correlation_id, db_session=db_session
+        )
+        uow_kwargs.update(**self.get_unit_of_work_init_kwargs())
+        uow_kwargs.update(**kwargs)
+        uow = self.unit_of_work_class(**uow_kwargs)
+        return uow
+
     def configure_unit_of_work(self, uow):
         """Allows to alter Unit of Work (i.e. add extra attributes) after it is instantiated"""
 
-    def end_unit_of_work(self, uow):
-        uow.db_session.commit()
+    def exit_uow(self):
+        """Ends current unit of work"""
+        self._uow.set(None)
 
-    def execute_command(self, command):
+    def execute_command(self, command) -> CommandResult:
         """Module entrypoint. Use it to change the state of the module by passing a command object"""
         command_class = type(command)
         assert (
@@ -141,11 +135,12 @@ class BusinessModule:
         kwarg_params = self.registry.get_command_handler_parameters_for(command_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
         command_result = handler(command, **kwargs)
-        if command_result.is_success():
-            self.publish_domain_events(command_result.events)
+        assert (
+            type(command_result) is CommandResult
+        ), f"{handler} expected to return CommandResult instance. Got {command_result} instead."
         return command_result
 
-    def execute_query(self, query):
+    def execute_query(self, query) -> QueryResult:
         """Module entrypoint. Use it to read the state of the module by passing a query object"""
         query_class = type(query)
         assert (
@@ -154,7 +149,11 @@ class BusinessModule:
         handler = self.registry.get_query_handler_for(query_class)
         kwarg_params = self.registry.get_query_handler_parameters_for(query_class)
         kwargs = self.resolve_handler_kwargs(kwarg_params)
-        return handler(query, **kwargs)
+        query_result = handler(query, **kwargs)
+        assert (
+            type(query_result) is QueryResult
+        ), f"{handler} expected to return QueryResult instance. Got {query_result} instead."
+        return query_result
 
     @property
     def uow(self) -> UnitOfWork:
@@ -171,20 +170,57 @@ class BusinessModule:
         kwargs = {}
         for param_name, param_type in kwarg_params.items():
             for attr_name, attr_value in self.uow.__dict__.items():
-                if attr_name == param_name or isinstance(attr_value, param_type):
+                name_is_match = param_name == attr_name
+                try:
+                    type_is_match = isinstance(attr_value, param_type)
+                except TypeError:
+                    type_is_match = False
+                if name_is_match or type_is_match:
                     kwargs[param_name] = attr_value
         return kwargs
 
-    def publish_domain_events(self, events):
-        for event in events:
-            self._domain_event_dispatcher.dispatch(event=event)
-
-    def handle_domain_event(self, event: type[DomainEvent]):
+    def handle_domain_event(self, event: type[DomainEvent]) -> EventResultSet:
         """Execute all registered handlers within this module for this event type"""
-
+        assert self.uow is not None, "Unit of work not set in handle_event"
+        result_set = EventResultSet()
         for handler in self.event_handlers:
-            event_class, handler_parameters = self.registry.inspect_handler_parameters(
+            event_class, kwarg_params = self.registry.inspect_handler_parameters(
                 handler
             )
             if event_class is type(event):
-                handler(event, self)
+                kwargs = self.resolve_handler_kwargs(kwarg_params)
+                event_result = handler(event, **kwargs)
+                assert (
+                    type(event_result) is EventResult
+                ), f"{handler} expected to return EventResult instance. Got {event_result} instead."
+                result_set.add(event_result)
+        return result_set
+
+
+@contextmanager
+def transactional_consistency(self, engine, **kwargs):
+    raise NotImplementedError()
+    # correlation_id = kwargs.pop("correlation_id", None)
+    # db_session = kwargs.pop("db_session", None)
+    #
+    # uow = self.create_unit_of_work(correlation_id, db_session, kwargs)
+    # self.configure_unit_of_work(uow)
+    #
+    # self._uow.set(uow)
+    # yield uow
+    # self.end_unit_of_work(uow)
+    # self._uow.set(None)
+    # request_context.correlation_id.set(None)
+
+    # engine = get_arg("engine", kwargs, self.init_kwargs)
+    # correlation_id = kwargs.pop("correlation_id")
+    # with Session(engine) as db_session:
+    #     uow = self.create_unit_of_work(correlation_id, db_session, kwargs)
+    #     self.configure_unit_of_work(uow)
+    #     request_context.correlation_id.set(correlation_id)
+    #     self._uow.set(uow)
+    #     yield uow
+    #     self.end_unit_of_work(uow)
+    #     # end unit of work
+    #     self._uow.set(None)
+    #     request_context.correlation_id.set(None)

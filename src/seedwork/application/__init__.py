@@ -1,6 +1,8 @@
 import uuid
 from collections import defaultdict
 
+from sqlalchemy.orm import Session
+
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.event_dispatcher import EventDispatcher
@@ -8,7 +10,8 @@ from seedwork.application.events import EventResult, EventResultSet, Integration
 from seedwork.application.exceptions import ApplicationException
 from seedwork.application.inbox_outbox import InMemoryInbox
 from seedwork.application.modules import BusinessModule
-from seedwork.application.queries import Query, QueryResult
+from seedwork.application.queries import Query
+from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.events import DomainEvent
 from seedwork.infrastructure.logging import logger
 from seedwork.infrastructure.request_context import request_context
@@ -18,8 +21,6 @@ def with_db_session(fn):
     """provides session argument to the decorated function"""
 
     def wrapper(self, *args, **kwargs):
-        from sqlalchemy.orm import Session
-
         with Session(self.engine) as session:
             kwargs["session"] = session
             result = fn(self, *args, **kwargs)

@@ -1,7 +1,7 @@
 from seedwork.application.commands import CommandResult
 from seedwork.application.events import EventResult, EventResultSet
 from seedwork.application.exceptions import UnitOfWorkNotSetException
-from seedwork.application.queries import QueryResult
+from seedwork.application.query_handlers import QueryResult
 from seedwork.infrastructure.logging import logger
 
 

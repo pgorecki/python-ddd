@@ -32,7 +32,7 @@ def test_delete_listing_draft():
 
     # act
     result = delete_listing_draft(command, repository)
-    
+
     print(result)
 
     # assert

@@ -15,7 +15,7 @@ class CommandResult:
 
     def has_errors(self):
         return len(self.errors) > 0
-    
+
     def add_error(self, message, exception, exception_info):
         self.errors.append((message, exception, exception_info))
 
@@ -40,5 +40,3 @@ class CommandResult:
         if event:
             events.append(event)
         return cls(entity_id=entity_id, payload=payload, events=events)
-
-        

@@ -36,6 +36,7 @@ def test_update_listing_draft():
     # assert
     assert result.is_success()
 
+
 @pytest.mark.skip("Not yet implemented")
 @pytest.mark.unit
 def test_partially_update_listing_draft():

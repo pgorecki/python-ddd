@@ -5,7 +5,10 @@ from modules.catalog.domain.events import (
     ListingDraftUpdatedEvent,
     ListingPublishedEvent,
 )
-from modules.catalog.domain.rules import ListingAskPriceMustBeGreaterThanZero, ListingMustBeDraft
+from modules.catalog.domain.rules import (
+    ListingAskPriceMustBeGreaterThanZero,
+    ListingMustBeDraft,
+)
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import UUID, Money
 

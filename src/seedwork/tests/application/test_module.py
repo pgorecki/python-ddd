@@ -5,9 +5,9 @@ import pytest
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.event_dispatcher import InMemoryEventDispatcher
+from seedwork.application.events import DomainEvent, EventResult
 from seedwork.application.modules import BusinessModule, UnitOfWork
 from seedwork.application.registry import Registry
-from seedwork.domain.events import DomainEvent
 
 registry = Registry()
 
@@ -28,9 +28,9 @@ def create_user(command: CreateUserCommand):
     )
 
 
-# @registry.domain_event_handler
 def on_user_created(event: UserCreatedEvent, module: type[BusinessModule]):
     module.on_user_created_fired = True
+    return EventResult.success()
 
 
 @dataclass
@@ -59,7 +59,7 @@ class SampleModule(BusinessModule):
 def test_sample_module_command_handler():
     a_module = SampleModule.create()
     assert a_module.supports_command(CreateUserCommand)
-        
+
 
 @pytest.mark.unit
 def test_sample_module_command_handler():
@@ -75,21 +75,6 @@ def test_sample_module_handles_domain_event():
     a_module = SampleModule.create()
 
     event = UserCreatedEvent(name="Foo")
-    a_module.handle_domain_event(event)
+    with a_module.unit_of_work(prefix=""):
+        a_module.handle_domain_event(event)
     assert a_module.on_user_created_fired is True
-
-
-@pytest.mark.integration
-def test_sample_module_handles_domain_event():
-    # Arrange 2 modules sharing the same event dispatcher
-    dispatcher = InMemoryEventDispatcher()
-    module1 = SampleModule(domain_event_dispatcher=dispatcher)
-    module2 = SampleModule(domain_event_dispatcher=dispatcher)
-
-    # Act: dispatch an event
-    event = UserCreatedEvent(name="Foo")
-    dispatcher.dispatch(event)
-
-    # Assert that both modules handled the event
-    assert module1.on_user_created_fired is True
-    assert module2.on_user_created_fired is True

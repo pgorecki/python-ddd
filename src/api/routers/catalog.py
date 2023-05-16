@@ -3,13 +3,13 @@ from fastapi import APIRouter
 from api.models import ListingIndexModel, ListingReadModel, ListingWriteModel
 from api.shared import dependency
 from config.container import Container, inject
-from modules.catalog import CatalogModule
 from modules.catalog.application.command import (
     CreateListingDraftCommand,
     DeleteListingDraftCommand,
 )
 from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
+from seedwork.application import Application
 from seedwork.domain.value_objects import Money
 from seedwork.infrastructure.request_context import request_context
 
@@ -19,30 +19,28 @@ router = APIRouter()
 @router.get("/catalog", tags=["catalog"], response_model=ListingIndexModel)
 @inject
 async def get_all_listings(
-    module: CatalogModule = dependency(Container.catalog_module),
+    app: Application = dependency(Container.application),
 ):
     """
     Shows all published listings in the catalog
     """
     query = GetAllListings()
-    with module.unit_of_work():
-        query_result = module.execute_query(query)
-        return dict(data=query_result.payload)
+    query_result = app.execute_query(query)
+    return dict(data=query_result.payload)
 
 
 @router.get("/catalog/{listing_id}", tags=["catalog"], response_model=ListingReadModel)
 @inject
 async def get_listing_details(
     listing_id,
-    module: CatalogModule = dependency(Container.catalog_module),
+    app: Application = dependency(Container.application),
 ):
     """
     Shows listing details
     """
     query = GetListingDetails(listing_id=listing_id)
-    with module.unit_of_work():
-        query_result = module.execute_query(query)
-        return query_result.payload
+    query_result = app.execute_query(query)
+    return dict(data=query_result.payload)
 
 
 @router.post(
@@ -51,7 +49,7 @@ async def get_listing_details(
 @inject
 async def create_listing(
     request_body: ListingWriteModel,
-    module: CatalogModule = dependency(Container.catalog_module),
+    app: Application = dependency(Container.application),
 ):
     """
     Creates a new listing.
@@ -62,12 +60,11 @@ async def create_listing(
         ask_price=Money(request_body.ask_price_amount, request_body.ask_price_currency),
         seller_id=request_context.current_user.id,
     )
-    with module.unit_of_work():
-        command_result = module.execute_command(command)
+    command_result = app.execute_command(command)
 
-        query = GetListingDetails(listing_id=command_result.result)
-        query_result = module.execute_query(query)
-        return query_result.payload
+    query = GetListingDetails(listing_id=command_result.payload)
+    query_result = app.execute_query(query)
+    return dict(data=query_result.payload)
 
 
 @router.delete(
@@ -76,7 +73,7 @@ async def create_listing(
 @inject
 async def delete_listing(
     listing_id,
-    module: CatalogModule = dependency(Container.catalog_module),
+    app: Application = dependency(Container.application),
 ):
     """
     Delete listing
@@ -84,5 +81,4 @@ async def delete_listing(
     command = DeleteListingDraftCommand(
         listing_id=listing_id,
     )
-    with module.unit_of_work():
-        module.execute_command(command)
+    app.execute_command(command)

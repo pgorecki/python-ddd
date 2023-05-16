@@ -31,7 +31,7 @@ class ListingMustBeDraft(BusinessRule):
 
     def is_broken(self) -> bool:
         return self.status != ListingStatus.DRAFT
-    
+
 
 class SellerMustBeEligibleForAddingNextListing(BusinessRule):
     __message = "Seller is not eligible for adding new listing"
@@ -50,4 +50,3 @@ class PublishedListingMustNotBeDeleted(BusinessRule):
 
     def is_broken(self) -> bool:
         return self.status == ListingStatus.PUBLISHED
-    

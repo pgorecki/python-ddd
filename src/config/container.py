@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from modules.catalog import CatalogModule
 from modules.iam import IamModule
 from seedwork.application import Application
-from seedwork.application.event_dispatcher import InMemoryEventDispatcher
+from seedwork.application.inbox_outbox import InMemoryOutbox
 
 
 def _default(val):
@@ -48,6 +48,18 @@ def create_engine_once(config):
     return engine
 
 
+def create_app(name, version, config, engine, catalog_module, outbox) -> Application:
+    app = Application(
+        name=name,
+        version=version,
+        config=config,
+        engine=engine,
+        outbox=outbox,
+    )
+    app.add_module("catalog", catalog_module)
+    return app
+
+
 class Container(containers.DeclarativeContainer):
     """Dependency Injection Container
 
@@ -58,26 +70,22 @@ class Container(containers.DeclarativeContainer):
 
     config = providers.Configuration()
     engine = providers.Singleton(create_engine_once, config)
-    domain_event_dispatcher = InMemoryEventDispatcher()
+    outbox = providers.Factory(InMemoryOutbox)
 
     catalog_module = providers.Factory(
         CatalogModule,
-        engine=engine,
-        domain_event_dispatcher=domain_event_dispatcher,
     )
 
     iam_module = providers.Factory(
         IamModule,
-        engine=engine,
-        domain_event_dispatcher=domain_event_dispatcher,
     )
-    
+
     application = providers.Factory(
-        Application,
-        name="Bidding",
+        create_app,
+        name="Auctions API",
         version="0.1.0",
         config=config,
+        engine=engine,
         catalog_module=catalog_module,
-        domain_event_dispatcher=domain_event_dispatcher,
+        outbox=outbox,
     )
-    

@@ -5,7 +5,10 @@ from modules.catalog.domain.events import (
     ListingDraftUpdatedEvent,
     ListingPublishedEvent,
 )
-from modules.catalog.domain.rules import ListingAskPriceMustBeGreaterThanZero, ListingMustBeDraft
+from modules.catalog.domain.rules import (
+    ListingAskPriceMustBeGreaterThanZero,
+    ListingMustBeDraft,
+)
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import UUID, Money
 
@@ -34,7 +37,11 @@ class Listing(AggregateRoot):
         self.check_rule(ListingMustBeDraft(status=self.status))
         self.check_rule(ListingAskPriceMustBeGreaterThanZero(ask_price=self.ask_price))
         self.status = ListingStatus.PUBLISHED
-        return [ListingPublishedEvent(listing_id=self.id)]
+        return [
+            ListingPublishedEvent(
+                listing_id=self.id, ask_price=self.ask_price, seller_id=self.seller_id
+            )
+        ]
 
 
 @dataclass

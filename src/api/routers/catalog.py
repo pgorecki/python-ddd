@@ -1,17 +1,22 @@
 from fastapi import APIRouter
 
-from api.models import ListingIndexModel, ListingReadModel, ListingWriteModel
+from api.models.catalog import ListingIndexModel, ListingReadModel, ListingWriteModel
 from api.shared import dependency
 from config.container import Container, inject
 from modules.catalog.application.command import (
     CreateListingDraftCommand,
     DeleteListingDraftCommand,
+    PublishListingDraftCommand,
 )
 from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
 from seedwork.application import Application
 from seedwork.domain.value_objects import Money
 from seedwork.infrastructure.request_context import request_context
+
+"""
+Inspired by https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/createOffer
+"""
 
 router = APIRouter()
 
@@ -64,7 +69,7 @@ async def create_listing(
 
     query = GetListingDetails(listing_id=command_result.payload)
     query_result = app.execute_query(query)
-    return dict(data=query_result.payload)
+    return dict(query_result.payload)
 
 
 @router.delete(
@@ -82,3 +87,27 @@ async def delete_listing(
         listing_id=listing_id,
     )
     app.execute_command(command)
+
+
+@router.post(
+    "/catalog/{listing_id}/publish",
+    tags=["catalog"],
+    status_code=200,
+    response_model=ListingReadModel,
+)
+@inject
+async def publish_listing(
+    listing_id,
+    app: Application = dependency(Container.application),
+):
+    """
+    Creates a new listing.
+    """
+    command = PublishListingDraftCommand(
+        listing_id=listing_id,
+    )
+    command_result = app.execute_command(command)
+
+    query = GetListingDetails(listing_id=command_result.entity_id)
+    query_result = app.execute_query(query)
+    return dict(query_result.payload)

@@ -29,14 +29,12 @@ def test_publish_listing():
 
     command = PublishListingDraftCommand(
         listing_id=listing.id,
-        seller_id=seller.id,
     )
 
     # act
     result = publish_listing_draft(
         command,
         listing_repository=listing_repository,
-        seller_repository=seller_repository,
     )
 
     # assert
@@ -63,14 +61,12 @@ def test_publish_listing_and_break_business_rule():
 
     command = PublishListingDraftCommand(
         listing_id=listing.id,
-        seller_id=seller.id,
     )
 
     # act
     result = publish_listing_draft(
         command,
         listing_repository=listing_repository,
-        seller_repository=seller_repository,
     )
 
     # assert

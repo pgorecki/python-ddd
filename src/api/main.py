@@ -4,8 +4,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 import api.routers.catalog
-from api.models import CurrentUser
-from api.routers import catalog, iam
+from api.models.catalog import CurrentUser
+from api.routers import bidding, catalog, iam
 from config.api_config import ApiConfig
 from config.container import Container
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
@@ -13,15 +13,16 @@ from seedwork.infrastructure.logging import LoggerFactory, logger
 from seedwork.infrastructure.request_context import request_context
 
 # configure logger prior to first usage
-LoggerFactory.configure(logger_name="cli")
+LoggerFactory.configure(logger_name="api")
 
 # dependency injection container
 container = Container()
 container.config.from_pydantic(ApiConfig())
-container.wire(modules=[api.routers.catalog, api.routers.iam])
+container.wire(modules=[api.routers.catalog, api.routers.bidding, api.routers.iam])
 
 app = FastAPI(debug=container.config.DEBUG)
 app.include_router(catalog.router)
+app.include_router(bidding.router)
 app.include_router(iam.router)
 app.container = container
 

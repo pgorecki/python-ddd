@@ -2,6 +2,7 @@ from dependency_injector import containers, providers
 from dependency_injector.wiring import inject  # noqa
 from sqlalchemy import create_engine
 
+from modules.bidding import BiddingModule
 from modules.catalog import CatalogModule
 from modules.iam import IamModule
 from seedwork.application import Application
@@ -48,7 +49,9 @@ def create_engine_once(config):
     return engine
 
 
-def create_app(name, version, config, engine, catalog_module, outbox) -> Application:
+def create_app(
+    name, version, config, engine, catalog_module, bidding_module, outbox
+) -> Application:
     app = Application(
         name=name,
         version=version,
@@ -56,7 +59,7 @@ def create_app(name, version, config, engine, catalog_module, outbox) -> Applica
         engine=engine,
         outbox=outbox,
     )
-    app.add_module("catalog", catalog_module)
+    app.add_modules(catalog=catalog_module, bidding=bidding_module)
     return app
 
 
@@ -76,6 +79,10 @@ class Container(containers.DeclarativeContainer):
         CatalogModule,
     )
 
+    bidding_module = providers.Factory(
+        BiddingModule,
+    )
+
     iam_module = providers.Factory(
         IamModule,
     )
@@ -87,5 +94,6 @@ class Container(containers.DeclarativeContainer):
         config=config,
         engine=engine,
         catalog_module=catalog_module,
+        bidding_module=bidding_module,
         outbox=outbox,
     )

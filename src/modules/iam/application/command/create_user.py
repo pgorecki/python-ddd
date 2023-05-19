@@ -20,6 +20,6 @@ def create_user(
     try:
         repository.add(user)
     except Exception as e:
-        return CommandResult.failed(message="Failed to create user", exception=e)
+        return CommandResult.failure(message="Failed to create user", exception=e)
 
-    return CommandResult.ok(result=user.id)
+    return CommandResult.success(result=user.id)

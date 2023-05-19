@@ -1,7 +1,18 @@
+import uuid
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass
+from typing import Any
+
+from sqlalchemy.orm import Session
+
 from seedwork.application.commands import CommandResult
+from seedwork.application.decorators import registry as default_registry
 from seedwork.application.events import EventResult, EventResultSet
 from seedwork.application.exceptions import UnitOfWorkNotSetException
 from seedwork.application.query_handlers import QueryResult
+from seedwork.domain.events import DomainEvent
+from seedwork.domain.repositories import GenericRepository
 from seedwork.infrastructure.logging import logger
 
 
@@ -20,19 +31,6 @@ def logging_handler(fn):
         return result
 
     return handle
-
-
-import uuid
-from contextlib import contextmanager
-from contextvars import ContextVar
-from dataclasses import dataclass
-from typing import Any
-
-from sqlalchemy.orm import Session
-
-from seedwork.application.decorators import registry as default_registry
-from seedwork.domain.events import DomainEvent
-from seedwork.domain.repositories import GenericRepository
 
 
 def get_arg(name, kwargs1, kwargs2={}, default=None):
@@ -54,6 +52,9 @@ class UnitOfWork:
 class BusinessModule:
     """
     Base class for creating business modules.
+    Business module corresponds to a bounded context in DDD terminology.
+    Modules can interact together via domain or integration events.
+
     As a rule of thumb, each module should expose a minimal set of operations via an interface that acts
     as a facade between the module and an external world.
 
@@ -189,10 +190,7 @@ class BusinessModule:
             )
             if event_class is type(event):
                 kwargs = self.resolve_handler_kwargs(kwarg_params)
-                event_result = handler(event, **kwargs)
-                assert (
-                    type(event_result) is EventResult
-                ), f"{handler} expected to return EventResult instance. Got {event_result} instead."
+                event_result = handler(event, **kwargs) or EventResult.success()
                 result_set.add(event_result)
         return result_set
 

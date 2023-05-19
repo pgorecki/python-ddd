@@ -8,13 +8,13 @@ from seedwork.application.query_handlers import QueryResult
 
 
 @dataclass
-class GetPastdueListingsQuery(Query):
+class GetPastdueListings(Query):
     now: datetime = field(default_factory=datetime.utcnow)
 
 
 @query_handler
 def get_past_due_listings(
-    query: GetPastdueListingsQuery, listing_repository: ListingRepository
+    query: GetPastdueListings, listing_repository: ListingRepository
 ) -> QueryResult:
     # TODO: not yet implemented
     return QueryResult([])

@@ -10,9 +10,9 @@ This part is a seller portal. It allows sellers to create and manage their listi
 
 - [x] As a seller, I want to update a listing draft.
 
-- [ ] As a seller, I want to delete a listing draft.
+- [x] As a seller, I want to delete a listing draft.
 
-- [ ] As a seller, I want to publish a listing draft immediately.
+- [x] As a seller, I want to publish a listing draft immediately.
 
 - [ ] As a seller, I want to schedule a listing draft for publishing.
 

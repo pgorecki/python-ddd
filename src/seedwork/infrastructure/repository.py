@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from seedwork.domain.entities import Entity
 from seedwork.domain.exceptions import EntityNotFoundException
 from seedwork.domain.value_objects import UUID
+from seedwork.infrastructure.logging import logger
 
 
 class Repository(ABC):
@@ -58,6 +59,7 @@ class InMemoryRepository(Repository):
     def add(self, entity: type[Entity]):
         assert issubclass(entity.__class__, Entity)
         self.objects[entity.id] = entity
+        logger.debug(f"Added {entity} to {self}")
 
     def remove(self, entity: type[Entity]):
         del self.objects[entity.id]

@@ -1,5 +1,5 @@
 from seedwork.domain.events import DomainEvent
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import UUID, Money
 
 
 class ListingDraftCreatedEvent(DomainEvent):
@@ -16,3 +16,5 @@ class ListingDraftDeletedEvent(DomainEvent):
 
 class ListingPublishedEvent(DomainEvent):
     listing_id: UUID
+    seller_id: UUID
+    ask_price: Money

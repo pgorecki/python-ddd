@@ -4,6 +4,9 @@ from modules.catalog.application.command import (
     PublishListingDraftCommand,
     UpdateListingDraftCommand,
 )
+from modules.catalog.application.event.do_nothing_when_listing_published import (
+    do_nothing_when_listing_published,
+)
 from modules.catalog.application.query import (
     GetAllListings,
     GetListingDetails,
@@ -24,6 +27,7 @@ class CatalogModule(BusinessModule):
         PublishListingDraftCommand,
     )
     supported_queries = (GetAllListings, GetListingDetails, GetListingsOfSeller)
+    event_handlers = (do_nothing_when_listing_published,)
 
     def configure_unit_of_work(self, uow):
         """Here we have a chance to add extra UOW attributes to be injected into command/query handers"""

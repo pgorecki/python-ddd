@@ -73,7 +73,7 @@ class Application:
         correlation_id = handler_kwargs.get("correlation_id", uuid.uuid4())
         uow_kwargs = dict(
             correlation_id=correlation_id,
-            db_session=session,  # TODO: get db engine somehow
+            db_session=session,
         )
         uow_kwargs.update(handler_kwargs)
 
@@ -99,16 +99,16 @@ class Application:
         correlation_id = handler_kwargs.get("correlation_id", uuid.uuid4())
         uow_kwargs = dict(
             correlation_id=correlation_id,
-            db_session=session,  # TODO: get db engine somehow
+            db_session=session,
         )
         uow_kwargs.update(handler_kwargs)
 
         request_context.correlation_id.set(correlation_id)
 
-        logger.debug("transaction started")
+        logger.debug("<<< transaction started")
         while len(execution_loop) > 0:
             task = execution_loop.pop(0)
-            logger.debug(f"processing task {type(task).__name__}")
+            logger.debug(f"processing {type(task).__name__}")
 
             if isinstance(task, Command):
                 handling_module = self.find_module_for_command(command=task)
@@ -154,8 +154,6 @@ class Application:
                             f"extending execution loop with {number_of_events} new event(s)"
                         )
                         execution_loop.extend(event_result_set.events)
-                else:
-                    logger.debug(f"no handlers found for event {type(task).__name__}")
 
             elif isinstance(task, IntegrationEvent):
                 logger.debug(f"saving integration event {type(task).__name__}")
@@ -166,7 +164,7 @@ class Application:
             handling_module.exit_uow()
 
         # TODO: commit transaction
-        logger.debug("transaction completed")
+        logger.debug(">>> transaction completed")
 
         request_context.correlation_id.set(None)
         return first_result

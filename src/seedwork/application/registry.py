@@ -8,7 +8,6 @@ from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
-from seedwork.application.events import EventResult
 from seedwork.application.utils import as_event_result
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.exceptions import BusinessRuleValidationException
@@ -117,9 +116,11 @@ class Registry:
                 )
                 return fn(*args, **kwargs)
             except ValidationError as e:
-                return QueryResult.failed("Validation error", exception=e)
+                return QueryResult.failure("Validation error", exception=e)
             except BusinessRuleValidationException as e:
-                return QueryResult.failed("Business rule validation error", exception=e)
+                return QueryResult.failure(
+                    "Business rule validation error", exception=e
+                )
 
         query_class, handler_parameters = self.inspect_handler_parameters(fn)
         assert issubclass(

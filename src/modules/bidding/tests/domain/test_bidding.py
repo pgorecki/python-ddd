@@ -15,6 +15,7 @@ def test_listing_initial_price():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
     assert listing.winning_bid is None
@@ -25,15 +26,17 @@ def test_place_one_bid():
     now = datetime.utcnow()
     seller = Seller(id=UUID.v4())
     bidder = Bidder(id=UUID.v4())
-    bid = Bid(price=Money(20), bidder=bidder, placed_at=now)
+    bid = Bid(max_price=Money(20), bidder=bidder, placed_at=now)
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
     listing.place_bid(bid)
     assert listing.winning_bid == Bid(Money(20), bidder=bidder, placed_at=now)
+    assert listing.current_price == Money(10)
 
 
 @pytest.mark.unit
@@ -46,11 +49,13 @@ def test_place_two_bids():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
-    listing.place_bid(Bid(price=Money(20), bidder=bidder1, placed_at=now))
-    listing.place_bid(Bid(price=Money(30), bidder=bidder2, placed_at=now))
+    listing.place_bid(Bid(max_price=Money(15), bidder=bidder1, placed_at=now))
+    listing.place_bid(Bid(max_price=Money(30), bidder=bidder2, placed_at=now))
     assert listing.winning_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
+    assert listing.current_price == Money(16)
 
 
 @pytest.mark.unit
@@ -62,13 +67,15 @@ def test_place_two_bids_by_same_bidder():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
-    listing.place_bid(Bid(price=Money(20), bidder=bidder, placed_at=now))
-    listing.place_bid(Bid(price=Money(30), bidder=bidder, placed_at=now))
+    listing.place_bid(Bid(max_price=Money(20), bidder=bidder, placed_at=now))
+    listing.place_bid(Bid(max_price=Money(30), bidder=bidder, placed_at=now))
 
     assert len(listing.bids) == 1
-    assert listing.winning_bid == Bid(price=Money(30), bidder=bidder, placed_at=now)
+    assert listing.winning_bid == Bid(max_price=Money(30), bidder=bidder, placed_at=now)
+    assert listing.current_price == Money(10)
 
 
 @pytest.mark.unit
@@ -79,10 +86,11 @@ def test_cannot_place_bid_if_listing_ended():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
     bid = Bid(
-        price=Money(10),
+        max_price=Money(10),
         bidder=bidder,
         placed_at=datetime.utcnow() + timedelta(seconds=1),
     )
@@ -101,10 +109,11 @@ def test_retract_bid():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
     bid = Bid(
-        price=Money(100),
+        max_price=Money(100),
         bidder=bidder,
         placed_at=datetime.utcnow() - timedelta(seconds=1),
     )
@@ -121,10 +130,11 @@ def test_cancel_listing():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=now,
         ends_at=now + timedelta(days=10),
     )
 
-    listing.cancel_listing()
+    listing.cancel()
 
     assert listing.time_left_in_listing == timedelta()
 
@@ -138,16 +148,17 @@ def test_can_cancel_listing_with_bids():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=now,
         ends_at=now + timedelta(days=10),
     )
     bid = Bid(
-        price=Money(100),
+        max_price=Money(100),
         bidder=bidder,
         placed_at=now,
     )
     listing.place_bid(bid)
 
-    listing.cancel_listing()
+    listing.cancel()
 
     assert listing.time_left_in_listing == timedelta()
 
@@ -161,14 +172,15 @@ def test_cannot_cancel_listing_with_bids():
         id=Listing.next_id(),
         seller=seller,
         initial_price=Money(10),
+        starts_at=now,
         ends_at=now + timedelta(hours=1),
     )
     bid = Bid(
-        price=Money(100),
+        max_price=Money(100),
         bidder=bidder,
         placed_at=now,
     )
     listing.place_bid(bid)
 
     with pytest.raises(BusinessRuleValidationException, match="ListingCanBeCancelled"):
-        listing.cancel_listing()
+        listing.cancel()

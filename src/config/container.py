@@ -1,10 +1,11 @@
 from dependency_injector import containers, providers
-from dependency_injector.wiring import inject  # noqa
+from dependency_injector.wiring import Provide, inject  # noqa
 from sqlalchemy import create_engine
 
 from modules.bidding import BiddingModule
 from modules.catalog import CatalogModule
-from modules.iam import IamModule
+from modules.iam import IamService
+from modules.iam.infrastructure.repository import InMemoryUserRepository
 from seedwork.application import Application
 from seedwork.application.inbox_outbox import InMemoryOutbox
 
@@ -40,7 +41,7 @@ def create_request_context(engine):
 
 def create_engine_once(config):
     engine = create_engine(
-        config["DATABASE_URL"], echo=config["DEBUG"], json_serializer=dumps
+        config["DATABASE_URL"], echo=config["DATABASE_ECHO"], json_serializer=dumps
     )
     from seedwork.infrastructure.database import Base
 
@@ -50,7 +51,7 @@ def create_engine_once(config):
 
 
 def create_app(
-    name, version, config, engine, catalog_module, bidding_module, outbox
+    name, version, config, engine, catalog_module, bidding_module, iam_service, outbox
 ) -> Application:
     app = Application(
         name=name,
@@ -58,6 +59,7 @@ def create_app(
         config=config,
         engine=engine,
         outbox=outbox,
+        iam_service=iam_service,
     )
     app.add_modules(catalog=catalog_module, bidding=bidding_module)
     return app
@@ -83,9 +85,11 @@ class Container(containers.DeclarativeContainer):
         BiddingModule,
     )
 
-    iam_module = providers.Factory(
-        IamModule,
+    user_repository = providers.Singleton(
+        InMemoryUserRepository,
     )
+
+    iam_service = providers.Factory(IamService, user_repository=user_repository)
 
     application = providers.Factory(
         create_app,
@@ -95,5 +99,6 @@ class Container(containers.DeclarativeContainer):
         engine=engine,
         catalog_module=catalog_module,
         bidding_module=bidding_module,
+        iam_service=iam_service,
         outbox=outbox,
     )

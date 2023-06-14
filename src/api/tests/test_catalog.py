@@ -20,6 +20,7 @@ def test_catalog_list_with_one_item(api, api_client):
     app = api.container.application()
     command_result = app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=1),
             title="Foo",
             description="Bar",
             ask_price=Money(10),
@@ -53,6 +54,7 @@ def test_catalog_list_with_two_items(api, api_client):
     app = api.container.application()
     app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=1),
             title="Foo #1",
             description="Bar",
             ask_price=Money(10),
@@ -61,6 +63,7 @@ def test_catalog_list_with_two_items(api, api_client):
     )
     app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=2),
             title="Foo #2",
             description="Bar",
             ask_price=Money(10),
@@ -93,6 +96,7 @@ def test_catalog_delete_draft(api, api_client):
     app = api.container.application()
     command_result = app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=1),
             title="Foo to be deleted",
             description="Bar",
             ask_price=Money(10),
@@ -118,6 +122,7 @@ def test_catalog_publish_listing_draft(api, api_client):
     app = api.container.application()
     command_result = app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=1),
             title="Foo to be deleted",
             description="Bar",
             ask_price=Money(10),
@@ -137,6 +142,7 @@ def test_published_listing_appears_in_biddings(api, api_client):
     app = api.container.application()
     command_result = app.execute_command(
         CreateListingDraftCommand(
+            listing_id=UUID(int=1),
             title="Foo to be deleted",
             description="Bar",
             ask_price=Money(10),

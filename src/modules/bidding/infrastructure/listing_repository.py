@@ -58,7 +58,7 @@ def deserialize_datetime(value) -> str:
 def serialize_bid(bid: Bid) -> dict:
     return {
         "bidder_id": serialize_id(bid.bidder.id),
-        "price": serialize_money(bid.price),
+        "max_price": serialize_money(bid.max_price),
         "placed_at": serialize_datetime(bid.placed_at),
     }
 
@@ -66,7 +66,7 @@ def serialize_bid(bid: Bid) -> dict:
 def deserialize_bid(data: dict) -> Bid:
     return Bid(
         bidder=Bidder(id=deserialize_id(data["bidder_id"])),
-        price=deserialize_money(data["price"]),
+        max_price=deserialize_money(data["max_price"]),
         placed_at=deserialize_datetime(data["placed_at"]),
     )
 
@@ -78,6 +78,7 @@ class ListingDataMapper:
             id=deserialize_id(instance.id),
             seller=Seller(id=deserialize_id(d["seller_id"])),
             initial_price=deserialize_money(d["initial_price"]),
+            starts_at=deserialize_datetime(d["starts_at"]),
             ends_at=deserialize_datetime(d["ends_at"]),
         )
 
@@ -85,6 +86,7 @@ class ListingDataMapper:
         return ListingModel(
             id=entity.id,
             data={
+                "starts_at": serialize_datetime(entity.starts_at),
                 "ends_at": serialize_datetime(entity.ends_at),
                 "initial_price": serialize_money(entity.initial_price),
                 "seller_id": serialize_id(entity.seller.id),

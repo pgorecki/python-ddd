@@ -11,8 +11,13 @@ class BidReadModel(BaseModel):
     bidder_username: str
 
 
-class BiddingReadModel(BaseModel):
+class BiddingResponse(BaseModel):
     listing_id: UUID
     auction_status: str = "active"  # active, ended
     auction_end_date: datetime
     bids: list[BidReadModel]
+
+
+class PlaceBidRequest(BaseModel):
+    bidder_id: UUID
+    amount: float

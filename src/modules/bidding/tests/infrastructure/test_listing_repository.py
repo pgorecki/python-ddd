@@ -21,14 +21,15 @@ def test_listing_repo_is_empty(db_session):
 @pytest.mark.unit
 def test_listing_data_mapper_maps_entity_to_model():
     listing = Listing(
-        id=UUID("00000000000000000000000000000001"),
-        seller=Seller(id=UUID("00000000000000000000000000000002")),
+        id=UUID(int=1),
+        seller=Seller(id=UUID(int=2)),
         initial_price=Money(100, "PLN"),
+        starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
         bids=[
             Bid(
-                price=Money(200, "PLN"),
-                bidder=Bidder(id=UUID("00000000000000000000000000000003")),
+                max_price=Money(200, "PLN"),
+                bidder=Bidder(id=UUID(int=3)),
                 placed_at=datetime.datetime(2020, 12, 30),
             )
         ],
@@ -38,17 +39,18 @@ def test_listing_data_mapper_maps_entity_to_model():
     actual = mapper.entity_to_model(listing)
 
     expected = ListingModel(
-        id=UUID("00000000000000000000000000000001"),
+        id=UUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
             "initial_price": {
                 "amount": 100,
                 "currency": "PLN",
             },
+            "starts_at": "2020-12-01T00:00:00",
             "ends_at": "2020-12-31T00:00:00",
             "bids": [
                 {
-                    "price": {
+                    "max_price": {
                         "amount": 200,
                         "currency": "PLN",
                     },
@@ -65,13 +67,14 @@ def test_listing_data_mapper_maps_entity_to_model():
 @pytest.mark.unit
 def test_listing_data_mapper_maps_model_to_entity():
     instance = ListingModel(
-        id=UUID("00000000000000000000000000000001"),
+        id=UUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
             "initial_price": {
                 "amount": 100,
                 "currency": "PLN",
             },
+            "starts_at": "2020-12-01T00:00:00",
             "ends_at": "2020-12-31T00:00:00",
         },
     )
@@ -80,9 +83,10 @@ def test_listing_data_mapper_maps_model_to_entity():
     actual = mapper.model_to_entity(instance)
 
     expected = Listing(
-        id=UUID("00000000000000000000000000000001"),
+        id=UUID(int=1),
         seller=Seller(id=UUID("00000000000000000000000000000002")),
         initial_price=Money(100, "PLN"),
+        starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
     )
     assert actual == expected
@@ -94,6 +98,7 @@ def test_listing_persistence(db_session):
         id=Listing.next_id(),
         seller=Seller(id=uuid.uuid4()),
         initial_price=Money(100, "PLN"),
+        starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
     )
     repository = PostgresJsonListingRepository(db_session=db_session)

@@ -1,67 +1,46 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel
 
+from api.dependencies import get_current_active_user
 from api.shared import dependency
 from config.container import Container, inject
-from modules.iam.application.exceptions import (
-    UsernamePasswordMismatchException,
-    UserNotFoundException,
-)
+from modules.iam.application.exceptions import InvalidCredentialsException
 from modules.iam.domain.entities import User
-from modules.iam.module import IdentityAndAccessModule
+from seedwork.application import Application
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 router = APIRouter()
 
 
-def get_user_by_token(
-    token,
-    module: IdentityAndAccessModule = dependency(Container.iam_module),
-) -> User:
-    user = module.authentication_service.find_user_by_access_token(token)
-    return user
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    user = get_user_by_token(token)
-    return user
-
-
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    if not current_user.is_active():
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
+class UserResponse(BaseModel):
+    id: str
+    username: str
 
 
 @router.get("/token", tags=["iam"])
 async def get_token(token: str = Depends(oauth2_scheme)):
-    return {"token": token}
+    return "sample_token"
 
 
 @router.post("/token", tags=["iam"])
 @inject
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    module: IdentityAndAccessModule = dependency(Container.iam_module),
+    app: Application = dependency(Container.application),
 ):
     try:
-        access_token = module.authentication_service.authenticate_with_password(
+        user = app.iam_service.authenticate_with_password(
             form_data.username, form_data.password
         )
-    except UserNotFoundException:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect username or password",
-        )
-    except UsernamePasswordMismatchException:
+    except InvalidCredentialsException:
+        # TODO: automatically map application exceptions to HTTP exceptions
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
         )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": user.access_token, "token_type": "bearer"}
 
 
 @router.get("/users/me", tags=["iam"])

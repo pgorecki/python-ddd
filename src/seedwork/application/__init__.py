@@ -44,7 +44,9 @@ class EventRouter:
 
 
 class Application:
-    def __init__(self, name: str, version: str, config: dict, engine, outbox):
+    def __init__(
+        self, name: str, version: str, config: dict, engine, outbox, iam_service=None
+    ):
         self.name = name
         self.version = version
         self.config = config
@@ -53,6 +55,7 @@ class Application:
         self.event_router = EventRouter()
         self.inbox = InMemoryInbox()
         self.outbox = outbox
+        self.iam_service = iam_service
 
     def add_modules(self, **kwargs):
         for name, module in kwargs.items():

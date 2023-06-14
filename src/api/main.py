@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 
 import api.routers.catalog
 from api.models.catalog import CurrentUser
-from api.routers import bidding, catalog, iam
+from api.routers import bidding, catalog, diagnostics, iam
 from config.api_config import ApiConfig
 from config.container import Container
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
@@ -18,12 +18,21 @@ LoggerFactory.configure(logger_name="api")
 # dependency injection container
 container = Container()
 container.config.from_pydantic(ApiConfig())
-container.wire(modules=[api.routers.catalog, api.routers.bidding, api.routers.iam])
+container.wire(
+    modules=[
+        api.dependencies,
+        api.routers.catalog,
+        api.routers.bidding,
+        api.routers.iam,
+        api.routers.diagnostics,
+    ]
+)
 
 app = FastAPI(debug=container.config.DEBUG)
 app.include_router(catalog.router)
 app.include_router(bidding.router)
 app.include_router(iam.router)
+app.include_router(diagnostics.router)
 app.container = container
 
 logger.info("using db engine %s" % str(container.engine()))

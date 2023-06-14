@@ -10,6 +10,7 @@ class ApiConfig(BaseSettings):
 
     APP_NAME: str = "Online Auctions API"
     DEBUG: bool = Field(env="DEBUG", default=True)
+    DATABASE_ECHO: bool = Field(env="DATABASE_ECHO", default=False)
     DATABASE_URL: str = Field(
         env="DATABASE_URL",
         default="postgresql://postgres:password@localhost:5432/postgres",

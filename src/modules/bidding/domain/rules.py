@@ -14,7 +14,7 @@ class PlacedBidMustBeGreaterThanCurrentWinningBid(BusinessRule):
     current_price: Money
 
     def is_broken(self) -> bool:
-        return self.bid.price <= self.current_price
+        return self.bid.max_price <= self.current_price
 
     def get_message(self) -> str:
         return self.__message.format(current_price=self.current_price)

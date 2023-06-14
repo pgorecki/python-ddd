@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 
 from modules.catalog.application.command.create_listing_draft import (
@@ -13,7 +15,11 @@ from seedwork.infrastructure.repository import InMemoryRepository
 def test_create_listing_draft():
     # arrange
     command = CreateListingDraftCommand(
-        title="foo", description="bar", ask_price=Money(1), seller_id=Seller.next_id()
+        listing_id=UUID(int=1),
+        title="foo",
+        description="bar",
+        ask_price=Money(1),
+        seller_id=Seller.next_id(),
     )
     repository = InMemoryRepository()
 

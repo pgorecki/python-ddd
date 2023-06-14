@@ -102,7 +102,12 @@ def create_app():
 def test_application_config():
     pong_module = PongModule()
     app = Application(
-        name="TestApp", version="1.0", config={}, outbox=InMemoryOutbox(), engine=None
+        name="TestApp",
+        version="1.0",
+        config={},
+        outbox=InMemoryOutbox(),
+        engine=None,
+        iam_service=None,
     )
     app.add_modules(pong_module=pong_module)
 

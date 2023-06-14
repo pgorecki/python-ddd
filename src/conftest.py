@@ -11,7 +11,7 @@ from seedwork.infrastructure.database import Base
 @pytest.fixture
 def engine():
     config = ApiConfig()
-    engine = create_engine(config.DATABASE_URL, echo=config.DEBUG)
+    engine = create_engine(config.DATABASE_URL, echo=config.DATABASE_ECHO)
 
     with engine.begin() as connection:
         Base.metadata.drop_all(connection)

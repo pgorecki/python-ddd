@@ -1,11 +1,13 @@
+from dataclasses import dataclass
 from typing import Optional
 
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.value_objects import UUID
 
-ANONYMOUS_ID = UUID("00000000-0000-0000-0000-000000000000")
+ANONYMOUS_ID = UUID(int=0)
 
 
+@dataclass
 class User(AggregateRoot):
     id: UUID
     username: str

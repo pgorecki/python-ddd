@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from modules.bidding.domain.entities import Listing
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Bidder
@@ -11,8 +9,6 @@ from seedwork.application.decorators import command_handler
 class RetractBidCommand(Command):
     listing_id: str
     bidder_id: str
-    amount: Decimal
-    currency: str = "USD"
 
 
 @command_handler
@@ -22,6 +18,6 @@ def retract_bid(
     bidder = Bidder(id=command.bidder_id)
 
     listing: Listing = listing_repository.get_by_id(id=command.listing_id)
-    events = listing.retract_bid_of(bidder)
+    event = listing.retract_bid_of(bidder)
 
-    return CommandResult.ok(events=events)
+    return CommandResult.ok(event=event)

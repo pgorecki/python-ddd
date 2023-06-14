@@ -16,7 +16,6 @@ This part is a seller portal. It allows sellers to create and manage their listi
 
 - [ ] As a seller, I want to schedule a listing draft for publishing.
 
-- [ ] As a seller, I want to end a listing immediately.
 
 - [ ] As a seller, I want to view all my listings (published, unpublished, ended).
 

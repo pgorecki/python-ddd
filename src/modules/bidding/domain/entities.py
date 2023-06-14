@@ -42,15 +42,27 @@ class ListingCancelledEvent(DomainEvent):
 class Listing(AggregateRoot):
     seller: Seller
     initial_price: Money
+    starts_at: datetime
     ends_at: datetime
     bids: list[Bid] = field(default_factory=list)
-    current_price: Money = field(init=False)
 
-    def __post_init__(self) -> None:
-        self.current_price = self.initial_price
+    @property
+    def current_price(self) -> Money:
+        highest_price = self.initial_price
+        second_highest_price = self.initial_price
+
+        if len(self.bids) == 1:
+            return min(self.bids[0].max_price, self.initial_price)
+
+        for bid in self.bids:
+            if bid.max_price > highest_price:
+                second_highest_price = highest_price
+                highest_price = bid.max_price
+
+        return second_highest_price + Money(1, currency=self.initial_price.currency)
 
     # public commands
-    def place_bid(self, bid: Bid) -> list[DomainEvent]:
+    def place_bid(self, bid: Bid) -> type[DomainEvent]:
         """Public method"""
         self.check_rule(
             PlacedBidMustBeGreaterThanCurrentWinningBid(
@@ -63,9 +75,11 @@ class Listing(AggregateRoot):
         else:
             self._add_bid(bid)
 
-        return [BidPlacedEvent(listing_id=self.id, bidder=bid.bidder, price=bid.price)]
+        return BidPlacedEvent(
+            listing_id=self.id, bidder=bid.bidder, max_price=bid.max_price
+        )
 
-    def retract_bid_of(self, bidder: Bidder) -> list[DomainEvent]:
+    def retract_bid_of(self, bidder: Bidder) -> type[DomainEvent]:
         """Public method"""
         bid = self.get_bid_of(bidder)
         self.check_rule(
@@ -73,9 +87,13 @@ class Listing(AggregateRoot):
         )
 
         self._remove_bid_of(bidder=bidder)
-        return [BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)]
+        return BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)
 
-    def cancel_listing(self) -> list[DomainEvent]:
+    def cancel(self) -> type[DomainEvent]:
+        """
+        Seller can cancel a listing (end a listing early). Listing must be eligible to cancelled,
+        depending on time left and if bids have been placed.
+        """
         self.check_rule(
             ListingCanBeCancelled(
                 time_left_in_listing=self.time_left_in_listing,
@@ -83,9 +101,12 @@ class Listing(AggregateRoot):
             )
         )
         self.ends_at = datetime.utcnow()
-        return [ListingCancelledEvent(listing_id=self.id)]
+        return ListingCancelledEvent(listing_id=self.id)
 
-    def end_bidding(self) -> list[DomainEvent]:
+    def end(self) -> type[DomainEvent]:
+        """
+        Ends listing.
+        """
         raise NotImplementedError()
         return []
 
@@ -108,7 +129,7 @@ class Listing(AggregateRoot):
     @property
     def winning_bid(self) -> Optional[Bid]:
         try:
-            highest_bid = max(self.bids, key=lambda bid: bid.price)
+            highest_bid = max(self.bids, key=lambda bid: bid.max_price)
         except ValueError:
             # nobody is bidding
             return None

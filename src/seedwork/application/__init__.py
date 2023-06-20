@@ -1,5 +1,9 @@
+import importlib
+import inspect
 import uuid
 from collections import defaultdict
+from functools import partial
+from typing import Dict, Type
 
 from sqlalchemy.orm import Session
 
@@ -9,7 +13,6 @@ from seedwork.application.event_dispatcher import EventDispatcher
 from seedwork.application.events import EventResult, EventResultSet, IntegrationEvent
 from seedwork.application.exceptions import ApplicationException
 from seedwork.application.inbox_outbox import InMemoryInbox
-from seedwork.application.modules import BusinessModule
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.events import DomainEvent
@@ -17,178 +20,259 @@ from seedwork.infrastructure.logging import logger
 from seedwork.infrastructure.request_context import request_context
 
 
-def with_db_session(fn):
-    """provides session argument to the decorated function"""
+def get_function_arguments(func):
+    handler_signature = inspect.signature(func)
+    kwargs_iterator = iter(handler_signature.parameters.items())
+    _, first_param = next(kwargs_iterator)
+    first_parameter = first_param.annotation
+    remaining_parameters = {}
+    for name, param in kwargs_iterator:
+        remaining_parameters[name] = param.annotation
 
-    def wrapper(self, *args, **kwargs):
-        with Session(self.engine) as session:
-            kwargs["session"] = session
-            result = fn(self, *args, **kwargs)
-            session.commit()
+    return first_parameter, remaining_parameters
+
+
+class DependencyProvider:
+    """Basic dependency provider that uses a dictionary to store and inject dependencies"""
+
+    def __init__(self, **kwargs):
+        self.dependencies = kwargs
+
+    def register_dependency(self, identifier, dependency_instance):
+        self.dependencies[identifier] = dependency_instance
+
+    def get_dependency(self, identifier):
+        return self.dependencies[identifier]
+
+    def _get_arguments(self, func):
+        return get_function_arguments(func)
+
+    def _resolve_arguments(self, handler_parameters) -> dict:
+        """Match handler_parameters with dependencies"""
+        kwargs = {}
+        for param_name, param_type in handler_parameters.items():
+            try:
+                if param_type is inspect._empty:
+                    raise ValueError("No type annotation")
+                kwargs[param_name] = self.get_dependency(param_type)
+                continue
+            except (ValueError, KeyError):
+                pass
+
+            try:
+                kwargs[param_name] = self.get_dependency(param_name)
+                continue
+            except (ValueError, KeyError):
+                pass
+
+        return kwargs
+
+    def get_handler_kwargs(self, func, **overrides):
+        _, handler_parameters = self._get_arguments(func)
+        kwargs = self._resolve_arguments(handler_parameters)
+        kwargs.update(**overrides)
+        return kwargs
+
+    def __getitem__(self, key):
+        return self.get_dependency(key)
+
+    def __setitem__(self, key, value):
+        self.register_dependency(key, value)
+
+
+class TransactionContext:
+    """A context spanning a single transaction for execution of commands and queries
+
+    Typically, the following thing happen in a transaction context:
+    - a command handler is called, which results in aggregate changes that fire domain events
+    - a domain event is raised, after
+    - a domain event handler is called
+    - a command is executed
+
+
+    """
+
+    def __init__(self, app, **overrides):
+        self.app = app
+        self.overrides = overrides
+        self.dependency_provider = app.dependency_provider
+        self.task = None
+        self.next_commands = []
+        self.integration_events = []
+
+    def __enter__(self):
+        """Should be used to start a transaction"""
+        self.app._on_enter_transaction_context(self)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Should be used to commit/end a transaction"""
+        self.app._on_exit_transaction_context(self, exc_type, exc_val, exc_tb)
+
+    def execute_query(self, query):
+        assert (
+            self.task is None
+        ), "Cannot execute query while another task is being executed"
+        self.task = query
+
+        handler_func = self.app.get_query_handler(query)
+        handler_kwargs = self.dependency_provider.get_handler_kwargs(
+            handler_func, **self.overrides
+        )
+
+        # prepare query handler
+        p = partial(handler_func, query, **handler_kwargs)
+
+        for middleware in self.app._transaction_middlewares:
+            p = partial(middleware, self, p)
+        result = p()
         return result
 
-    return wrapper
+    def execute_command(self, command):
+        assert (
+            self.task is None
+        ), "Cannot execute command while another task is being executed"
+        self.task = command
+
+        handler_func = self.app.get_command_handler(command)
+        handler_kwargs = self.dependency_provider.get_handler_kwargs(
+            handler_func, **self.overrides
+        )
+
+        # prepare command handler
+        p = partial(handler_func, command, **handler_kwargs)
+
+        # wrap command handler in middlewares
+        handler_kwargs = self.dependency_provider.get_handler_kwargs(
+            handler_func, **self.overrides
+        )
+        p = partial(handler_func, command, **handler_kwargs)
+        for middleware in self.app._transaction_middlewares:
+            p = partial(middleware, self, p)
+
+        # execute wrapped command handler
+        command_result = p()
+
+        self.next_commands = []
+        self.integration_events = []
+        event_queue = command_result.events.copy()
+        while len(event_queue) > 0:
+            event = event_queue.pop(0)
+            if isinstance(event, IntegrationEvent):
+                self.integration_events.append(result)
+            elif isinstance(event, DomainEvent):
+                for event_handler in self.app.get_event_handlers(event):
+                    handler_kwargs = self.dependency_provider.get_handler_kwargs(
+                        event_handler, **self.overrides
+                    )
+                    logger.info(f"handling event {event} with {event_handler}")
+                    result = event_handler(event, **handler_kwargs)
+                    if isinstance(result, Command):
+                        self.next_commands.append(result)
+                    elif isinstance(result, EventResult):
+                        event_queue.extend(result.events)
+
+        return CommandResult.success(payload=command_result.payload)
+
+    def get_service(self, service_cls):
+        return self.dependency_provider.get_dependency(service_cls)
+
+    @property
+    def current_user(self):
+        return self.dependency_provider.get_dependency("current_user")
 
 
-class EventRouter:
-    """Creates a mapping between events and modules that handle them."""
-
-    def __init__(self):
-        self.routes = defaultdict(set)
-
-    def set_route(self, event_class, module):
-        self.routes[event_class].add(module)
-
-    def get_modules_for_event(self, event_class) -> BusinessModule:
-        return self.routes[event_class]
-
-
-class Application:
-    def __init__(
-        self, name: str, version: str, config: dict, engine, outbox, iam_service=None
-    ):
+class ApplicationModule:
+    def __init__(self, name, version=1.0):
         self.name = name
         self.version = version
-        self.config = config
-        self.modules = []
-        self.engine = engine
-        self.event_router = EventRouter()
-        self.inbox = InMemoryInbox()
-        self.outbox = outbox
-        self.iam_service = iam_service
+        self.command_handlers = {}
+        self.query_handlers = {}
+        self.event_handlers = defaultdict(set)
 
-    def add_modules(self, **kwargs):
-        for name, module in kwargs.items():
-            assert isinstance(module, BusinessModule)
-            self.add_module(name, module)
+    def query_handler(self, handler_func):
+        """Query handler decorator"""
+        query_cls, _ = get_function_arguments(handler_func)
+        self.query_handlers[query_cls] = handler_func
+        return handler_func
 
-    def add_module(self, name: str, module: BusinessModule):
-        self.modules.append(module)
-        setattr(self, name, module)
-        for event_class in module.get_handleable_events():
-            self.event_router.set_route(event_class, module)
+    def command_handler(self, handler_func):
+        """Command handler decorator"""
+        command_cls, _ = get_function_arguments(handler_func)
+        self.command_handlers[command_cls] = handler_func
+        return handler_func
 
-    @with_db_session
-    def execute_query(self, query, session, **handler_kwargs) -> QueryResult:
-        handing_module = self.find_module_for_query(query)
+    def domain_event_handler(self, handler_func):
+        """Event handler decorator"""
+        event_cls, _ = get_function_arguments(handler_func)
+        self.event_handlers[event_cls].add(handler_func)
+        return handler_func
 
-        # begin transaction
-        correlation_id = handler_kwargs.get("correlation_id", uuid.uuid4())
-        uow_kwargs = dict(
-            correlation_id=correlation_id,
-            db_session=session,
-        )
-        uow_kwargs.update(handler_kwargs)
+    def import_from(self, module_name):
+        importlib.import_module(module_name)
 
-        request_context.correlation_id.set(correlation_id)
-        with handing_module.unit_of_work(**uow_kwargs):
-            query_result = handing_module.execute_query(query)
-        request_context.correlation_id.set(None)
-        return query_result
+    def __repr__(self):
+        return f"<{self.name} v{self.version} {object.__repr__(self)}>"
 
-    @with_db_session
-    def execute_command(self, command, session, **handler_kwargs) -> CommandResult:
-        """
-        Executes command by finding a module that can handle it and executing it in a unit of work.
-        handler_kwargs are passed to the unit of work, and as a consequence, also may be passed to
-        handler function (if needed).
-        """
 
-        execution_loop = [command]
-        active_uows = {}
-        first_result = None
+class Application(ApplicationModule):
+    def __init__(self, name=__name__, version=1.0, dependency_provider=None, **kwargs):
+        super().__init__(name, version)
+        self.dependency_provider = dependency_provider or DependencyProvider(**kwargs)
+        self._transaction_middlewares = []
+        self._on_enter_transaction_context = lambda ctx: None
+        self._on_exit_transaction_context = lambda ctx, exc_type, exc_val, exc_tb: None
+        self._modules = set([self])
 
-        # begin transaction
-        correlation_id = handler_kwargs.get("correlation_id", uuid.uuid4())
-        uow_kwargs = dict(
-            correlation_id=correlation_id,
-            db_session=session,
-        )
-        uow_kwargs.update(handler_kwargs)
+    def include_module(self, a_module):
+        assert isinstance(
+            a_module, ApplicationModule
+        ), "Can only include ApplicationModule instances"
+        self._modules.add(a_module)
 
-        request_context.correlation_id.set(correlation_id)
+    def on_enter_transaction_context(self, func):
+        self._on_enter_transaction_context = func
+        return func
 
-        logger.debug("<<< transaction started")
-        while len(execution_loop) > 0:
-            task = execution_loop.pop(0)
-            logger.debug(f"processing {type(task).__name__}")
+    def on_exit_transaction_context(self, func):
+        self._on_exit_transaction_context = func
+        return func
 
-            if isinstance(task, Command):
-                handling_module = self.find_module_for_command(command=task)
-                if handling_module not in active_uows:
-                    logger.debug(
-                        f"entering uow of {handling_module.__class__.__name__}"
-                    )
-                    active_uows[handling_module] = handling_module.enter_uow(
-                        **uow_kwargs
-                    )
-                logger.debug(
-                    f"executing command {type(task).__name__} by {handling_module.__class__.__name__}"
-                )
-                command_result = handling_module.execute_command(command=task)
-                logger.debug(f"command handled, result: {command_result}")
-                number_of_events = len(command_result.events)
-                if command_result.is_success() and number_of_events > 0:
-                    logger.debug(
-                        f"extending execution loop with {number_of_events} new event(s)"
-                    )
-                    execution_loop.extend(command_result.events)
-                if not first_result:
-                    first_result = command_result
+    def transaction_middleware(self, middleware_func):
+        """Middleware for processing transaction boundaries (i.e. running a command or query)"""
+        self._transaction_middlewares.insert(0, middleware_func)
+        return middleware_func
 
-            elif isinstance(task, DomainEvent):
-                handling_modules = self.find_modules_for_event(event_class=type(task))
-                for handling_module in handling_modules:
-                    if handling_module not in active_uows:
-                        logger.debug(
-                            f"entering uow of {handling_module.__class__.__name__}"
-                        )
-                        active_uows[handling_module] = handling_module.enter_uow(
-                            **uow_kwargs
-                        )
-                    logger.debug(
-                        f"handling event {type(task).__name__} by {handling_module.__class__.__name__}"
-                    )
-                    event_result_set = handling_module.handle_domain_event(event=task)
-                    logger.debug(f"event handled, result: {event_result_set}")
-                    number_of_events = len(event_result_set.events)
-                    if event_result_set.is_success() and number_of_events > 0:
-                        logger.debug(
-                            f"extending execution loop with {number_of_events} new event(s)"
-                        )
-                        execution_loop.extend(event_result_set.events)
+    def get_query_handler(self, query):
+        query_cls = type(query)
+        for app_module in self._modules:
+            handler_func = app_module.query_handlers.get(query_cls)
+            if handler_func:
+                return handler_func
+        raise Exception(f"No query handler found for command {query_cls}")
 
-            elif isinstance(task, IntegrationEvent):
-                logger.debug(f"saving integration event {type(task).__name__}")
-                self.outbox.save(task)
+    def get_command_handler(self, command):
+        command_cls = type(command)
+        for app_module in self._modules:
+            handler_func = app_module.command_handlers.get(command_cls)
+            if handler_func:
+                return handler_func
+        raise Exception(f"No command handler found for command {command_cls}")
 
-        for handling_module in active_uows.keys():
-            logger.debug(f"exiting uow of {handling_module}")
-            handling_module.exit_uow()
+    def get_event_handlers(self, event):
+        event_cls = type(event)
+        event_handlers = []
+        for app_module in self._modules:
+            event_handlers.extend(app_module.event_handlers.get(event_cls, []))
+        return event_handlers
 
-        # TODO: commit transaction
-        logger.debug(">>> transaction completed")
+    def transaction_context(self, **dependencies):
+        return TransactionContext(self, **dependencies)
 
-        request_context.correlation_id.set(None)
-        return first_result
+    def execute_command(self, command, **dependencies):
+        with self.transaction_context(**dependencies) as ctx:
+            return ctx.execute_command(command)
 
-    def process_inbox(self):
-        """Processes all events in the inbox."""
-        while not self.inbox.is_empty():
-            with self.inbox.get_next_event() as event:
-                raise NotImplementedError()
-
-    def find_module_for_query(self, query):
-        for module in self.modules:
-            if module.supports_query(type(query)):
-                return module
-        raise ApplicationException(f"Could not find module for query {query}")
-
-    def find_module_for_command(self, command):
-        for module in self.modules:
-            if module.supports_command(type(command)):
-                return module
-        raise ApplicationException(f"Could not find module for command {command}")
-
-    def find_modules_for_event(self, event_class):
-        return self.event_router.get_modules_for_event(event_class)
+    def execute_query(self, query, **dependencies):
+        with self.transaction_context(**dependencies) as ctx:
+            return ctx.execute_query(query)

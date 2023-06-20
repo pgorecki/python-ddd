@@ -1,57 +1,37 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from seedwork.domain.entities import AggregateRoot
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import UUID, Email
 
-ANONYMOUS_ID = UUID(int=0)
+UserId = UUID
 
 
 @dataclass
 class User(AggregateRoot):
     id: UUID
-    username: str
-    email: str = ""
-    hashed_password: str = ""
-    first_name: Optional[str] = ""
-    last_name: Optional[str] = ""
+    email: Email
+    password_hash: bytes
+    access_token: str
+    is_superuser: bool = False
 
-    def change_main_attributes(
-        self,
-        username: str = None,
-        first_name: str = None,
-        last_name: str = None,
-        email: str = None,
-    ):
-        if username:
-            self.username = username
-        if first_name:
-            self.first_name = first_name
-        if last_name:
-            self.last_name = last_name
-        if email:
-            self.email = email
+    @property
+    def username(self):
+        return self.email
 
-    def activate(self):
-        # TODO: maybe later
-        ...
+    @username.setter
+    def username(self, value):
+        self.email = value
 
-    def deactivate(self):
-        # TODO: maybe later
-        ...
 
-    def is_disabled(self):
-        return False
-
-    def is_anonymous(self):
-        return self.id == ANONYMOUS_ID
-
-    def is_active(self):
-        return not self.is_anonymous() and not self.is_disabled()
-
-    @classmethod
-    def Anonymous(cls):
-        return User(
-            id=ANONYMOUS_ID,
-            username="anonymous",
+class AnonymousUser(User):
+    def __init__(self):
+        super().__init__(
+            id=UUID("00000000-0000-0000-0000-000000000000"),
+            email=None,
+            password_hash=b"",
+            access_token="",
         )
+
+    @property
+    def username(self):
+        return "<anonymous>"

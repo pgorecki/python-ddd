@@ -51,6 +51,9 @@ class Listing(AggregateRoot):
         highest_price = self.initial_price
         second_highest_price = self.initial_price
 
+        if len(self.bids) == 0:
+            return self.initial_price
+
         if len(self.bids) == 1:
             return min(self.bids[0].max_price, self.initial_price)
 

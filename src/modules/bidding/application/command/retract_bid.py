@@ -1,9 +1,9 @@
+from modules.bidding.application import bidding_module
 from modules.bidding.domain.entities import Listing
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Bidder
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler
 
 
 class RetractBidCommand(Command):
@@ -11,7 +11,7 @@ class RetractBidCommand(Command):
     bidder_id: str
 
 
-@command_handler
+@bidding_module.command_handler
 def retract_bid(
     command: RetractBidCommand, listing_repository: ListingRepository
 ) -> CommandResult:

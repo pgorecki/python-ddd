@@ -6,26 +6,11 @@ from seedwork.application import Application
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.application.events import EventResult
-from seedwork.application.inbox_outbox import InMemoryOutbox
-from seedwork.application.modules import BusinessModule, UnitOfWork
-from seedwork.application.registry import Registry
 from seedwork.domain.events import DomainEvent
-
-registry = Registry()
 
 
 @dataclass
 class CompleteOrderCommand(Command):
-    order_id: str
-
-
-@dataclass
-class ProcessPaymentCommand(Command):
-    order_id: str
-
-
-@dataclass
-class ShipOrderCommand(Command):
     order_id: str
 
 
@@ -41,125 +26,75 @@ class OrderShippedEvent(DomainEvent):
     order_id: str
 
 
-@registry.command_handler
-def complete_order(command: CompleteOrderCommand, history):
-    history.append(f"completing {command.order_id}")
-    return CommandResult.success(
-        payload=None, event=OrderCompletedEvent(order_id=command.order_id)
-    )
+def create_app():
+    app = Application()
 
+    @app.command_handler
+    def complete_order(command: CompleteOrderCommand, history):
+        history.append(f"completing {command.order_id}")
+        return CommandResult.success(
+            payload=None, event=OrderCompletedEvent(order_id=command.order_id)
+        )
 
-@registry.command_handler
-def process_payment(command: ProcessPaymentCommand, history):
-    history.append(f"processing payment for {command.order_id}")
-    return CommandResult.success(
-        payload=None, event=PaymentProcessedEvent(order_id=command.order_id)
-    )
+    @app.domain_event_handler
+    def when_order_is_completed_process_payment_policy(
+        event: OrderCompletedEvent, history
+    ):
+        history.append(
+            f"starting when_order_is_completed_process_payment_policy for {event.order_id}"
+        )
+        ...
+        return EventResult.success(event=PaymentProcessedEvent(order_id=event.order_id))
 
+    @app.domain_event_handler
+    def when_order_is_completed_ship_order_policy(event: OrderCompletedEvent, history):
+        history.append(
+            f"starting when_order_is_completed_ship_order_policy for {event.order_id}"
+        )
+        ...
+        return EventResult.success(event=OrderShippedEvent(order_id=event.order_id))
 
-@registry.command_handler
-def ship_order(command: ShipOrderCommand, history):
-    history.append(f"shipping {command.order_id}")
-    return CommandResult.success(
-        payload=None, event=OrderShippedEvent(order_id=command.order_id)
-    )
+    @app.domain_event_handler
+    def when_payment_is_processed_open_champagne_policy(
+        event: PaymentProcessedEvent, history
+    ):
+        history.append(
+            f"starting when_payment_is_processed_open_champagne_policy for {event.order_id}"
+        )
+        return EventResult.success()
 
+    @app.domain_event_handler
+    def when_order_is_shipped_sit_and_relax_policy(event: OrderShippedEvent, history):
+        history.append(
+            f"starting when_order_is_shipped_sit_and_relax_policy for {event.order_id}"
+        )
+        return EventResult.success()
 
-@registry.domain_event_handler
-def when_order_is_completed_process_payment_policy(
-    event: OrderCompletedEvent, module: type[BusinessModule]
-):
-    module.uow.history.append(
-        f"starting when_order_is_completed_process_payment_policy for {event.order_id}"
-    )
-    command_result = module.execute_command(
-        ProcessPaymentCommand(order_id=event.order_id)
-    )
-    return command_result
-
-
-@registry.domain_event_handler
-def when_order_is_completed_ship_order_policy(
-    event: OrderCompletedEvent, module: type[BusinessModule]
-):
-    module.uow.history.append(
-        f"starting when_order_is_completed_ship_order_policy for {event.order_id}"
-    )
-    command_result = module.execute_command(ShipOrderCommand(order_id=event.order_id))
-    return command_result
-
-
-@registry.domain_event_handler
-def when_payment_is_processed_open_champagne_policy(
-    event: PaymentProcessedEvent, module: type[BusinessModule]
-):
-    module.uow.history.append(
-        f"starting when_payment_is_processed_open_champagne_policy for {event.order_id}"
-    )
-    return EventResult.success()
-
-
-@registry.domain_event_handler
-def when_order_is_shipped_sit_and_relax_policy(
-    event: OrderShippedEvent, module: type[BusinessModule]
-):
-    module.uow.history.append(
-        f"starting when_order_is_shipped_sit_and_relax_policy for {event.order_id}"
-    )
-    return EventResult.success()
-
-
-@dataclass
-class MonoUnitOfWork(UnitOfWork):
-    history: list
-
-
-class MonoModule(BusinessModule):
-    registry = registry
-    unit_of_work_class = MonoUnitOfWork
-    supported_commands = (CompleteOrderCommand, ProcessPaymentCommand, ShipOrderCommand)
-    supported_queries = ()
-    event_handlers = (
-        when_order_is_completed_process_payment_policy,
-        when_order_is_completed_ship_order_policy,
-        when_payment_is_processed_open_champagne_policy,
-        when_order_is_shipped_sit_and_relax_policy,
-    )
-
-    def get_unit_of_work_init_kwargs(self):
-        return dict(history=self.init_kwargs["history"])
+    return app
 
 
 @pytest.mark.integration
 def test_mono_module_command_branching_flow():
     """This tests the branching code flow:
-                                    CompleteOrderCommand
+                                    complete_order
                                             ↓
                                     OrderCompletedEvent
                                     ↓                 ↓
     when_order_is_completed_process_payment_policy    when_order_is_completed_ship_order_policy
              ↓                                              ↓
-    ProcessPaymentCommand                             ShipOrderCommand
-             ↓                                              ↓
     PaymentProcessedEvent                             OrderShippedEvent
              ↓                                              ↓
     when_payment_is_processed_ship_order_policy       when_order_is_shipped_sit_and_relax_policy
     """
+    app = create_app()
     history = []
-    mono_module = MonoModule(history=history)
-    app = Application(
-        name="Monolith", version="1.0", config={}, outbox=InMemoryOutbox(), engine=None
-    )
-    app.add_module("mono_module", mono_module)
-
-    app.execute_command(CompleteOrderCommand(order_id="order1"))
+    with app.transaction_context(history=history) as ctx:
+        ctx.execute_command(CompleteOrderCommand(order_id="order1"))
 
     assert history == [
         "completing order1",
         "starting when_order_is_completed_process_payment_policy for order1",
-        "processing payment for order1",
         "starting when_order_is_completed_ship_order_policy for order1",
-        "shipping order1",
         "starting when_payment_is_processed_open_champagne_policy for order1",
         "starting when_order_is_shipped_sit_and_relax_policy for order1",
     ]

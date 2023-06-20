@@ -19,6 +19,14 @@ class GenericRepository(metaclass=abc.ABCMeta):
     def get_by_id(id: UUID) -> Entity:
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def persist(self, entity: type[Entity]):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def persist_all(self):
+        raise NotImplementedError()
+
     def __getitem__(self, index) -> Entity:
         return self.get_by_id(index)
 

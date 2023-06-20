@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+from modules.bidding.application import bidding_module
 from modules.bidding.domain.entities import Listing
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Bid, Bidder, Money
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler
 
 
 @dataclass
@@ -17,7 +17,7 @@ class PlaceBidCommand(Command):
     currency: str = "USD"
 
 
-@command_handler
+@bidding_module.command_handler
 def place_bid(
     command: PlaceBidCommand, listing_repository: ListingRepository
 ) -> CommandResult:
@@ -27,4 +27,4 @@ def place_bid(
     listing: Listing = listing_repository.get_by_id(command.listing_id)
     listing.place_bid(bid)
 
-    return CommandResult.ok()
+    return CommandResult.success()

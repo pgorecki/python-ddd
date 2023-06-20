@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
+from modules.catalog.application import catalog_module
 from modules.catalog.infrastructure.listing_repository import ListingModel
-from seedwork.application.decorators import query_handler
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.value_objects import UUID
@@ -11,7 +11,7 @@ class GetListingsOfSeller(Query):
     seller_id: UUID
 
 
-@query_handler
+@catalog_module.query_handler
 def get_listings_of_seller(query: GetListingsOfSeller, session: Session) -> QueryResult:
     # FIXME: use seller_id to filter out listings
     queryset = session.query(ListingModel)  # .filter(

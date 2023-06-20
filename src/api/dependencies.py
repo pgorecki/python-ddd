@@ -1,59 +1,34 @@
-from collections.abc import Callable
+from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 
-from config.container import Container, inject
-from modules.iam.domain.entities import User
-from seedwork.application import Application
-
-from .shared import dependency
+from modules.iam.application.services import IamService
+from modules.iam.domain.entities import AnonymousUser
+from seedwork.application import Application, TransactionContext
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
-def allow_role(role: str):
-    def check(user: User):
-        if user.role != role:
-            raise HTTPException(status_code=403, detail="Forbidden")
-        return True
-
-    return check
+async def get_application(request: Request) -> Application:
+    application = request.app.container.application()
+    return application
 
 
-def allow_authenticated():
-    def check(user: User):
-        if not user.is_authenticated():
-            raise HTTPException(status_code=403, detail="Forbidden")
-        return True
+async def get_transaction_context(
+    request: Request, app: Annotated[Application, Depends(get_application)]
+) -> TransactionContext:
+    """Creates a new transaction context for each request"""
 
-    return check
-
-
-def allow_anonymous():
-    return lambda user: True
-
-
-def create_app(check: callable) -> Callable[..., Application]:
-    @inject
-    async def create(
-        request: Request, app: Application = dependency(Container.application)
-    ):
+    with app.transaction_context() as ctx:
         try:
             access_token = await oauth2_scheme(request=request)
-            current_user = app.iam_service.find_user_by_access_token(access_token)
+            current_user = ctx.get_service(IamService).find_user_by_access_token(
+                access_token
+            )
         except HTTPException as e:
-            current_user = User.Anonymous()
+            current_user = AnonymousUser()
 
-        print("current user", current_user)
-        check(current_user)
-        app.current_user = current_user
-        return app
+        ctx.dependency_provider["current_user"] = current_user
 
-    return create
-
-
-def get_current_active_user(
-    app: Application = Depends(create_app(allow_authenticated())),
-):
-    return app.current_user
+        yield ctx

@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 
+from modules.catalog.application import catalog_module
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler
 from seedwork.domain.value_objects import UUID, Money
 
 
@@ -19,7 +19,7 @@ class UpdateListingDraftCommand(Command):
     modify_user_id: UUID
 
 
-@command_handler
+@catalog_module.command_handler
 def update_listing_draft(
     command: UpdateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:

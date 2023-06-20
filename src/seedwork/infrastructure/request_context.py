@@ -44,25 +44,10 @@ class RequestContext:
         return self._current_user.get()
 
     def begin_request(self, current_user=None):
-        self._current_user.set(current_user)
         self._correlation_id.set(uuid.uuid4())
-        session = Session(self._engine)
-        session.begin()
-        self._db_session.set(session)
 
     def end_request(self, commit=True):
-        if commit:
-            self.db_session.get().commit()
-        else:
-            self.db_session.get().rollback()
-
-    def __enter__(self):
-        self.begin_request()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        commit = exc_type is None
-        self.end_request(commit=commit)
+        self._correlation_id.set(uuid.UUID(int=0))
 
 
 """

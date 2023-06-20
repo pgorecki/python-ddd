@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
+from modules.catalog.application import catalog_module
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.events import ListingDraftCreatedEvent
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.decorators import command_handler
 from seedwork.domain.value_objects import UUID, Money
 
 
@@ -20,7 +20,7 @@ class CreateListingDraftCommand(Command):
     seller_id: UUID
 
 
-@command_handler
+@catalog_module.command_handler
 def create_listing_draft(
     command: CreateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:

@@ -67,6 +67,12 @@ class InMemoryRepository(Repository):
     def count(self):
         return len(self.objects)
 
+    def persist(self, entity: type[Entity]):
+        ...
+
+    def persist_all(self):
+        ...
+
 
 # a sentinel value for keeping track of entites removed from the repository
 class Removed:

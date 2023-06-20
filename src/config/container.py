@@ -1,13 +1,51 @@
+import inspect
+import json
+import uuid
+from typing import Optional
+from uuid import UUID
+
 from dependency_injector import containers, providers
+from dependency_injector.containers import Container
+from dependency_injector.providers import Dependency, Factory, Provider, Singleton
 from dependency_injector.wiring import Provide, inject  # noqa
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
-from modules.bidding import BiddingModule
-from modules.catalog import CatalogModule
-from modules.iam import IamService
-from modules.iam.infrastructure.repository import InMemoryUserRepository
-from seedwork.application import Application
+from modules.bidding.application import bidding_module
+from modules.bidding.infrastructure.listing_repository import (
+    PostgresJsonListingRepository as BiddingPostgresJsonListingRepository,
+)
+from modules.catalog.application import catalog_module
+from modules.catalog.infrastructure.listing_repository import (
+    PostgresJsonListingRepository as CatalogPostgresJsonListingRepository,
+)
+from modules.iam.application.services import IamService
+from modules.iam.infrastructure.repository import PostgresJsonUserRepository
+from seedwork.application import Application, DependencyProvider
 from seedwork.application.inbox_outbox import InMemoryOutbox
+from seedwork.infrastructure.logging import logger
+
+
+def resolve_provider_by_type(container: Container, cls: type) -> Optional[Provider]:
+    def inspect_provider(provider: Provider) -> bool:
+        if isinstance(provider, (Factory, Singleton)):
+            return issubclass(provider.cls, cls)
+        elif isinstance(provider, Dependency):
+            return issubclass(provider.instance_of, cls)
+
+        return False
+
+    matching_providers = inspect.getmembers(
+        container,
+        inspect_provider,
+    )
+    if matching_providers:
+        if len(matching_providers) > 1:
+            raise ValueError(
+                f"Cannot uniquely resolve {cls}. Found {len(providers)} matching resources."
+            )
+        return matching_providers[0][1]
+    return None
 
 
 def _default(val):
@@ -19,24 +57,26 @@ def _default(val):
 
 
 def dumps(d):
-    import json
-
     return json.dumps(d, default=_default)
 
 
-class DummyService:
-    def __init__(self, config) -> None:
-        self.config = config
+class IocProvider(DependencyProvider):
+    def __init__(self, container):
+        self.container = container
 
-    def serve(self):
-        return f"serving with config {self.config}"
+    def register_dependency(self, identifier, dependency_instance):
+        setattr(self.container, identifier, providers.Object(dependency_instance))
 
-
-def create_request_context(engine):
-    from seedwork.infrastructure.request_context import request_context
-
-    request_context.setup(engine)
-    return request_context
+    def get_dependency(self, identifier):
+        try:
+            if isinstance(identifier, type):
+                provider = resolve_provider_by_type(self.container, identifier)
+            else:
+                provider = getattr(self.container, identifier)
+            instance = provider()
+        except Exception as e:
+            raise e
+        return instance
 
 
 def create_engine_once(config):
@@ -50,55 +90,80 @@ def create_engine_once(config):
     return engine
 
 
-def create_app(
-    name, version, config, engine, catalog_module, bidding_module, iam_service, outbox
-) -> Application:
-    app = Application(
-        name=name,
-        version=version,
-        config=config,
-        engine=engine,
-        outbox=outbox,
-        iam_service=iam_service,
+def create_application(db_engine):
+    application = Application(
+        "BiddingApp",
+        0.1,
+        db_engine=db_engine,
     )
-    app.add_modules(catalog=catalog_module, bidding=bidding_module)
-    return app
+    application.include_module(catalog_module)
+    application.include_module(bidding_module)
+
+    @application.on_enter_transaction_context
+    def on_enter_transaction_context(ctx):
+        engine = ctx.app.dependency_provider["db_engine"]
+        session = Session(engine)
+        correlation_id = uuid.uuid4()
+        transaction_container = TransactionContainer(
+            db_session=session, correlation_id=correlation_id, logger=logger
+        )
+        ctx.dependency_provider = IocProvider(transaction_container)
+        logger.info(f"session={id(session)} transaction started")
+
+    @application.on_exit_transaction_context
+    def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
+        session = ctx.dependency_provider.get_dependency("db_session")
+        if exc_type:
+            session.rollback()
+            logger.info(f"session={id(session)} rollback due to {exc_type}")
+        else:
+            session.commit()
+            logger.info(f"session={id(session)} committed")
+        session.close()
+        logger.info(f"session={id(session)} transaction ended ")
+
+    @application.transaction_middleware
+    def logging_middleware(ctx, next):
+        session = ctx.dependency_provider.get_dependency("db_session")
+        result = next()
+        logger.info(f"Task {ctx.task} executed successfully")
+        return result
+
+    return application
 
 
-class Container(containers.DeclarativeContainer):
-    """Dependency Injection Container
+class TransactionContainer(containers.DeclarativeContainer):
+    """Dependency Injection Container for the transaction context.
 
     see https://github.com/ets-labs/python-dependency-injector for more details
     """
 
-    __self__ = providers.Self()
+    correlation_id = providers.Dependency(instance_of=UUID)
+    db_session = providers.Dependency(instance_of=Session)
+    logger = providers.Dependency()
 
-    config = providers.Configuration()
-    engine = providers.Singleton(create_engine_once, config)
-    outbox = providers.Factory(InMemoryOutbox)
+    outbox = providers.Singleton(InMemoryOutbox)
 
-    catalog_module = providers.Factory(
-        CatalogModule,
+    catalog_listing_repository = providers.Singleton(
+        CatalogPostgresJsonListingRepository,
+        db_session=db_session,
     )
 
-    bidding_module = providers.Factory(
-        BiddingModule,
+    bidding_listing_repository = providers.Singleton(
+        BiddingPostgresJsonListingRepository,
+        db_session=db_session,
     )
 
     user_repository = providers.Singleton(
-        InMemoryUserRepository,
+        PostgresJsonUserRepository,
+        db_session=db_session,
     )
 
-    iam_service = providers.Factory(IamService, user_repository=user_repository)
+    iam_service = providers.Singleton(IamService, user_repository=user_repository)
 
-    application = providers.Factory(
-        create_app,
-        name="Auctions API",
-        version="0.1.0",
-        config=config,
-        engine=engine,
-        catalog_module=catalog_module,
-        bidding_module=bidding_module,
-        iam_service=iam_service,
-        outbox=outbox,
-    )
+
+class TopLevelContainer(containers.DeclarativeContainer):
+    __self__ = providers.Self()
+    config = providers.Configuration()
+    db_engine = providers.Singleton(create_engine_once, config)
+    application = providers.Singleton(create_application, db_engine=db_engine)

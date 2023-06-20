@@ -1,8 +1,11 @@
-from fastapi import APIRouter
+from typing import Annotated
+from uuid import UUID
 
+from fastapi import APIRouter, Depends
+
+from api.dependencies import Application, get_application
 from api.models.catalog import ListingIndexModel, ListingReadModel, ListingWriteModel
-from api.shared import dependency
-from config.container import Container, inject
+from config.container import inject
 from modules.catalog.application.command import (
     CreateListingDraftCommand,
     DeleteListingDraftCommand,
@@ -23,9 +26,7 @@ router = APIRouter()
 
 @router.get("/catalog", tags=["catalog"], response_model=ListingIndexModel)
 @inject
-async def get_all_listings(
-    app: Application = dependency(Container.application),
-):
+async def get_all_listings(app: Annotated[Application, Depends(get_application)]):
     """
     Shows all published listings in the catalog
     """
@@ -37,8 +38,7 @@ async def get_all_listings(
 @router.get("/catalog/{listing_id}", tags=["catalog"], response_model=ListingReadModel)
 @inject
 async def get_listing_details(
-    listing_id,
-    app: Application = dependency(Container.application),
+    listing_id, app: Annotated[Application, Depends(get_application)]
 ):
     """
     Shows listing details
@@ -54,7 +54,7 @@ async def get_listing_details(
 @inject
 async def create_listing(
     request_body: ListingWriteModel,
-    app: Application = dependency(Container.application),
+    app: Annotated[Application, Depends(get_application)],
 ):
     """
     Creates a new listing.
@@ -77,8 +77,7 @@ async def create_listing(
 )
 @inject
 async def delete_listing(
-    listing_id,
-    app: Application = dependency(Container.application),
+    listing_id, app: Annotated[Application, Depends(get_application)]
 ):
     """
     Delete listing
@@ -97,8 +96,7 @@ async def delete_listing(
 )
 @inject
 async def publish_listing(
-    listing_id,
-    app: Application = dependency(Container.application),
+    listing_id: UUID, app: Annotated[Application, Depends(get_application)]
 ):
     """
     Creates a new listing.
@@ -106,8 +104,8 @@ async def publish_listing(
     command = PublishListingDraftCommand(
         listing_id=listing_id,
     )
-    command_result = app.execute_command(command)
+    app.execute_command(command)
 
-    query = GetListingDetails(listing_id=command_result.entity_id)
+    query = GetListingDetails(listing_id=listing_id)
     query_result = app.execute_query(query)
     return dict(query_result.payload)

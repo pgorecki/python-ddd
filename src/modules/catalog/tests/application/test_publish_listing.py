@@ -6,6 +6,7 @@ from modules.catalog.application.command.publish_listing_draft import (
 )
 from modules.catalog.domain.entities import Listing, Seller
 from modules.catalog.domain.value_objects import ListingStatus
+from seedwork.domain.exceptions import BusinessRuleValidationException
 from seedwork.domain.value_objects import Money
 from seedwork.infrastructure.repository import InMemoryRepository
 
@@ -64,10 +65,10 @@ def test_publish_listing_and_break_business_rule():
     )
 
     # act
-    result = publish_listing_draft(
-        command,
-        listing_repository=listing_repository,
-    )
 
     # assert
-    assert result.has_errors()
+    with pytest.raises(BusinessRuleValidationException):
+        publish_listing_draft(
+            command,
+            listing_repository=listing_repository,
+        )

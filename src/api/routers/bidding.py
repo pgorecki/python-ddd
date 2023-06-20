@@ -1,8 +1,10 @@
-from fastapi import APIRouter
+from typing import Annotated
 
+from fastapi import APIRouter, Depends
+
+from api.dependencies import get_application
 from api.models.bidding import BiddingResponse, PlaceBidRequest
-from api.shared import dependency
-from config.container import Container, inject
+from config.container import inject
 from modules.bidding.application.command import PlaceBidCommand, RetractBidCommand
 from modules.bidding.application.query.get_bidding_details import GetBiddingDetails
 from seedwork.application import Application
@@ -17,8 +19,7 @@ Inspired by https://developer.ebay.com/api-docs/buy/offer/types/api:Bidding
 @router.get("/bidding/{listing_id}", tags=["bidding"], response_model=BiddingResponse)
 @inject
 async def get_bidding_details_of_listing(
-    listing_id,
-    app: Application = dependency(Container.application),
+    listing_id, app: Annotated[Application, Depends(get_application)]
 ):
     """
     Shows listing details
@@ -40,7 +41,7 @@ async def get_bidding_details_of_listing(
 async def place_bid(
     listing_id,
     request_body: PlaceBidRequest,
-    app: Application = dependency(Container.application),
+    app: Annotated[Application, Depends(get_application)],
 ):
     """
     Places a bid on a listing
@@ -52,7 +53,7 @@ async def place_bid(
         bidder_id=request_body.bidder_id,
         amount=request_body.amount,
     )
-    app.execute_command(command)
+    result = app.execute_command(command)
 
     query = GetBiddingDetails(listing_id=listing_id)
     query_result = app.execute_query(query)
@@ -71,8 +72,7 @@ async def place_bid(
 )
 @inject
 async def retract_bid(
-    listing_id,
-    app: Application = dependency(Container.application),
+    listing_id, app: Annotated[Application, Depends(get_application)]
 ):
     """
     Retracts a bid from a listing

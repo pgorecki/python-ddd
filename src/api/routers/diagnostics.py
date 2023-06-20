@@ -2,24 +2,21 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from api.dependencies import allow_anonymous, create_app
-from seedwork.application import Application
+from api.dependencies import get_transaction_context
+from seedwork.application import TransactionContext
+
+from .iam import UserResponse
 
 router = APIRouter()
 
 
-from .iam import UserResponse
-
-app_for_anonymous = create_app(allow_anonymous())
-
-
 @router.get("/debug", tags=["diagnostics"])
-async def debug(app: Annotated[Application, Depends(app_for_anonymous)]):
+async def debug(ctx: Annotated[TransactionContext, Depends(get_transaction_context)]):
     return dict(
-        app_id=id(app),
+        app_id=id(ctx.app),
         user=UserResponse(
-            id=str(app.current_user.id), username=app.current_user.username
+            id=str(ctx.current_user.id), username=ctx.current_user.username
         ),
-        name=app.name,
-        version=app.version,
+        name=ctx.app.name,
+        version=ctx.app.version,
     )

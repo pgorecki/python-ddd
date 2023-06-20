@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy.orm import Session
 
 from modules.catalog.domain.entities import Listing, Money
 from modules.catalog.infrastructure.listing_repository import (
@@ -8,13 +9,58 @@ from modules.catalog.infrastructure.listing_repository import (
 )
 from seedwork.domain.value_objects import UUID
 
-# engine = sqlalchemy.create_engine("")
-
 
 @pytest.mark.integration
 def test_listing_repo_is_empty(db_session):
     repo = PostgresJsonListingRepository(db_session=db_session)
     assert repo.count() == 0
+
+
+@pytest.mark.integration
+def test_sqlalchemy_repo_is_adding(engine):
+    with Session(engine) as session:
+        repo = PostgresJsonListingRepository(db_session=session)
+        listing = Listing(
+            id=UUID(int=1),
+            title="Foo",
+            description="...",
+            ask_price=Money(10),
+            seller_id=UUID(int=1),
+        )
+        repo.add(listing)
+        session.commit()
+
+    with Session(engine) as session:
+        repo = PostgresJsonListingRepository(db_session=session)
+        listing = repo.get_by_id(UUID(int=1))
+        assert listing is not None
+
+
+@pytest.mark.integration
+def test_sqlalchemy_repo_is_persisting_chages(engine):
+    with Session(engine) as session:
+        repo = PostgresJsonListingRepository(db_session=session)
+        listing = Listing(
+            id=UUID(int=1),
+            title="Foo",
+            description="...",
+            ask_price=Money(10),
+            seller_id=UUID(int=1),
+        )
+        repo.add(listing)
+        session.commit()
+
+    with Session(engine) as session:
+        repo = PostgresJsonListingRepository(db_session=session)
+        listing = repo.get_by_id(UUID(int=1))
+        listing.title = "Bar"
+        repo.persist_all()
+        session.commit()
+
+    with Session(engine) as session:
+        repo = PostgresJsonListingRepository(db_session=session)
+        listing = repo.get_by_id(UUID(int=1))
+        assert listing.title == "Bar"
 
 
 @pytest.mark.unit

@@ -1,31 +1,12 @@
+import copy
 import uuid
-from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
 from config.container import Container
-from modules.catalog.application.command.create_listing_draft import (
-    CreateListingDraftCommand,
-)
-from modules.catalog.domain.entities import Money
 from modules.catalog.infrastructure.listing_repository import Base
 from seedwork.infrastructure.logging import LoggerFactory, logger
-
-
-@contextmanager
-def unit_of_work(module):
-    from seedwork.infrastructure.request_context import request_context
-
-    with Session(engine) as db_session:
-        correlation_id = uuid.uuid4()
-        request_context.correlation_id.set(correlation_id)
-        with module.unit_of_work(
-            correlation_id=correlation_id, db_session=db_session
-        ) as uow:
-            yield uow
-        db_session.commit()
-        request_context.correlation_id.set(None)
-
+from seedwork.infrastructure.request_context import request_context
 
 # a sample command line script to print all listings
 # run with "cd src && python -m cli"
@@ -38,31 +19,90 @@ container.config.from_dict(
     dict(
         # DATABASE_URL="sqlite+pysqlite:///:memory:",
         DATABASE_URL="postgresql://postgres:password@localhost:5432/postgres",
+        DATABASE_ECHO=False,
         DEBUG=True,
     )
 )
 
-engine = container.engine()
+engine = container.db().engine()
 Base.metadata.create_all(engine)
 
-app = container.application()
 
-
-with unit_of_work(app.catalog) as uow:
-    logger.info(f"executing unit of work")
-    count = uow.listing_repository.count()
-    logger.info(f"{count} listing in the repository")
-
-
-logger.info(f"adding new draft")
-command_result = app.execute_command(
-    CreateListingDraftCommand(
-        title="First listing", description=".", ask_price=Money(100), seller_id=None
-    )
+from seedwork.spike.test_scratch import (
+    ActivateUserCommand,
+    Application,
+    CommandResult,
+    DependencyProvider,
+    TransactionContext,
 )
-print(command_result)
 
-with unit_of_work(app.catalog) as uow:
-    logger.info(f"executing unit of work")
-    count = uow.listing_repository.count()
-    logger.info(f"{count} listing in the repository")
+
+class CustomDependencyProvider(DependencyProvider):
+    def __init__(self, ioc_container):
+        self.ioc_container = ioc_container
+
+
+provider = CustomDependencyProvider(container)
+app = Application(provider)
+
+
+@app.on_enter_transaction_context
+def on_enter_transaction_context(context: TransactionContext):
+    db_session = Session(engine)
+    correlation_id = uuid.uuid4()
+    context.dependency_provider = copy.deepcopy(app.dependency_provider)
+    context.dependency_provider["correlation_id"] = correlation_id
+    context.dependency_provider["db_session"] = db_session
+
+
+@app.on_exit_transaction_context
+def on_exit_transaction_context(context: TransactionContext, exc_type, exc_val, exc_tb):
+    db_session = context.dependency_provider["db_session"]
+    if exc_val is None:
+        db_session.commit()
+    else:
+        db_session.rollback()
+    context.dependency_provider["db_session"].close()
+
+
+@app.transaction_middleware
+def logging_middleware(next: callable, context: TransactionContext, task):
+    correlation_id = context.dependency_provider["correlation_id"]
+    request_context.correlation_id.set(correlation_id)
+    logger.info(f"transaction started for {task}")
+    result = next()
+    logger.info(f"transaction finished with {result}")
+    return result
+
+
+@app.transaction_middleware
+def sql_alchemy_session_middleware(next: callable, context: TransactionContext, task):
+    db_session = context.dependency_provider["db_session"]
+    logger.debug(f"session {db_session} started")
+    try:
+        result = next()
+        db_session.commit()
+        logger.debug(f"session {db_session} committed")
+        return result
+    except:
+        db_session.rollback()
+        logger.debug(f"session {db_session} rolled back")
+    finally:
+        db_session.close()
+
+
+@app.command_handler(ActivateUserCommand)
+def activate_user(
+    command: ActivateUserCommand, user_repository, db_session
+) -> CommandResult:
+    logger.info(f"activate_user {db_session} {user_repository}")
+    try:
+        user = user_repository.get_by_id(command.user_id)
+    except:
+        user = None
+    return CommandResult(user)
+
+
+with app.transaction_context(correlation_id="foo") as ctx:
+    ctx.execute_command(ActivateUserCommand(user_id=uuid.UUID(int=1)))
+    ctx.execute_command(ActivateUserCommand(user_id=uuid.UUID(int=2)))

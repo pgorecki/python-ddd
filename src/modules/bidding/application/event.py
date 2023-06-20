@@ -1,14 +1,15 @@
 from datetime import datetime, timedelta
 
+from modules.bidding.application import bidding_module
 from modules.bidding.domain.entities import Listing
+from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Seller
 from modules.catalog.domain.events import ListingPublishedEvent
-from seedwork.application.decorators import domain_event_handler
 
 
-@domain_event_handler
+@bidding_module.domain_event_handler
 def when_listing_is_published_start_auction(
-    event: ListingPublishedEvent, listing_repository
+    event: ListingPublishedEvent, listing_repository: ListingRepository
 ):
     listing = Listing(
         id=event.listing_id,

@@ -37,7 +37,9 @@ def test_update_listing_draft():
     assert result.is_success()
 
 
-@pytest.mark.skip("Not yet implemented")
+@pytest.mark.skip(
+    "UpdateListingDraftCommand with optional fields is not yet implemented"
+)
 @pytest.mark.unit
 def test_partially_update_listing_draft():
     # arrange
@@ -53,6 +55,7 @@ def test_partially_update_listing_draft():
 
     # act
     command = UpdateListingDraftCommand(
+        # only 2 fields should be updated, but all are required in a command
         listing_id=listing.id,
         title="Tiny golden dragon",
     )

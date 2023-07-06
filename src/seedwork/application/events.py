@@ -24,6 +24,7 @@ class EventResult:
 
     event_id: UUID = None
     payload: Any = None
+    command: Any = None  # command th
     events: list[DomainEvent] = field(default_factory=list)
     errors: list[Any] = field(default_factory=list)
 
@@ -48,14 +49,14 @@ class EventResult:
 
     @classmethod
     def success(
-        cls, event_id=None, payload=None, event=None, events=None
+        cls, event_id=None, payload=None, command=None, event=None, events=None
     ) -> "EventResult":
         """Creates a successful result"""
         if events is None:
             events = []
         if event:
             events.append(event)
-        return cls(event_id=event_id, payload=payload, events=events)
+        return cls(event_id=event_id, payload=payload, command=command, events=events)
 
 
 class EventResultSet(set):
@@ -70,3 +71,8 @@ class EventResultSet(set):
         for event in self:
             all_events.extend(event.events)
         return all_events
+
+    @property
+    def commands(self):
+        all_commands = [event.command for event in self if event.command]
+        return all_commands

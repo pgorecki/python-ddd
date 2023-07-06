@@ -117,7 +117,7 @@ class TransactionContext:
             p = partial(middleware, self, p, command, query, event)
         return p
 
-    def execute_query(self, query):
+    def execute_query(self, query) -> QueryResult:
         assert (
             self.task is None
         ), "Cannot execute query while another task is being executed"
@@ -127,12 +127,15 @@ class TransactionContext:
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
             handler_func, **self.overrides
         )
-        handler_func = partial(handler_func, query, **handler_kwargs)
-        wrapped_handler = self._wrap_with_middlewares(handler_func, query=query)
+        p = partial(handler_func, query, **handler_kwargs)
+        wrapped_handler = self._wrap_with_middlewares(p, query=query)
         result = wrapped_handler()
+        assert isinstance(
+            result, QueryResult
+        ), f"Got {result} instead of QueryResult from {handler_func}"
         return result
 
-    def execute_command(self, command):
+    def execute_command(self, command) -> CommandResult:
         assert (
             self.task is None
         ), "Cannot execute command while another task is being executed"
@@ -142,11 +145,14 @@ class TransactionContext:
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
             handler_func, **self.overrides
         )
-        handler_func = partial(handler_func, command, **handler_kwargs)
-        wrapped_handler = self._wrap_with_middlewares(handler_func, command=command)
+        p = partial(handler_func, command, **handler_kwargs)
+        wrapped_handler = self._wrap_with_middlewares(p, command=command)
 
         # execute wrapped command handler
         command_result = wrapped_handler()
+        assert isinstance(
+            command_result, CommandResult
+        ), f"Got {command_result} instead of CommandResult from {handler_func}"
 
         self.next_commands = []
         self.integration_events = []
@@ -154,14 +160,32 @@ class TransactionContext:
         while len(event_queue) > 0:
             event = event_queue.pop(0)
             if isinstance(event, IntegrationEvent):
-                self._process_integration_event(event)
+                self.collect_integration_event(event)
 
             elif isinstance(event, DomainEvent):
-                new_command, new_events = self._process_domain_event(event)
-                self.next_commands.extend(new_command)
-                event_queue.extend(new_events)
+                event_results = self.handle_domain_event(event)
+                self.next_commands.extend(event_results.commands)
+                event_queue.extend(event_results.events)
 
         return CommandResult.success(payload=command_result.payload)
+
+    def handle_domain_event(self, event) -> EventResultSet:
+        event_results = []
+        for handler_func in self.app.get_event_handlers(event):
+            handler_kwargs = self.dependency_provider.get_handler_kwargs(
+                handler_func, **self.overrides
+            )
+            p = partial(handler_func, event, **handler_kwargs)
+            wrapped_handler = self._wrap_with_middlewares(p, event=event)
+            result = wrapped_handler()
+            assert isinstance(
+                result, EventResult
+            ), f"Got {result} instead of EventResult from {handler_func}"
+            event_results.append(result)
+        return EventResultSet(event_results)
+
+    def collect_integration_event(self, event):
+        self.integration_events.append(event)
 
     def get_service(self, service_cls):
         return self.dependency_provider.get_dependency(service_cls)
@@ -169,25 +193,6 @@ class TransactionContext:
     @property
     def current_user(self):
         return self.dependency_provider.get_dependency("current_user")
-
-    def _process_integration_event(self, event):
-        self.integration_events.append(event)
-
-    def _process_domain_event(self, event):
-        new_commands = []
-        new_events = []
-        for handler_func in self.app.get_event_handlers(event):
-            handler_kwargs = self.dependency_provider.get_handler_kwargs(
-                handler_func, **self.overrides
-            )
-            event_handler = partial(handler_func, event, **handler_kwargs)
-            wrapped_handler = self._wrap_with_middlewares(event_handler, event=event)
-            result = wrapped_handler()
-            if isinstance(result, Command):
-                new_commands.append(result)
-            elif isinstance(result, EventResult):
-                new_events.extend(result.events)
-        return new_commands, new_events
 
 
 class ApplicationModule:

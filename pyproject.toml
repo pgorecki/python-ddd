@@ -33,6 +33,7 @@ bcrypt = "^4.0.1"
 poethepoet = "^0.10.0"
 pytest-cov = "^2.12.1"
 mypy = "^0.910"
+vulture = "^2.7"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

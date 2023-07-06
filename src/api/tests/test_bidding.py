@@ -37,7 +37,7 @@ def setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id):
         )
     )
     app.execute_command(PublishListingDraftCommand(listing_id=listing_id))
-    logger.info("setup complete")
+    logger.info("test setup complete")
 
 
 @pytest.mark.integration

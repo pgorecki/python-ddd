@@ -108,25 +108,36 @@ def create_application(db_engine):
             db_session=session, correlation_id=correlation_id, logger=logger
         )
         ctx.dependency_provider = IocProvider(transaction_container)
-        logger.info(f"session={id(session)} transaction started")
+        logger.info(f"{id(session)} transaction started")
 
     @application.on_exit_transaction_context
     def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
         session = ctx.dependency_provider.get_dependency("db_session")
         if exc_type:
             session.rollback()
-            logger.info(f"session={id(session)} rollback due to {exc_type}")
+            logger.info(f"{id(session)} rollback due to {exc_type}")
         else:
             session.commit()
-            logger.info(f"session={id(session)} committed")
+            logger.info(f"{id(session)} committed")
         session.close()
-        logger.info(f"session={id(session)} transaction ended ")
+        logger.info(f"{id(session)} transaction ended ")
 
     @application.transaction_middleware
-    def logging_middleware(ctx, next):
+    def logging_middleware(ctx, next, command=None, query=None, event=None):
+        if command:
+            prefix = "Executing"
+            task = command
+        elif query:
+            prefix = "Querying"
+            task = query
+        elif event:
+            prefix = "Handling"
+            task = event
+        task = command or query or event
         session = ctx.dependency_provider.get_dependency("db_session")
+        logger.info(f"{id(session)} {prefix} {task}")
         result = next()
-        logger.info(f"Task {ctx.task} executed successfully")
+        logger.info(f"{id(session)} {prefix} completed, result: {result}")
         return result
 
     return application

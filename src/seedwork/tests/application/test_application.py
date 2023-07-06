@@ -124,12 +124,12 @@ def test_transaction_context_middleware():
     app = Application(trace=[])
 
     @app.transaction_middleware
-    def middleware1(ctx, next):
+    def middleware1(ctx, next, command=None, query=None, event=None):
         ctx.dependency_provider["trace"].append("middleware1")
         return next()
 
     @app.transaction_middleware
-    def middleware1(ctx, next):
+    def middleware1(ctx, next, command=None, query=None, event=None):
         ctx.dependency_provider["trace"].append("middleware2")
         return next()
 

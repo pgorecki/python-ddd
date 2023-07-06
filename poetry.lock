@@ -787,10 +787,21 @@ platformdirs = ">=2.4,<3"
 docs = ["proselint (>=0.13)", "sphinx (>=5.3)", "sphinx-argparse (>=0.3.2)", "sphinx-rtd-theme (>=1)", "towncrier (>=22.8)"]
 testing = ["coverage (>=6.2)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=21.3)", "pytest (>=7.0.1)", "pytest-env (>=0.6.2)", "pytest-freezegun (>=0.4.2)", "pytest-mock (>=3.6.1)", "pytest-randomly (>=3.10.3)", "pytest-timeout (>=2.1)"]
 
+[[package]]
+name = "vulture"
+version = "2.7"
+description = "Find dead code"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+toml = "*"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10.0"
-content-hash = "39a1dd9a1ca117451b105bca0f7a6e62f0c5fe222d6158bdb0195510c320668d"
+content-hash = "6eccbbfbc60a040faae5b4d7aba3e3233e060f5dc94d14452fc7c5b4510e7d48"
 
 [metadata.files]
 alembic = []
@@ -959,3 +970,4 @@ uvicorn = [
     {file = "uvicorn-0.14.0.tar.gz", hash = "sha256:45ad7dfaaa7d55cab4cd1e85e03f27e9d60bc067ddc59db52a2b0aeca8870292"},
 ]
 virtualenv = []
+vulture = []

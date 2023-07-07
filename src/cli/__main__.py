@@ -55,7 +55,7 @@ with app.transaction_context() as ctx:
         )
     )
 
-# use transaction context to acccess any dependency (i.e a repository, a service, etc.)
+# use transaction context to access any dependency (i.e a repository, a service, etc.)
 with app.transaction_context() as ctx:
     listing_repository = ctx.get_service(ListingRepository)
     listing_count = listing_repository.count()

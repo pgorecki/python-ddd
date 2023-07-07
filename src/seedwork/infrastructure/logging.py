@@ -1,22 +1,27 @@
 import logging
+import uuid
+from contextvars import ContextVar
 from datetime import datetime
 from logging.config import dictConfig
 
 from pythonjsonlogger import jsonlogger
 
-from seedwork.infrastructure.request_context import request_context
 from seedwork.utils.functional import SimpleLazyObject
+
+correlation_id: ContextVar[uuid.UUID] = ContextVar(
+    "correlation_id", default=uuid.UUID("00000000-0000-0000-0000-000000000000")
+)
 
 
 class RequestContextFilter(logging.Filter):
     """ "Provides correlation id parameter for the logger"""
 
-    def __init__(self, name: str, request_context) -> None:
+    def __init__(self, name: str, correlation_id) -> None:
         super().__init__(name=name)
-        self.request_context = request_context
+        self.correlation_id = correlation_id
 
     def filter(self, record):
-        record.correlation_id = self.request_context.correlation_id.get()
+        record.correlation_id = self.correlation_id.get()
         return True
 
 
@@ -40,11 +45,11 @@ class LoggerFactory:
         cls,
         logger_name="app",
         log_filename="./logs.json",
-        request_context=request_context,
+        correlation_id=correlation_id,
     ):
         cls.logger_name = logger_name
         cls.log_filename = log_filename
-        cls.request_context = request_context
+        cls.correlation_id = correlation_id
         cls._configured = True
 
     @classmethod
@@ -131,9 +136,10 @@ class LoggerFactory:
 
         dictConfig(logging_config)
         logger = logging.getLogger(name=cls.logger_name)
+        logger.correlation_id = cls.correlation_id
         logger.addFilter(
             RequestContextFilter(
-                name=cls.logger_name, request_context=cls.request_context
+                name=cls.logger_name, correlation_id=cls.correlation_id
             )
         )
         return logger

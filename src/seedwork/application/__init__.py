@@ -1,11 +1,8 @@
 import importlib
 import inspect
-import uuid
 from collections import defaultdict
 from functools import partial
-from typing import Dict, Type
-
-from sqlalchemy.orm import Session
+from typing import Any
 
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
@@ -16,8 +13,7 @@ from seedwork.application.inbox_outbox import InMemoryInbox
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.events import DomainEvent
-from seedwork.infrastructure.logging import logger
-from seedwork.infrastructure.request_context import request_context
+from seedwork.utils.data_structures import OrderedSet
 
 
 def get_function_arguments(func):
@@ -187,8 +183,12 @@ class TransactionContext:
     def collect_integration_event(self, event):
         self.integration_events.append(event)
 
-    def get_service(self, service_cls):
+    def get_service(self, service_cls) -> Any:
+        """Get a dependency from the dependency provider"""
         return self.dependency_provider.get_dependency(service_cls)
+
+    def __getitem__(self, item) -> Any:
+        return self.get_service(item)
 
     @property
     def current_user(self):
@@ -201,7 +201,7 @@ class ApplicationModule:
         self.version = version
         self.command_handlers = {}
         self.query_handlers = {}
-        self.event_handlers = defaultdict(set)
+        self.event_handlers = defaultdict(OrderedSet)
 
     def query_handler(self, handler_func):
         """Query handler decorator"""

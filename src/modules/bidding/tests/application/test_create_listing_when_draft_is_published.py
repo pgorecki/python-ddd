@@ -20,5 +20,5 @@ def test_create_listing_on_draft_published_event(app, engine):
         )
 
     with app.transaction_context() as ctx:
-        listing_repository = ctx.get_service(BiddingListingRepository)
+        listing_repository = ctx[BiddingListingRepository]
         assert listing_repository.count() == 1

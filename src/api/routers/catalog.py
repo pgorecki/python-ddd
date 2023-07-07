@@ -15,7 +15,6 @@ from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
 from seedwork.application import Application
 from seedwork.domain.value_objects import Money
-from seedwork.infrastructure.request_context import request_context
 
 """
 Inspired by https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/createOffer

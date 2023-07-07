@@ -104,23 +104,25 @@ def create_application(db_engine):
         engine = ctx.app.dependency_provider["db_engine"]
         session = Session(engine)
         correlation_id = uuid.uuid4()
+        logger.correlation_id.set(uuid.uuid4())
         transaction_container = TransactionContainer(
             db_session=session, correlation_id=correlation_id, logger=logger
         )
         ctx.dependency_provider = IocProvider(transaction_container)
-        logger.info(f"{id(session)} transaction started")
+        logger.debug(f"transaction started")
 
     @application.on_exit_transaction_context
     def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
         session = ctx.dependency_provider.get_dependency("db_session")
         if exc_type:
             session.rollback()
-            logger.info(f"{id(session)} rollback due to {exc_type}")
+            logger.debug(f"rollback due to {exc_type}")
         else:
             session.commit()
-            logger.info(f"{id(session)} committed")
+            logger.debug(f"committed")
         session.close()
-        logger.info(f"{id(session)} transaction ended ")
+        logger.debug(f"transaction ended ")
+        logger.correlation_id.set(uuid.UUID(int=0))
 
     @application.transaction_middleware
     def logging_middleware(ctx, next, command=None, query=None, event=None):

@@ -8,7 +8,6 @@ from config.api_config import ApiConfig
 from config.container import TopLevelContainer
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
 from seedwork.infrastructure.logging import LoggerFactory, logger
-from seedwork.infrastructure.request_context import request_context
 
 # configure logger prior to first usage
 LoggerFactory.configure(logger_name="api")

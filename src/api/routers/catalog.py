@@ -57,7 +57,7 @@ async def create_listing(
     current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     """
-    Creates a new listing.
+    Creates a new listing
     """
     command = CreateListingDraftCommand(
         listing_id=uuid.uuid4(),
@@ -83,7 +83,7 @@ async def delete_listing(
     current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     """
-    Delete listing
+    Deletes a listing
     """
     command = DeleteListingDraftCommand(
         listing_id=listing_id,
@@ -100,13 +100,16 @@ async def delete_listing(
 )
 @inject
 async def publish_listing(
-    listing_id: UUID, app: Annotated[Application, Depends(get_application)]
+    listing_id: UUID,
+    app: Annotated[Application, Depends(get_application)],
+    current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     """
-    Creates a new listing.
+    Publishes a listing
     """
     command = PublishListingDraftCommand(
         listing_id=listing_id,
+        seller_id=current_user.id,
     )
     app.execute_command(command)
 

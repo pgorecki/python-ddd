@@ -52,8 +52,18 @@ class PublishedListingMustNotBeDeleted(BusinessRule):
         return self.status == ListingStatus.PUBLISHED
 
 
+class OnlyListingOwnerCanPublishListing(BusinessRule):
+    __message = "Only listing owner can publish a listing"
+
+    listing_seller_id: ListingId
+    current_seller_id: SellerId
+
+    def is_broken(self) -> bool:
+        return self.listing_seller_id != self.current_seller_id
+
+
 class OnlyListingOwnerCanDeleteListing(BusinessRule):
-    __message = "Only listing owner can delete listing"
+    __message = "Only listing owner can delete a listing"
 
     listing_seller_id: ListingId
     current_seller_id: SellerId

@@ -30,6 +30,7 @@ def test_publish_listing():
 
     command = PublishListingDraftCommand(
         listing_id=listing.id,
+        seller_id=seller.id,
     )
 
     # act
@@ -62,6 +63,7 @@ def test_publish_listing_and_break_business_rule():
 
     command = PublishListingDraftCommand(
         listing_id=listing.id,
+        seller_id=seller.id,
     )
 
     # act

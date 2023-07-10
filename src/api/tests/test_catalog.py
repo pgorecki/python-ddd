@@ -111,8 +111,9 @@ def test_catalog_delete_non_existing_draft_returns_404(authenticated_api_client)
 
 
 @pytest.mark.integration
-def test_catalog_publish_listing_draft(app, api_client):
+def test_catalog_publish_listing_draft(app, authenticated_api_client):
     # arrange
+    current_user = authenticated_api_client.current_user
     listing_id = UUID(int=1)
     app.execute_command(
         CreateListingDraftCommand(
@@ -120,35 +121,37 @@ def test_catalog_publish_listing_draft(app, api_client):
             title="Listing to be published",
             description="...",
             ask_price=Money(10),
-            seller_id=UUID("00000000000000000000000000000002"),
+            seller_id=current_user.id,
         )
     )
 
     # act
-    response = api_client.post(f"/catalog/{listing_id}/publish")
+    response = authenticated_api_client.post(f"/catalog/{listing_id}/publish")
 
     # assert that the listing was published
     assert response.status_code == 200
 
 
-def test_published_listing_appears_in_biddings(app, api_client):
+def test_published_listing_appears_in_biddings(app, authenticated_api_client):
     # arrange
     listing_id = UUID(int=1)
+    current_user = authenticated_api_client.current_user
     app.execute_command(
         CreateListingDraftCommand(
             listing_id=listing_id,
             title="Listing to be published",
             description="...",
             ask_price=Money(10),
-            seller_id=UUID("00000000000000000000000000000002"),
+            seller_id=current_user.id,
         )
     )
     app.execute_command(
         PublishListingDraftCommand(
             listing_id=listing_id,
+            seller_id=current_user.id,
         )
     )
 
     url = f"/bidding/{listing_id}"
-    response = api_client.get(url)
+    response = authenticated_api_client.get(url)
     assert response.status_code == 200

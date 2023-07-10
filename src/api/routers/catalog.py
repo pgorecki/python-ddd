@@ -1,9 +1,10 @@
+import uuid
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
-from api.dependencies import Application, get_application
+from api.dependencies import Application, User, get_application, get_authenticated_user
 from api.models.catalog import ListingIndexModel, ListingReadModel, ListingWriteModel
 from config.container import inject
 from modules.catalog.application.command import (
@@ -13,7 +14,6 @@ from modules.catalog.application.command import (
 )
 from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
-from seedwork.application import Application
 from seedwork.domain.value_objects import Money
 
 """
@@ -54,19 +54,21 @@ async def get_listing_details(
 async def create_listing(
     request_body: ListingWriteModel,
     app: Annotated[Application, Depends(get_application)],
+    current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     """
     Creates a new listing.
     """
     command = CreateListingDraftCommand(
+        listing_id=uuid.uuid4(),
         title=request_body.title,
         description=request_body.description,
         ask_price=Money(request_body.ask_price_amount, request_body.ask_price_currency),
-        seller_id=request_context.current_user.id,
+        seller_id=current_user.id,
     )
-    command_result = app.execute_command(command)
+    app.execute_command(command)
 
-    query = GetListingDetails(listing_id=command_result.payload)
+    query = GetListingDetails(listing_id=command.listing_id)
     query_result = app.execute_query(query)
     return dict(query_result.payload)
 
@@ -76,13 +78,16 @@ async def create_listing(
 )
 @inject
 async def delete_listing(
-    listing_id, app: Annotated[Application, Depends(get_application)]
+    listing_id,
+    app: Annotated[Application, Depends(get_application)],
+    current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     """
     Delete listing
     """
     command = DeleteListingDraftCommand(
         listing_id=listing_id,
+        seller_id=current_user.id,
     )
     app.execute_command(command)
 

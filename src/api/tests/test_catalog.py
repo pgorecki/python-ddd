@@ -78,32 +78,35 @@ def test_catalog_list_with_two_items(app, api_client):
     assert len(response_data) == 2
 
 
-def test_catalog_create_draft_fails_due_to_incomplete_data(api, api_client):
-    response = api_client.post("/catalog")
+def test_catalog_create_draft_fails_due_to_incomplete_data(
+    api, authenticated_api_client
+):
+    response = authenticated_api_client.post("/catalog")
     assert response.status_code == 422
 
 
 @pytest.mark.integration
-def test_catalog_delete_draft(app, api_client):
+def test_catalog_delete_draft(app, authenticated_api_client):
+    current_user = authenticated_api_client.current_user
     app.execute_command(
         CreateListingDraftCommand(
             listing_id=UUID(int=1),
             title="Listing to be deleted",
             description="...",
             ask_price=Money(10),
-            seller_id=UUID("00000000000000000000000000000002"),
+            seller_id=current_user.id,
         )
     )
 
-    response = api_client.delete(f"/catalog/{str(UUID(int=1))}")
+    response = authenticated_api_client.delete(f"/catalog/{str(UUID(int=1))}")
 
     assert response.status_code == 204
 
 
 @pytest.mark.integration
-def test_catalog_delete_non_existing_draft_returns_404(api_client):
+def test_catalog_delete_non_existing_draft_returns_404(authenticated_api_client):
     listing_id = UUID("00000000000000000000000000000001")
-    response = api_client.delete(f"/catalog/{listing_id}")
+    response = authenticated_api_client.delete(f"/catalog/{listing_id}")
     assert response.status_code == 404
 
 

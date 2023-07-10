@@ -1,3 +1,5 @@
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -5,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from api.main import app as fastapi_instance
 from config.api_config import ApiConfig
+from modules.iam.application.services import IamService
 from seedwork.infrastructure.database import Base
 
 
@@ -33,6 +36,24 @@ def api():
 @pytest.fixture
 def api_client(api, app):
     client = TestClient(api)
+    return client
+
+
+@pytest.fixture
+def authenticated_api_client(api, app):
+    access_token = uuid.uuid4()
+    with app.transaction_context() as ctx:
+        iam: IamService = ctx[IamService]
+        current_user = iam.create_user(
+            uuid.UUID(int=1),
+            email="user1@example.com",
+            password="password",
+            access_token=str(access_token),
+            is_superuser=False,
+        )
+    headers = {"Authorization": f"bearer {access_token}"}
+    client = TestClient(api, headers=headers)
+    client.current_user = current_user
     return client
 
 

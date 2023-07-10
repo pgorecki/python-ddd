@@ -29,6 +29,7 @@ class IamService:
             is_superuser=is_superuser,
         )
         self.user_repository.add(user)
+        return user
 
     def authenticate_with_name_and_password(self, name, password) -> User:
         user = self.user_repository.get_by_email(name)

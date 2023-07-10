@@ -16,26 +16,24 @@ from seedwork.infrastructure.repository import InMemoryRepository
 @pytest.mark.unit
 def test_delete_listing_draft():
     # arrange
+    seller_id = UUID.v4()
     repository = InMemoryRepository()
     listing = Listing(
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
         ask_price=Money(1),
-        seller_id=UUID.v4(),
+        seller_id=seller_id,
     )
     repository.add(listing)
 
     command = DeleteListingDraftCommand(
         listing_id=listing.id,
+        seller_id=seller_id,
     )
 
     # act
     result = delete_listing_draft(command, repository)
-
-    print(result)
-
-    print(result)
 
     # assert
     assert result.is_success()
@@ -45,18 +43,20 @@ def test_delete_listing_draft():
 
 @pytest.mark.integration
 def test_delete_listing_draft_removes_from_database(db_session):
+    seller_id = UUID.v4()
     repository = PostgresJsonListingRepository(db_session=db_session)
     listing = Listing(
         id=Listing.next_id(),
         title="Tiny dragon",
         description="Tiny dragon for sale",
         ask_price=Money(1),
-        seller_id=UUID.v4(),
+        seller_id=seller_id,
     )
     repository.add(listing)
 
     command = DeleteListingDraftCommand(
         listing_id=listing.id,
+        seller_id=seller_id,
     )
 
     # act

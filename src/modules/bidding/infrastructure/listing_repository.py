@@ -77,7 +77,7 @@ class ListingDataMapper:
         return Listing(
             id=deserialize_id(instance.id),
             seller=Seller(id=deserialize_id(d["seller_id"])),
-            initial_price=deserialize_money(d["initial_price"]),
+            ask_price=deserialize_money(d["ask_price"]),
             starts_at=deserialize_datetime(d["starts_at"]),
             ends_at=deserialize_datetime(d["ends_at"]),
         )
@@ -88,7 +88,7 @@ class ListingDataMapper:
             data={
                 "starts_at": serialize_datetime(entity.starts_at),
                 "ends_at": serialize_datetime(entity.ends_at),
-                "initial_price": serialize_money(entity.initial_price),
+                "ask_price": serialize_money(entity.ask_price),
                 "seller_id": serialize_id(entity.seller.id),
                 "bids": [serialize_bid(b) for b in entity.bids],
             },

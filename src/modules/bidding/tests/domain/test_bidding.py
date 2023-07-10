@@ -14,7 +14,7 @@ def test_listing_initial_price():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
@@ -30,7 +30,7 @@ def test_place_one_bid():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
@@ -40,22 +40,77 @@ def test_place_one_bid():
 
 
 @pytest.mark.unit
-def test_place_two_bids():
+def test_place_two_bids_second_buyer_outbids():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
-    bidder1 = Bidder(id=UUID.v4())
-    bidder2 = Bidder(id=UUID.v4())
+    seller = Seller(id=UUID(int=1))
+    bidder1 = Bidder(id=UUID(int=2))
+    bidder2 = Bidder(id=UUID(int=3))
     listing = Listing(
-        id=Listing.next_id(),
+        id=UUID(int=4),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
-    listing.place_bid(Bid(max_price=Money(15), bidder=bidder1, placed_at=now))
-    listing.place_bid(Bid(max_price=Money(30), bidder=bidder2, placed_at=now))
+    assert listing.current_price == Money(10)
+    assert listing.next_minimum_price == Money(11)
+
+    # bidder1 places a bid
+    listing.place_bid(Bid(bidder=bidder1, max_price=Money(15), placed_at=now))
+    assert listing.current_price == Money(10)
+    assert listing.next_minimum_price == Money(11)
+
+    # bidder2 successfully outbids bidder1
+    listing.place_bid(Bid(bidder=bidder2, max_price=Money(30), placed_at=now))
+    assert listing.current_price == Money(15)
+    assert listing.next_minimum_price == Money(16)
     assert listing.winning_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
-    assert listing.current_price == Money(16)
+
+
+@pytest.mark.unit
+def test_place_two_bids_second_buyer_fails_to_outbid():
+    now = datetime.utcnow()
+    seller = Seller(id=UUID(int=1))
+    bidder1 = Bidder(id=UUID(int=2))
+    bidder2 = Bidder(id=UUID(int=3))
+    listing = Listing(
+        id=UUID(int=4),
+        seller=seller,
+        ask_price=Money(10),
+        starts_at=datetime.utcnow(),
+        ends_at=datetime.utcnow(),
+    )
+
+    # bidder1 places a bid
+    listing.place_bid(Bid(bidder=bidder1, max_price=Money(30), placed_at=now))
+    assert listing.current_price == Money(10)
+    assert listing.next_minimum_price == Money(11)
+
+    # bidder2 tries to outbid bidder1...
+    listing.place_bid(Bid(bidder=bidder2, max_price=Money(20), placed_at=now))
+
+    # ...but he fails. bidder1 is still a winner, but current price changes
+    assert listing.winning_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
+    assert listing.current_price == Money(20)
+
+
+@pytest.mark.unit
+def test_place_two_bids_second_buyer_fails_to_outbid_with_same_amount():
+    now = datetime.utcnow()
+    seller = Seller(id=UUID(int=1))
+    bidder1 = Bidder(id=UUID(int=2))
+    bidder2 = Bidder(id=UUID(int=3))
+    listing = Listing(
+        id=UUID(int=4),
+        seller=seller,
+        ask_price=Money(10),
+        starts_at=datetime.utcnow(),
+        ends_at=datetime.utcnow(),
+    )
+    listing.place_bid(Bid(bidder=bidder1, max_price=Money(30), placed_at=now))
+    listing.place_bid(Bid(bidder=bidder2, max_price=Money(30), placed_at=now))
+    assert listing.winning_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
+    assert listing.current_price == Money(30)
 
 
 @pytest.mark.unit
@@ -66,7 +121,7 @@ def test_place_two_bids_by_same_bidder():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
@@ -85,7 +140,7 @@ def test_cannot_place_bid_if_listing_ended():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
@@ -96,7 +151,7 @@ def test_cannot_place_bid_if_listing_ended():
     )
     with pytest.raises(
         BusinessRuleValidationException,
-        match="PlacedBidMustBeGreaterThanCurrentWinningBid",
+        match="PlacedBidMustBeGreaterOrEqualThanNextMinimumBid",
     ):
         listing.place_bid(bid)
 
@@ -108,7 +163,7 @@ def test_retract_bid():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
@@ -129,7 +184,7 @@ def test_cancel_listing():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=now,
         ends_at=now + timedelta(days=10),
     )
@@ -147,7 +202,7 @@ def test_can_cancel_listing_with_bids():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=now,
         ends_at=now + timedelta(days=10),
     )
@@ -171,7 +226,7 @@ def test_cannot_cancel_listing_with_bids():
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
-        initial_price=Money(10),
+        ask_price=Money(10),
         starts_at=now,
         ends_at=now + timedelta(hours=1),
     )

@@ -23,7 +23,7 @@ def test_listing_data_mapper_maps_entity_to_model():
     listing = Listing(
         id=UUID(int=1),
         seller=Seller(id=UUID(int=2)),
-        initial_price=Money(100, "PLN"),
+        ask_price=Money(100, "PLN"),
         starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
         bids=[
@@ -42,7 +42,7 @@ def test_listing_data_mapper_maps_entity_to_model():
         id=UUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
-            "initial_price": {
+            "ask_price": {
                 "amount": 100,
                 "currency": "PLN",
             },
@@ -70,7 +70,7 @@ def test_listing_data_mapper_maps_model_to_entity():
         id=UUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
-            "initial_price": {
+            "ask_price": {
                 "amount": 100,
                 "currency": "PLN",
             },
@@ -85,7 +85,7 @@ def test_listing_data_mapper_maps_model_to_entity():
     expected = Listing(
         id=UUID(int=1),
         seller=Seller(id=UUID("00000000000000000000000000000002")),
-        initial_price=Money(100, "PLN"),
+        ask_price=Money(100, "PLN"),
         starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
     )
@@ -97,7 +97,7 @@ def test_listing_persistence(db_session):
     original = Listing(
         id=Listing.next_id(),
         seller=Seller(id=uuid.uuid4()),
-        initial_price=Money(100, "PLN"),
+        ask_price=Money(100, "PLN"),
         starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
     )

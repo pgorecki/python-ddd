@@ -15,7 +15,7 @@ def when_listing_is_published_start_auction(
     listing = Listing(
         id=event.listing_id,
         seller=Seller(id=event.seller_id),
-        initial_price=event.ask_price,
+        ask_price=event.ask_price,
         starts_at=datetime.now(),
         ends_at=datetime.now() + timedelta(days=7),
     )

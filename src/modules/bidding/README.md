@@ -10,8 +10,8 @@ System will let you know (by email) if someone outbids you, and you can decide i
 Sometimes you can be automatically outbid (if some other buyer sets his maximum limit higher that yours).
 
 For example:
-1. Alice wants to sell X. She sets the initial price for X item as 10 USD. 
-2. Bob wants to place a bid. The minimum amount is 10 USD (the ask price), and he places the bid of 15 USD. As the only bidder, he is the winner and the current price for X is 10 USD.
+1. Alice wants to sell X. She sets the ask price for this item as 10 USD. 
+2. Bob wants to place a bid on X. The minimum amount is 10 USD (the ask price), and he places the bid of 15 USD. As the only bidder, he is the winner and the current price for X is 10 USD.
 3. Alice and Bob are notified by email.
 4. Charlie places his bid, but now the minimum price he can bid is 11 USD, so he decides to bid 12 USD. As this is not enough to outbid Bob, he is not the winner, and the price is increased to 12 USD.
 5. Charlie places another bid, this time with the amount of 20 USD. As this is more than Bob's maximum limit, Charlie is the winner and the price is increased to 16 USD.

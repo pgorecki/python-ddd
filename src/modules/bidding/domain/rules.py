@@ -2,22 +2,21 @@ from datetime import datetime, timedelta
 
 from pydantic import Field
 
-from modules.bidding.domain.value_objects import Bid
 from seedwork.domain.rules import BusinessRule
 from seedwork.domain.value_objects import Money
 
 
-class PlacedBidMustBeGreaterThanCurrentWinningBid(BusinessRule):
-    __message = "Placed bid must be greater than {current_price}"
+class PlacedBidMustBeGreaterOrEqualThanNextMinimumBid(BusinessRule):
+    __message = "Placed bid must be greater or equal than {next_minimum_price}"
 
-    bid: Bid
     current_price: Money
+    next_minimum_price: Money
 
     def is_broken(self) -> bool:
-        return self.bid.max_price <= self.current_price
+        return self.current_price < self.next_minimum_price
 
     def get_message(self) -> str:
-        return self.__message.format(current_price=self.current_price)
+        return self.__message.format(next_minimum_price=self.next_minimum_price)
 
 
 class BidCanBeRetracted(BusinessRule):

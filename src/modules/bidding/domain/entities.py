@@ -5,7 +5,7 @@ from typing import Optional
 from modules.bidding.domain.rules import (
     BidCanBeRetracted,
     ListingCanBeCancelled,
-    PlacedBidMustBeGreaterThanCurrentWinningBid,
+    PlacedBidMustBeGreaterOrEqualThanNextMinimumBid,
 )
 from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from seedwork.domain.entities import AggregateRoot
@@ -41,35 +41,30 @@ class ListingCancelledEvent(DomainEvent):
 @dataclass(kw_only=True)
 class Listing(AggregateRoot):
     seller: Seller
-    initial_price: Money
+    ask_price: Money
     starts_at: datetime
     ends_at: datetime
     bids: list[Bid] = field(default_factory=list)
 
     @property
     def current_price(self) -> Money:
-        highest_price = self.initial_price
-        second_highest_price = self.initial_price
+        """The current price is the price buyers are competing against"""
+        if len(self.bids) < 2:
+            return self.ask_price
 
-        if len(self.bids) == 0:
-            return self.initial_price
+        sorted_prices = sorted([bid.max_price for bid in self.bids], reverse=True)
+        return sorted_prices[1]
 
-        if len(self.bids) == 1:
-            return min(self.bids[0].max_price, self.initial_price)
-
-        for bid in self.bids:
-            if bid.max_price > highest_price:
-                second_highest_price = highest_price
-                highest_price = bid.max_price
-
-        return second_highest_price + Money(1, currency=self.initial_price.currency)
+    @property
+    def next_minimum_price(self) -> Money:
+        return self.current_price + Money(1, currency=self.ask_price.currency)
 
     # public commands
     def place_bid(self, bid: Bid) -> type[DomainEvent]:
         """Public method"""
         self.check_rule(
-            PlacedBidMustBeGreaterThanCurrentWinningBid(
-                bid=bid, current_price=self.current_price
+            PlacedBidMustBeGreaterOrEqualThanNextMinimumBid(
+                current_price=bid.max_price, next_minimum_price=self.next_minimum_price
             )
         )
 

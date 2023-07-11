@@ -8,6 +8,7 @@ from api.routers import bidding, catalog, diagnostics, iam
 from config.api_config import ApiConfig
 from config.container import TopLevelContainer
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
+from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.logging import LoggerFactory, logger
 
 # configure logger prior to first usage
@@ -25,7 +26,10 @@ app.include_router(iam.router)
 app.include_router(diagnostics.router)
 app.container = container
 
-logger.info("using db engine %s" % str(container.db_engine()))
+db_engine = container.db_engine()
+logger.info(f"using db engine {db_engine}, creating tables")
+Base.metadata.create_all(db_engine)
+logger.info("setup complete")
 
 try:
     import uuid

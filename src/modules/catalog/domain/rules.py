@@ -40,7 +40,7 @@ class SellerMustBeEligibleForAddingNextListing(BusinessRule):
     currently_published_listings_count: int
 
     def is_broken(self) -> bool:
-        return self.seller.is_new and self.seller.currently_published_listings_count > 0
+        return self.is_new and self.currently_published_listings_count > 0
 
 
 class PublishedListingMustNotBeDeleted(BusinessRule):

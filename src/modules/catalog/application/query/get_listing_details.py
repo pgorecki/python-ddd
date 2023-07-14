@@ -7,12 +7,12 @@ from modules.catalog.application.query.model_mappers import map_listing_model_to
 from modules.catalog.infrastructure.listing_repository import ListingModel
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @dataclass
 class GetListingDetails(Query):
-    listing_id: UUID
+    listing_id: GenericUUID
 
 
 @catalog_module.query_handler

@@ -7,7 +7,7 @@ from modules.catalog.infrastructure.listing_repository import (
     ListingModel,
     PostgresJsonListingRepository,
 )
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @pytest.mark.integration
@@ -21,18 +21,18 @@ def test_sqlalchemy_repo_is_adding(engine):
     with Session(engine) as session:
         repo = PostgresJsonListingRepository(db_session=session)
         listing = Listing(
-            id=UUID(int=1),
+            id=GenericUUID(int=1),
             title="Foo",
             description="...",
             ask_price=Money(10),
-            seller_id=UUID(int=1),
+            seller_id=GenericUUID(int=1),
         )
         repo.add(listing)
         session.commit()
 
     with Session(engine) as session:
         repo = PostgresJsonListingRepository(db_session=session)
-        listing = repo.get_by_id(UUID(int=1))
+        listing = repo.get_by_id(GenericUUID(int=1))
         assert listing is not None
 
 
@@ -41,43 +41,43 @@ def test_sqlalchemy_repo_is_persisting_chages(engine):
     with Session(engine) as session:
         repo = PostgresJsonListingRepository(db_session=session)
         listing = Listing(
-            id=UUID(int=1),
+            id=GenericUUID(int=1),
             title="Foo",
             description="...",
             ask_price=Money(10),
-            seller_id=UUID(int=1),
+            seller_id=GenericUUID(int=1),
         )
         repo.add(listing)
         session.commit()
 
     with Session(engine) as session:
         repo = PostgresJsonListingRepository(db_session=session)
-        listing = repo.get_by_id(UUID(int=1))
+        listing = repo.get_by_id(GenericUUID(int=1))
         listing.title = "Bar"
         repo.persist_all()
         session.commit()
 
     with Session(engine) as session:
         repo = PostgresJsonListingRepository(db_session=session)
-        listing = repo.get_by_id(UUID(int=1))
+        listing = repo.get_by_id(GenericUUID(int=1))
         assert listing.title == "Bar"
 
 
 @pytest.mark.unit
 def test_listing_data_mapper_maps_entity_to_model():
     listing = Listing(
-        id=UUID("00000000000000000000000000000001"),
+        id=GenericUUID("00000000000000000000000000000001"),
         title="Foo",
         description="...",
         ask_price=Money(10),
-        seller_id=UUID("00000000000000000000000000000002"),
+        seller_id=GenericUUID("00000000000000000000000000000002"),
     )
     mapper = ListingDataMapper()
 
     actual = mapper.entity_to_model(listing)
 
     expected = ListingModel(
-        id=UUID("00000000000000000000000000000001"),
+        id=GenericUUID("00000000000000000000000000000001"),
         data={
             "title": "Foo",
             "description": "...",
@@ -96,7 +96,7 @@ def test_listing_data_mapper_maps_entity_to_model():
 @pytest.mark.unit
 def test_listing_data_mapper_maps_model_to_entity():
     instance = ListingModel(
-        id=UUID("00000000000000000000000000000001"),
+        id=GenericUUID("00000000000000000000000000000001"),
         data={
             "title": "Foo",
             "description": "...",
@@ -113,11 +113,11 @@ def test_listing_data_mapper_maps_model_to_entity():
     actual = mapper.model_to_entity(instance)
 
     expected = Listing(
-        id=UUID("00000000000000000000000000000001"),
+        id=GenericUUID("00000000000000000000000000000001"),
         title="Foo",
         description="...",
         ask_price=Money(10),
-        seller_id=UUID("00000000000000000000000000000002"),
+        seller_id=GenericUUID("00000000000000000000000000000002"),
     )
     assert actual == expected
 
@@ -129,7 +129,7 @@ def test_listing_persistence(db_session):
         ask_price=Money(1),
         title="red dragon",
         description="",
-        seller_id=UUID.v4(),
+        seller_id=GenericUUID.next_id(),
     )
     repository = PostgresJsonListingRepository(db_session=db_session)
 

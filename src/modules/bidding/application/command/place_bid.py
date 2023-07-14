@@ -1,19 +1,18 @@
 from dataclasses import dataclass
-from decimal import Decimal
 
 from modules.bidding.application import bidding_module
-from modules.bidding.domain.entities import Listing
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Bid, Bidder, Money
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
+from seedwork.domain.value_objects import GenericUUID
 
 
 @dataclass
 class PlaceBidCommand(Command):
-    listing_id: str
-    bidder_id: str
-    amount: Decimal
+    listing_id: GenericUUID
+    bidder_id: GenericUUID
+    amount: int  # todo: Decimal
     currency: str = "USD"
 
 
@@ -24,7 +23,7 @@ def place_bid(
     bidder = Bidder(id=command.bidder_id)
     bid = Bid(bidder=bidder, max_price=Money(command.amount))
 
-    listing: Listing = listing_repository.get_by_id(command.listing_id)
+    listing = listing_repository.get_by_id(command.listing_id)
     listing.place_bid(bid)
 
     return CommandResult.success()

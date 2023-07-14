@@ -11,7 +11,7 @@ from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from seedwork.domain.entities import AggregateRoot
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.exceptions import DomainException
-from seedwork.domain.value_objects import Money
+from seedwork.domain.value_objects import GenericUUID, Money
 
 
 class BidderIsNotBiddingListing(DomainException):
@@ -39,13 +39,14 @@ class ListingCancelledEvent(DomainEvent):
 
 
 @dataclass(kw_only=True)
-class Listing(AggregateRoot):
+class Listing(AggregateRoot[GenericUUID]):
     seller: Seller
     ask_price: Money
     starts_at: datetime
     ends_at: datetime
     bids: list[Bid] = field(default_factory=list)
 
+    # public queries
     @property
     def current_price(self) -> Money:
         """The current price is the price buyers are competing against"""
@@ -57,10 +58,10 @@ class Listing(AggregateRoot):
 
     @property
     def next_minimum_price(self) -> Money:
-        return self.current_price + Money(1, currency=self.ask_price.currency)
+        return self.current_price + Money(amount=1, currency=self.ask_price.currency)
 
     # public commands
-    def place_bid(self, bid: Bid) -> type[DomainEvent]:
+    def place_bid(self, bid: Bid) -> DomainEvent:
         """Public method"""
         self.check_rule(
             PlacedBidMustBeGreaterOrEqualThanNextMinimumBid(
@@ -77,7 +78,7 @@ class Listing(AggregateRoot):
             listing_id=self.id, bidder=bid.bidder, max_price=bid.max_price
         )
 
-    def retract_bid_of(self, bidder: Bidder) -> type[DomainEvent]:
+    def retract_bid_of(self, bidder: Bidder) -> DomainEvent:
         """Public method"""
         bid = self.get_bid_of(bidder)
         self.check_rule(
@@ -85,9 +86,9 @@ class Listing(AggregateRoot):
         )
 
         self._remove_bid_of(bidder=bidder)
-        return BidRetractedEvent(listing_id=self.id, bidder_id=bidder.uuid)
+        return BidRetractedEvent(listing_id=self.id, bidder_id=bidder.id)
 
-    def cancel(self) -> type[DomainEvent]:
+    def cancel(self) -> DomainEvent:
         """
         Seller can cancel a listing (end a listing early). Listing must be eligible to cancelled,
         depending on time left and if bids have been placed.
@@ -101,7 +102,7 @@ class Listing(AggregateRoot):
         self.ends_at = datetime.utcnow()
         return ListingCancelledEvent(listing_id=self.id)
 
-    def end(self) -> type[DomainEvent]:
+    def end(self) -> DomainEvent:
         """
         Ends listing.
         """
@@ -150,3 +151,6 @@ class Listing(AggregateRoot):
         self.bids = [
             bid if bid.bidder == existing.bidder else existing for existing in self.bids
         ]
+
+    def _remove_bid_of(self, bidder: Bidder):
+        self.bids = [bid for bid in self.bids if bid.bidder != bidder]

@@ -2,6 +2,7 @@ import logging
 import uuid
 from contextvars import ContextVar
 from datetime import datetime
+from logging import Logger
 from logging.config import dictConfig
 
 from pythonjsonlogger import jsonlogger
@@ -149,4 +150,4 @@ class LoggerFactory:
 We are making logger globally available, but to make it configurable logger lazy-evaluated.
 Use `LoggerFactory.configure()` to configure the logger prior to its usage
 """
-logger = SimpleLazyObject(LoggerFactory.create_logger)
+logger: Logger = SimpleLazyObject(LoggerFactory.create_logger)  # type: ignore

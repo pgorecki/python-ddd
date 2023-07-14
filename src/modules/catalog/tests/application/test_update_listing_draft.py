@@ -5,7 +5,7 @@ from modules.catalog.application.command.update_listing_draft import (
     update_listing_draft,
 )
 from modules.catalog.domain.entities import Listing
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 from seedwork.infrastructure.repository import InMemoryRepository
 
 
@@ -18,7 +18,7 @@ def test_update_listing_draft():
         title="Tiny dragon",
         description="Tiny dragon for sale",
         ask_price=Money(1),
-        seller_id=UUID.v4(),
+        seller_id=GenericUUID.next_id(),
     )
     repository.add(listing)
 
@@ -49,7 +49,7 @@ def test_partially_update_listing_draft():
         title="Tiny dragon",
         description="Tiny dragon for sale",
         ask_price=Money(1),
-        seller_id=UUID.v4(),
+        seller_id=GenericUUID.next_id(),
     )
     repository.add(listing)
 

@@ -1,13 +1,13 @@
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 
 T = TypeVar("T")
 
 
 @dataclass
 class QueryResult(Generic[T]):
-    payload: T = None
+    payload: Optional[T] = None
     errors: list[Any] = field(default_factory=list)
 
     def has_errors(self):

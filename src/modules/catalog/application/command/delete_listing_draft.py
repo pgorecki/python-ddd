@@ -11,15 +11,15 @@ from modules.catalog.domain.rules import (
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.domain.mixins import check_rule
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @dataclass
 class DeleteListingDraftCommand(Command):
     """A command for deleting a listing"""
 
-    listing_id: UUID
-    seller_id: UUID
+    listing_id: GenericUUID
+    seller_id: GenericUUID
 
 
 @catalog_module.command_handler

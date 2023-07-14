@@ -9,14 +9,14 @@ from modules.catalog.domain.events import ListingDraftDeletedEvent
 from modules.catalog.infrastructure.listing_repository import (
     PostgresJsonListingRepository,
 )
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 from seedwork.infrastructure.repository import InMemoryRepository
 
 
 @pytest.mark.unit
 def test_delete_listing_draft():
     # arrange
-    seller_id = UUID.v4()
+    seller_id = GenericUUID.next_id()
     repository = InMemoryRepository()
     listing = Listing(
         id=Listing.next_id(),
@@ -43,7 +43,7 @@ def test_delete_listing_draft():
 
 @pytest.mark.integration
 def test_delete_listing_draft_removes_from_database(db_session):
-    seller_id = UUID.v4()
+    seller_id = GenericUUID.next_id()
     repository = PostgresJsonListingRepository(db_session=db_session)
     listing = Listing(
         id=Listing.next_id(),

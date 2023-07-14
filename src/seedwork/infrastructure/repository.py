@@ -1,80 +1,80 @@
-from abc import ABC, abstractmethod
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from seedwork.domain.entities import Entity
 from seedwork.domain.exceptions import EntityNotFoundException
-from seedwork.domain.value_objects import UUID
-from seedwork.infrastructure.logging import logger
+from seedwork.domain.repositories import GenericRepository
+from seedwork.domain.value_objects import GenericUUID
+from seedwork.infrastructure.data_mapper import DataMapper
+from seedwork.infrastructure.database import Base
+
+# class Repository(ABC):
+#     """Base class for all repositories"""
+#
+#     @abstractmethod
+#     def add(self, entity: Entity):
+#         ...
+#
+#     @abstractmethod
+#     def remove(self, entity: Entity):
+#         ...
+#
+#     @abstractmethod
+#     def get_by_id(self, entity_id: GenericUUID):
+#         """Should raise EntityNotFoundException if not found"""
+#         ...
+#
+#     @abstractmethod
+#     def remove_by_id(self, entity_id: GenericUUID):
+#         """Should raise EntityNotFoundException if not found"""
+#         ...
+#
+#     @abstractmethod
+#     def count(self) -> int:
+#         ...
+#
+#     def __getitem__(self, key):
+#         return self.get_by_id(key)
+#
+#     def __delitem__(self, key):
+#         return self.remove_by_id(key)
 
 
-class Repository(ABC):
-    """Base class for all repositories"""
-
-    @abstractmethod
-    def add(self, entity: type[Entity]):
-        ...
-
-    @abstractmethod
-    def remove(self, entity: type[Entity]):
-        ...
-
-    @abstractmethod
-    def get_by_id(self, entity_id: type[UUID]):
-        """Should raise EntityNotFoundException if not found"""
-        ...
-
-    @abstractmethod
-    def remove_by_id(self, entity_id: type[UUID]):
-        """Should raise EntityNotFoundException if not found"""
-        ...
-
-    @abstractmethod
-    def count(self) -> int:
-        ...
-
-    def __getitem__(self, key):
-        return self.get_by_id(key)
-
-    def __delitem__(self, key):
-        return self.remove_by_id(key)
-
-
-class InMemoryRepository(Repository):
+class InMemoryRepository(GenericRepository[GenericUUID, Entity]):
     def __init__(self) -> None:
-        self.objects = {}
+        self.objects: dict[Any, Any] = {}
 
-    def get_by_id(self, entity_id: type[UUID]) -> type[Entity]:
+    def get_by_id(self, entity_id: GenericUUID) -> Entity:
         try:
             return self.objects[entity_id]
         except KeyError:
             raise EntityNotFoundException(repository=self, entity_id=entity_id)
 
-    def remove_by_id(self, entity_id: type[UUID]) -> type[Entity]:
+    def remove_by_id(self, entity_id: GenericUUID):
         try:
             del self.objects[entity_id]
         except KeyError:
             raise EntityNotFoundException(repository=self, entity_id=entity_id)
 
-    def add(self, entity: type[Entity]):
+    def add(self, entity: Entity):
         assert issubclass(entity.__class__, Entity)
         self.objects[entity.id] = entity
-        logger.debug(f"Added {entity} to {self}")
 
-    def remove(self, entity: type[Entity]):
+    def remove(self, entity: Entity):
         del self.objects[entity.id]
 
     def count(self):
         return len(self.objects)
 
-    def persist(self, entity: type[Entity]):
+    def persist(self, entity: Entity):
         ...
 
     def persist_all(self):
         ...
 
 
-# a sentinel value for keeping track of entites removed from the repository
+# a sentinel value for keeping track of entities removed from the repository
 class Removed:
     def __repr__(self):
         return "<Removed entity>"
@@ -86,9 +86,9 @@ class Removed:
 REMOVED = Removed()
 
 
-class SqlAlchemyGenericRepository(Repository):
-    data_mapper = None
-    model_class: type[Entity] = None
+class SqlAlchemyGenericRepository(GenericRepository[GenericUUID, Entity]):
+    mapper_class: type[DataMapper[Entity, Base]]
+    model_class: type[Entity]
 
     def __init__(self, db_session: Session, identity_map=None):
         self._session = db_session
@@ -105,7 +105,7 @@ class SqlAlchemyGenericRepository(Repository):
         instance = self._session.query(self.get_model_class()).get(entity.id)
         self._session.delete(instance)
 
-    def remove_by_id(self, entity_id: UUID):
+    def remove_by_id(self, entity_id: GenericUUID):
         self._check_not_removed(entity_id)
         self._identity_map[entity_id] = REMOVED
         instance = self._session.query(self.get_model_class()).get(entity_id)
@@ -113,7 +113,7 @@ class SqlAlchemyGenericRepository(Repository):
             raise EntityNotFoundException(repository=self, entity_id=entity_id)
         self._session.delete(instance)
 
-    def get_by_id(self, entity_id: UUID):
+    def get_by_id(self, entity_id: GenericUUID):
         instance = self._session.query(self.get_model_class()).get(entity_id)
         if instance is None:
             raise EntityNotFoundException(repository=self, entity_id=entity_id)
@@ -138,13 +138,17 @@ class SqlAlchemyGenericRepository(Repository):
             if entity is not REMOVED:
                 self.persist(entity)
 
+    @property
+    def data_mapper(self):
+        return self.mapper_class()
+
     def count(self) -> int:
         return self._session.query(self.model_class).count()
 
     def map_entity_to_model(self, entity: Entity):
-        assert self.data_mapper, (
+        assert self.mapper_class, (
             f"No data_mapper attribute in {self.__class__.__name__}. "
-            "Make sure to include `data_mapper = MyDataMapper()` in the class."
+            "Make sure to include `mapper_class = MyDataMapper` in the Repository class."
         )
 
         return self.data_mapper.entity_to_model(entity)

@@ -3,11 +3,11 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from modules.bidding.infrastructure.listing_repository import ListingModel
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 class ListingDAO(BaseModel):
-    id: UUID
+    id: GenericUUID
     ends_at: datetime
     bids: list
 

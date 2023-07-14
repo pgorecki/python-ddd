@@ -5,7 +5,11 @@ from typing import Any
 from pydantic import BaseModel
 
 from seedwork.domain.type_hints import DomainEvent
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
+
+
+class EventId(GenericUUID):
+    """Unique identifier of an event"""
 
 
 class IntegrationEvent(BaseModel):
@@ -22,13 +26,15 @@ class EventResult:
     Result of event execution (success or failure) by an event handler.
     """
 
-    event_id: UUID = None
+    event_id: EventId = field(default_factory=EventId.next_id)
     payload: Any = None
-    command: Any = None  # command th
+    command: Any = (
+        None  # command to be executed as a result of this event (experimental)
+    )
     events: list[DomainEvent] = field(default_factory=list)
     errors: list[Any] = field(default_factory=list)
 
-    def has_errors(self):
+    def has_errors(self) -> bool:
         """Returns True if an event execution failed"""
         return len(self.errors) > 0
 
@@ -40,7 +46,7 @@ class EventResult:
         return id(self)
 
     @classmethod
-    def failure(cls, message="Failure", exception=None) -> "CommandResult":
+    def failure(cls, message="Failure", exception=None) -> "EventResult":
         """Creates a failed result"""
         exception_info = sys.exc_info()
         errors = [(message, exception, exception_info)]

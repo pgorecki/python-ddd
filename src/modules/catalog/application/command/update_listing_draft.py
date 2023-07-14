@@ -5,18 +5,18 @@ from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 
 
 @dataclass
 class UpdateListingDraftCommand(Command):
     """A command for updating a listing"""
 
-    listing_id: UUID
+    listing_id: GenericUUID
     title: str
     description: str
     ask_price: Money
-    modify_user_id: UUID
+    modify_user_id: GenericUUID
 
 
 @catalog_module.command_handler

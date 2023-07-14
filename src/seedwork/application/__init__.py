@@ -6,7 +6,6 @@ from typing import Any
 
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.event_dispatcher import EventDispatcher
 from seedwork.application.events import EventResult, EventResultSet, IntegrationEvent
 from seedwork.application.exceptions import ApplicationException
 from seedwork.application.inbox_outbox import InMemoryInbox

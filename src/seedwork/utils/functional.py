@@ -352,7 +352,7 @@ class LazyObject:
 
     # Need to pretend to be the wrapped class, for the sake of objects that
     # care about this (especially in equality tests)
-    __class__ = property(new_method_proxy(operator.attrgetter("__class__")))
+    __class__ = property(new_method_proxy(operator.attrgetter("__class__")))  # type: ignore
     __eq__ = new_method_proxy(operator.eq)
     __lt__ = new_method_proxy(operator.lt)
     __gt__ = new_method_proxy(operator.gt)

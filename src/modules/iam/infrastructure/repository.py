@@ -45,7 +45,7 @@ class UserDataMapper(JSONDataMapper):
 class PostgresJsonUserRepository(SqlAlchemyGenericRepository, UserRepository):
     """Listing repository implementation"""
 
-    data_mapper = UserDataMapper()
+    mapper_class = UserDataMapper
     model_class = UserModel
 
     def get_by_access_token(self, access_token: str) -> User | None:

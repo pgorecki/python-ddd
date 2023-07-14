@@ -1,6 +1,4 @@
-import uuid
-
-from seedwork.domain.entities import Entity
+from seedwork.domain.entities import Entity, GenericUUID
 
 
 class JSONDataMapper:
@@ -8,7 +6,7 @@ class JSONDataMapper:
 
     def data_to_entity(self, data: dict, entity_class: type[Entity]) -> Entity:
         """Creates business entity from dictionary with a `data` attribute"""
-        entity_id = uuid.UUID(data.pop("id"))
+        entity_id = GenericUUID(data.pop("id"))
         entity_dict = {
             "id": entity_id,
             **data,

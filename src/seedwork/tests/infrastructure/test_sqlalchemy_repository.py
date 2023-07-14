@@ -8,6 +8,7 @@ from sqlalchemy_utils import UUIDType
 
 from seedwork.domain.entities import Entity
 from seedwork.domain.exceptions import EntityNotFoundException
+from seedwork.infrastructure.data_mapper import DataMapper
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.repository import SqlAlchemyGenericRepository
 
@@ -29,7 +30,7 @@ class PersonModel(Base):
     last_name = Column(String)
 
 
-class PersonDataMapper:
+class PersonDataMapper(DataMapper):
     def model_to_entity(self, instance: PersonModel) -> Person:
         return Person(
             id=instance.id,
@@ -46,7 +47,7 @@ class PersonDataMapper:
 
 
 class PersonSqlAlchemyRepository(SqlAlchemyGenericRepository):
-    data_mapper = PersonDataMapper()
+    mapper_class = PersonDataMapper
     model_class = PersonModel
 
 

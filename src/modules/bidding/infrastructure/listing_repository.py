@@ -8,6 +8,7 @@ from sqlalchemy_utils import UUIDType
 
 from modules.bidding.domain.entities import Bid, Bidder, Listing, Money, Seller
 from modules.bidding.domain.repositories import ListingRepository
+from seedwork.domain.value_objects import GenericUUID
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.repository import SqlAlchemyGenericRepository
 
@@ -33,25 +34,25 @@ def serialize_money(money: Money) -> dict:
     }
 
 
-def serialize_id(value: uuid.UUID) -> str:
+def serialize_id(value: GenericUUID) -> str:
     return str(value)
 
 
-def deserialize_id(value: str) -> uuid.UUID:
+def deserialize_id(value: str) -> GenericUUID:
     if isinstance(value, uuid.UUID):
-        return value
-    return uuid.UUID(value)
+        return GenericUUID(value.hex)
+    return GenericUUID(value)
 
 
 def deserialize_money(data: dict) -> Money:
     return Money(amount=data["amount"], currency=data["currency"])
 
 
-def serialize_datetime(value) -> str:
+def serialize_datetime(value: datetime.datetime) -> str:
     return value.isoformat()
 
 
-def deserialize_datetime(value) -> str:
+def deserialize_datetime(value: str) -> datetime.datetime:
     return datetime.datetime.fromisoformat(value)
 
 
@@ -98,5 +99,5 @@ class ListingDataMapper:
 class PostgresJsonListingRepository(SqlAlchemyGenericRepository, ListingRepository):
     """Listing repository implementation"""
 
-    data_mapper = ListingDataMapper()
+    mapper_class = ListingDataMapper
     model_class = ListingModel

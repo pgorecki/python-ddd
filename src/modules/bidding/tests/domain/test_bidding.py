@@ -2,15 +2,15 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from modules.bidding.domain.entities import Listing, Money, Seller
-from modules.bidding.domain.value_objects import Bid, Bidder
+from modules.bidding.domain.entities import Listing
+from modules.bidding.domain.value_objects import Bid, Bidder, Money, Seller
 from seedwork.domain.exceptions import BusinessRuleValidationException
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @pytest.mark.unit
 def test_listing_initial_price():
-    seller = Seller(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -24,8 +24,8 @@ def test_listing_initial_price():
 @pytest.mark.unit
 def test_place_one_bid():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     bid = Bid(max_price=Money(20), bidder=bidder, placed_at=now)
     listing = Listing(
         id=Listing.next_id(),
@@ -42,11 +42,11 @@ def test_place_one_bid():
 @pytest.mark.unit
 def test_place_two_bids_second_buyer_outbids():
     now = datetime.utcnow()
-    seller = Seller(id=UUID(int=1))
-    bidder1 = Bidder(id=UUID(int=2))
-    bidder2 = Bidder(id=UUID(int=3))
+    seller = Seller(id=GenericUUID(int=1))
+    bidder1 = Bidder(id=GenericUUID(int=2))
+    bidder2 = Bidder(id=GenericUUID(int=3))
     listing = Listing(
-        id=UUID(int=4),
+        id=GenericUUID(int=4),
         seller=seller,
         ask_price=Money(10),
         starts_at=datetime.utcnow(),
@@ -70,11 +70,11 @@ def test_place_two_bids_second_buyer_outbids():
 @pytest.mark.unit
 def test_place_two_bids_second_buyer_fails_to_outbid():
     now = datetime.utcnow()
-    seller = Seller(id=UUID(int=1))
-    bidder1 = Bidder(id=UUID(int=2))
-    bidder2 = Bidder(id=UUID(int=3))
+    seller = Seller(id=GenericUUID(int=1))
+    bidder1 = Bidder(id=GenericUUID(int=2))
+    bidder2 = Bidder(id=GenericUUID(int=3))
     listing = Listing(
-        id=UUID(int=4),
+        id=GenericUUID(int=4),
         seller=seller,
         ask_price=Money(10),
         starts_at=datetime.utcnow(),
@@ -97,11 +97,11 @@ def test_place_two_bids_second_buyer_fails_to_outbid():
 @pytest.mark.unit
 def test_place_two_bids_second_buyer_fails_to_outbid_with_same_amount():
     now = datetime.utcnow()
-    seller = Seller(id=UUID(int=1))
-    bidder1 = Bidder(id=UUID(int=2))
-    bidder2 = Bidder(id=UUID(int=3))
+    seller = Seller(id=GenericUUID(int=1))
+    bidder1 = Bidder(id=GenericUUID(int=2))
+    bidder2 = Bidder(id=GenericUUID(int=3))
     listing = Listing(
-        id=UUID(int=4),
+        id=GenericUUID(int=4),
         seller=seller,
         ask_price=Money(10),
         starts_at=datetime.utcnow(),
@@ -116,8 +116,8 @@ def test_place_two_bids_second_buyer_fails_to_outbid_with_same_amount():
 @pytest.mark.unit
 def test_place_two_bids_by_same_bidder():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -135,8 +135,8 @@ def test_place_two_bids_by_same_bidder():
 
 @pytest.mark.unit
 def test_cannot_place_bid_if_listing_ended():
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -158,8 +158,8 @@ def test_cannot_place_bid_if_listing_ended():
 
 @pytest.mark.unit
 def test_retract_bid():
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -180,7 +180,7 @@ def test_retract_bid():
 @pytest.mark.unit
 def test_cancel_listing():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -197,8 +197,8 @@ def test_cancel_listing():
 @pytest.mark.unit
 def test_can_cancel_listing_with_bids():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,
@@ -221,8 +221,8 @@ def test_can_cancel_listing_with_bids():
 @pytest.mark.unit
 def test_cannot_cancel_listing_with_bids():
     now = datetime.utcnow()
-    seller = Seller(id=UUID.v4())
-    bidder = Bidder(id=UUID.v4())
+    seller = Seller(id=GenericUUID.next_id())
+    bidder = Bidder(id=GenericUUID.next_id())
     listing = Listing(
         id=Listing.next_id(),
         seller=seller,

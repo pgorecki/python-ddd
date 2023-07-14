@@ -1,8 +1,8 @@
-from seedwork.domain.value_objects import UUID, ValueObject
+from seedwork.domain.value_objects import GenericUUID, ValueObject
 
 # some aliases to fight primitive obsession
-ListingId = UUID
-SellerId = UUID
+ListingId = GenericUUID
+SellerId = GenericUUID
 
 
 class ListingStatus(ValueObject):

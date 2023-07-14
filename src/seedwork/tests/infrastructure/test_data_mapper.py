@@ -26,7 +26,7 @@ def test_data_mapper_maps_entity_to_json():
         id=UUID("12345678123456781234567812345678"), name="Bob"
     )
 
-    actual = mapper.map_entity_to_model(entity_instance)
+    actual = mapper.entity_to_model(entity_instance)
 
     expected = {"id": "12345678-1234-5678-1234-567812345678", "data": {"name": "Bob"}}
 
@@ -41,7 +41,7 @@ def test_data_mapper_maps_json_to_entity():
         "data": {"name": "Bob"},
     }
 
-    actual = mapper.map_model_to_entity(model_instance)
+    actual = mapper.model_to_entity(model_instance)
 
     expected = PersonEntity(id=UUID("12345678123456781234567812345678"), name="Bob")
 

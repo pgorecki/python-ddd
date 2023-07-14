@@ -37,17 +37,6 @@ def test_application_handles_command():
 
 
 @pytest.mark.unit
-def test_application_handles_command():
-    app = Application()
-
-    @app.command_handler
-    def handle_ping(command: SendPing):
-        ...
-
-    assert app.get_command_handler(SendPing()) is handle_ping
-
-
-@pytest.mark.unit
 def test_application_handles_domain_event():
     app = Application()
 

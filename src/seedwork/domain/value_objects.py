@@ -1,10 +1,12 @@
-import functools
 import uuid
 
 from pydantic.dataclasses import dataclass
 
-UUID = uuid.UUID
-UUID.v4 = uuid.uuid4
+
+class GenericUUID(uuid.UUID):
+    @classmethod
+    def next_id(cls):
+        return cls(int=uuid.uuid4().int)
 
 
 @dataclass(frozen=True)
@@ -14,7 +16,7 @@ class ValueObject:
     """
 
 
-@functools.total_ordering
+# @functools.total_ordering  # type: ignore
 @dataclass(frozen=True)
 class Money(ValueObject):
     amount: int = 0

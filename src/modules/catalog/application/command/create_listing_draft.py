@@ -6,18 +6,18 @@ from modules.catalog.domain.events import ListingDraftCreatedEvent
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 
 
 @dataclass
 class CreateListingDraftCommand(Command):
     """A command for creating new listing in draft state"""
 
-    listing_id: UUID
+    listing_id: GenericUUID
     title: str
     description: str
     ask_price: Money
-    seller_id: UUID
+    seller_id: GenericUUID
 
 
 @catalog_module.command_handler

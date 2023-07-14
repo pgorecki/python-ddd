@@ -9,7 +9,7 @@ from modules.bidding.infrastructure.listing_repository import (
     ListingModel,
     PostgresJsonListingRepository,
 )
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @pytest.mark.integration
@@ -21,15 +21,15 @@ def test_listing_repo_is_empty(db_session):
 @pytest.mark.unit
 def test_listing_data_mapper_maps_entity_to_model():
     listing = Listing(
-        id=UUID(int=1),
-        seller=Seller(id=UUID(int=2)),
+        id=GenericUUID(int=1),
+        seller=Seller(id=GenericUUID(int=2)),
         ask_price=Money(100, "PLN"),
         starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),
         bids=[
             Bid(
                 max_price=Money(200, "PLN"),
-                bidder=Bidder(id=UUID(int=3)),
+                bidder=Bidder(id=GenericUUID(int=3)),
                 placed_at=datetime.datetime(2020, 12, 30),
             )
         ],
@@ -39,7 +39,7 @@ def test_listing_data_mapper_maps_entity_to_model():
     actual = mapper.entity_to_model(listing)
 
     expected = ListingModel(
-        id=UUID(int=1),
+        id=GenericUUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
             "ask_price": {
@@ -67,7 +67,7 @@ def test_listing_data_mapper_maps_entity_to_model():
 @pytest.mark.unit
 def test_listing_data_mapper_maps_model_to_entity():
     instance = ListingModel(
-        id=UUID(int=1),
+        id=GenericUUID(int=1),
         data={
             "seller_id": "00000000-0000-0000-0000-000000000002",
             "ask_price": {
@@ -83,8 +83,8 @@ def test_listing_data_mapper_maps_model_to_entity():
     actual = mapper.model_to_entity(instance)
 
     expected = Listing(
-        id=UUID(int=1),
-        seller=Seller(id=UUID("00000000000000000000000000000002")),
+        id=GenericUUID(int=1),
+        seller=Seller(id=GenericUUID("00000000000000000000000000000002")),
         ask_price=Money(100, "PLN"),
         starts_at=datetime.datetime(2020, 12, 1),
         ends_at=datetime.datetime(2020, 12, 31),

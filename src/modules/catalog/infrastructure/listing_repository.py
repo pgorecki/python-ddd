@@ -5,8 +5,10 @@ from sqlalchemy.sql.schema import Column
 from sqlalchemy_json import mutable_json_type
 from sqlalchemy_utils import UUIDType
 
-from modules.catalog.domain.entities import Listing, Money
+from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
+from seedwork.domain.value_objects import GenericUUID, Money
+from seedwork.infrastructure.data_mapper import DataMapper
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.repository import SqlAlchemyGenericRepository
 
@@ -25,7 +27,7 @@ class ListingModel(Base):
     data = Column(mutable_json_type(dbtype=JSONB, nested=True))
 
 
-class ListingDataMapper:
+class ListingDataMapper(DataMapper[Listing, ListingModel]):
     def model_to_entity(self, instance: ListingModel) -> Listing:
         d = instance.data
         return Listing(
@@ -33,7 +35,7 @@ class ListingDataMapper:
             title=d["title"],
             description=d["description"],
             ask_price=Money(**d["ask_price"]),
-            seller_id=uuid.UUID(d["seller_id"]),
+            seller_id=GenericUUID(d["seller_id"]),
         )
 
     def entity_to_model(self, entity: Listing) -> ListingModel:
@@ -52,8 +54,8 @@ class ListingDataMapper:
         )
 
 
-class PostgresJsonListingRepository(SqlAlchemyGenericRepository, ListingRepository):
+class PostgresJsonListingRepository(ListingRepository, SqlAlchemyGenericRepository):
     """Listing repository implementation"""
 
-    data_mapper = ListingDataMapper()
+    mapper_class = ListingDataMapper
     model_class = ListingModel

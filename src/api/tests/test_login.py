@@ -1,7 +1,7 @@
 import pytest
 
 from modules.iam.application.services import IamService
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @pytest.mark.integration
@@ -10,7 +10,7 @@ def test_login_with_api_token(app, api_client):
     with app.transaction_context() as ctx:
         iam_service = ctx.get_service(IamService)
         iam_service.create_user(
-            user_id=UUID(int=1),
+            user_id=GenericUUID(int=1),
             email="admin@example.com",
             password="admin",
             access_token="token",
@@ -33,7 +33,7 @@ def test_login_with_invalid_username_returns_400(app, api_client):
     with app.transaction_context() as ctx:
         iam_service = ctx.get_service(IamService)
         iam_service.create_user(
-            user_id=UUID(int=1),
+            user_id=GenericUUID(int=1),
             email="admin@example.com",
             password="admin",
             access_token="token",
@@ -55,7 +55,7 @@ def test_login_with_invalid_password_returns_400(app, api_client):
     with app.transaction_context() as ctx:
         iam_service = ctx.get_service(IamService)
         iam_service.create_user(
-            user_id=UUID(int=1),
+            user_id=GenericUUID(int=1),
             email="admin@example.com",
             password="admin",
             access_token="token",

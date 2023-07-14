@@ -10,7 +10,7 @@ from modules.catalog.domain.rules import (
     ListingMustBeDraft,
 )
 from seedwork.domain.entities import AggregateRoot
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 
 from .value_objects import ListingStatus
 
@@ -20,7 +20,7 @@ class Listing(AggregateRoot):
     title: str
     description: str
     ask_price: Money
-    seller_id: UUID
+    seller_id: GenericUUID
     status = ListingStatus.DRAFT
 
     def change_main_attributes(
@@ -46,7 +46,7 @@ class Listing(AggregateRoot):
 
 @dataclass
 class Seller(AggregateRoot):
-    id: UUID
+    id: GenericUUID
     is_new: bool = True
     currently_published_listings_count: int = 0
 

@@ -1,6 +1,4 @@
-import uuid
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends
 
@@ -14,7 +12,7 @@ from modules.catalog.application.command import (
 )
 from modules.catalog.application.query.get_all_listings import GetAllListings
 from modules.catalog.application.query.get_listing_details import GetListingDetails
-from seedwork.domain.value_objects import Money
+from seedwork.domain.value_objects import GenericUUID, Money
 
 """
 Inspired by https://developer.ebay.com/api-docs/sell/inventory/resources/offer/methods/createOffer
@@ -60,7 +58,7 @@ async def create_listing(
     Creates a new listing
     """
     command = CreateListingDraftCommand(
-        listing_id=uuid.uuid4(),
+        listing_id=GenericUUID.next_id(),
         title=request_body.title,
         description=request_body.description,
         ask_price=Money(request_body.ask_price_amount, request_body.ask_price_currency),
@@ -100,7 +98,7 @@ async def delete_listing(
 )
 @inject
 async def publish_listing(
-    listing_id: UUID,
+    listing_id: GenericUUID,
     app: Annotated[Application, Depends(get_application)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
 ):

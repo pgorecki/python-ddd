@@ -4,7 +4,7 @@ from modules.catalog.application.command import (
     CreateListingDraftCommand,
     PublishListingDraftCommand,
 )
-from seedwork.domain.value_objects import UUID, Money
+from seedwork.domain.value_objects import GenericUUID, Money
 from seedwork.infrastructure.logging import logger
 
 
@@ -44,9 +44,9 @@ def setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id):
 
 @pytest.mark.integration
 def test_place_bid(app, api_client):
-    listing_id = UUID(int=1)
-    seller_id = UUID(int=2)
-    bidder_id = UUID(int=3)
+    listing_id = GenericUUID(int=1)
+    seller_id = GenericUUID(int=2)
+    bidder_id = GenericUUID(int=3)
     setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id)
 
     url = f"/bidding/{listing_id}/place_bid"

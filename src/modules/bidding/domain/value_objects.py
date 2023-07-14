@@ -2,17 +2,17 @@ from datetime import datetime
 
 from pydantic.dataclasses import Field, dataclass
 
-from seedwork.domain.value_objects import UUID, Money, ValueObject
+from seedwork.domain.value_objects import GenericUUID, Money, ValueObject
 
 
 @dataclass(frozen=True)
 class Bidder(ValueObject):
-    id: UUID
+    id: GenericUUID
 
 
 @dataclass(frozen=True)
 class Seller(ValueObject):
-    id: UUID
+    id: GenericUUID
 
 
 @dataclass(frozen=True)

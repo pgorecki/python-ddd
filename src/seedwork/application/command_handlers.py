@@ -1,14 +1,14 @@
 import sys
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from seedwork.domain.type_hints import DomainEvent
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @dataclass
 class CommandResult:
-    entity_id: UUID = None
+    entity_id: Optional[GenericUUID] = None
     payload: Any = None
     events: list[DomainEvent] = field(default_factory=list)
     errors: list[Any] = field(default_factory=list)

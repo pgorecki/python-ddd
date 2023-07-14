@@ -10,12 +10,12 @@ from modules.bidding.application.query.model_mappers import (
 from modules.bidding.infrastructure.listing_repository import ListingModel
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
-from seedwork.domain.value_objects import UUID
+from seedwork.domain.value_objects import GenericUUID
 
 
 @dataclass
 class GetBiddingDetails(Query):
-    listing_id: UUID
+    listing_id: GenericUUID
 
 
 @bidding_module.query_handler

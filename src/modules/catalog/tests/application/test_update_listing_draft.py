@@ -31,10 +31,10 @@ def test_update_listing_draft():
     )
 
     # act
-    result = update_listing_draft(command, repository)
+    update_listing_draft(command, repository)
 
     # assert
-    assert result.is_success()
+    assert listing.title == "Tiny golden dragon"
 
 
 @pytest.mark.skip(

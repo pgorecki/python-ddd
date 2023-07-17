@@ -18,7 +18,7 @@ def test_listing_initial_price():
         starts_at=datetime.utcnow(),
         ends_at=datetime.utcnow(),
     )
-    assert listing.winning_bid is None
+    assert listing.highest_bid is None
 
 
 @pytest.mark.unit
@@ -35,7 +35,7 @@ def test_place_one_bid():
         ends_at=datetime.utcnow(),
     )
     listing.place_bid(bid)
-    assert listing.winning_bid == Bid(Money(20), bidder=bidder, placed_at=now)
+    assert listing.highest_bid == Bid(Money(20), bidder=bidder, placed_at=now)
     assert listing.current_price == Money(10)
 
 
@@ -64,7 +64,7 @@ def test_place_two_bids_second_buyer_outbids():
     listing.place_bid(Bid(bidder=bidder2, max_price=Money(30), placed_at=now))
     assert listing.current_price == Money(15)
     assert listing.next_minimum_price == Money(16)
-    assert listing.winning_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
+    assert listing.highest_bid == Bid(Money(30), bidder=bidder2, placed_at=now)
 
 
 @pytest.mark.unit
@@ -90,7 +90,7 @@ def test_place_two_bids_second_buyer_fails_to_outbid():
     listing.place_bid(Bid(bidder=bidder2, max_price=Money(20), placed_at=now))
 
     # ...but he fails. bidder1 is still a winner, but current price changes
-    assert listing.winning_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
+    assert listing.highest_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
     assert listing.current_price == Money(20)
 
 
@@ -109,7 +109,7 @@ def test_place_two_bids_second_buyer_fails_to_outbid_with_same_amount():
     )
     listing.place_bid(Bid(bidder=bidder1, max_price=Money(30), placed_at=now))
     listing.place_bid(Bid(bidder=bidder2, max_price=Money(30), placed_at=now))
-    assert listing.winning_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
+    assert listing.highest_bid == Bid(Money(30), bidder=bidder1, placed_at=now)
     assert listing.current_price == Money(30)
 
 
@@ -129,7 +129,7 @@ def test_place_two_bids_by_same_bidder():
     listing.place_bid(Bid(max_price=Money(30), bidder=bidder, placed_at=now))
 
     assert len(listing.bids) == 1
-    assert listing.winning_bid == Bid(max_price=Money(30), bidder=bidder, placed_at=now)
+    assert listing.highest_bid == Bid(max_price=Money(30), bidder=bidder, placed_at=now)
     assert listing.current_price == Money(10)
 
 
@@ -151,7 +151,7 @@ def test_cannot_place_bid_if_listing_ended():
     )
     with pytest.raises(
         BusinessRuleValidationException,
-        match="PlacedBidMustBeGreaterOrEqualThanNextMinimumBid",
+        match="PriceOfPlacedBidMustBeGreaterOrEqualThanNextMinimumPrice",
     ):
         listing.place_bid(bid)
 

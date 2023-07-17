@@ -24,9 +24,8 @@ def update_listing_draft(
     command: UpdateListingDraftCommand, repository: ListingRepository
 ) -> CommandResult:
     listing: Listing = repository.get_by_id(command.listing_id)
-    events = listing.change_main_attributes(
+    listing.change_main_attributes(
         title=command.title,
         description=command.description,
         ask_price=command.ask_price,
     )
-    return CommandResult.success(entity_id=listing.id, events=events)

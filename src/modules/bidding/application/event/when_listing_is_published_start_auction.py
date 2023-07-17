@@ -20,4 +20,3 @@ def when_listing_is_published_start_auction(
         ends_at=datetime.now() + timedelta(days=7),
     )
     listing_repository.add(listing)
-    return EventResult.success()

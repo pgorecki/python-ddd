@@ -3,42 +3,12 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from seedwork.domain.entities import Entity
+from seedwork.domain.events import DomainEvent
 from seedwork.domain.exceptions import EntityNotFoundException
 from seedwork.domain.repositories import GenericRepository
 from seedwork.domain.value_objects import GenericUUID
 from seedwork.infrastructure.data_mapper import DataMapper
 from seedwork.infrastructure.database import Base
-
-# class Repository(ABC):
-#     """Base class for all repositories"""
-#
-#     @abstractmethod
-#     def add(self, entity: Entity):
-#         ...
-#
-#     @abstractmethod
-#     def remove(self, entity: Entity):
-#         ...
-#
-#     @abstractmethod
-#     def get_by_id(self, entity_id: GenericUUID):
-#         """Should raise EntityNotFoundException if not found"""
-#         ...
-#
-#     @abstractmethod
-#     def remove_by_id(self, entity_id: GenericUUID):
-#         """Should raise EntityNotFoundException if not found"""
-#         ...
-#
-#     @abstractmethod
-#     def count(self) -> int:
-#         ...
-#
-#     def __getitem__(self, key):
-#         return self.get_by_id(key)
-#
-#     def __delitem__(self, key):
-#         return self.remove_by_id(key)
 
 
 class InMemoryRepository(GenericRepository[GenericUUID, Entity]):
@@ -72,6 +42,12 @@ class InMemoryRepository(GenericRepository[GenericUUID, Entity]):
 
     def persist_all(self):
         ...
+
+    def collect_events(self) -> list[DomainEvent]:
+        events = []
+        for entity in self.objects.values():
+            events.extend(entity.collect_events())
+        return events
 
 
 # a sentinel value for keeping track of entities removed from the repository
@@ -137,6 +113,14 @@ class SqlAlchemyGenericRepository(GenericRepository[GenericUUID, Entity]):
         for entity in self._identity_map.values():
             if entity is not REMOVED:
                 self.persist(entity)
+
+    def collect_events(self):
+        """Collects all events from entities known to the repository (present in the identity map)."""
+        events = []
+        for entity in self._identity_map.values():
+            if entity is not REMOVED:
+                events.extend(entity.collect_events())
+        return events
 
     @property
     def data_mapper(self):

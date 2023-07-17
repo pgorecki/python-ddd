@@ -2,7 +2,7 @@ import importlib
 import inspect
 from collections import defaultdict
 from functools import partial
-from typing import Any
+from typing import Any, Type, TypeVar
 
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
@@ -12,6 +12,7 @@ from seedwork.application.inbox_outbox import InMemoryInbox
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.events import DomainEvent
+from seedwork.domain.repositories import GenericRepository
 from seedwork.utils.data_structures import OrderedSet
 
 
@@ -25,6 +26,20 @@ def get_function_arguments(func):
         remaining_parameters[name] = param.annotation
 
     return first_parameter, remaining_parameters
+
+
+T = TypeVar("T", CommandResult, EventResult)
+
+
+def collect_domain_events(result: T, handler_kwargs) -> T:
+    domain_events = []
+    repositories = filter(
+        lambda x: isinstance(x, GenericRepository), handler_kwargs.values()
+    )
+    for repo in repositories:
+        domain_events.extend(repo.collect_events())
+    result.events.extend(domain_events)
+    return result
 
 
 class DependencyProvider:
@@ -144,10 +159,11 @@ class TransactionContext:
         wrapped_handler = self._wrap_with_middlewares(p, command=command)
 
         # execute wrapped command handler
-        command_result = wrapped_handler()
+        command_result = wrapped_handler() or CommandResult.success()
         assert isinstance(
             command_result, CommandResult
         ), f"Got {command_result} instead of CommandResult from {handler_func}"
+        command_result = collect_domain_events(command_result, handler_kwargs)
 
         self.next_commands = []
         self.integration_events = []
@@ -172,11 +188,12 @@ class TransactionContext:
             )
             p = partial(handler_func, event, **handler_kwargs)
             wrapped_handler = self._wrap_with_middlewares(p, event=event)
-            result = wrapped_handler()
+            event_result = wrapped_handler() or EventResult.success()
             assert isinstance(
-                result, EventResult
-            ), f"Got {result} instead of EventResult from {handler_func}"
-            event_results.append(result)
+                event_result, EventResult
+            ), f"Got {event_result} instead of EventResult from {handler_func}"
+            event_result = collect_domain_events(event_result, handler_kwargs)
+            event_results.append(event_result)
         return EventResultSet(event_results)
 
     def collect_integration_event(self, event):

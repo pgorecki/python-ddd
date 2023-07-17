@@ -18,8 +18,9 @@ def test_delete_listing_draft():
     # arrange
     seller_id = GenericUUID.next_id()
     repository = InMemoryRepository()
+    listing_id = Listing.next_id()
     listing = Listing(
-        id=Listing.next_id(),
+        id=listing_id,
         title="Tiny dragon",
         description="Tiny dragon for sale",
         ask_price=Money(1),
@@ -37,7 +38,6 @@ def test_delete_listing_draft():
 
     # assert
     assert result.is_success()
-    assert result.entity_id == listing.id
     assert result.events == [ListingDraftDeletedEvent(listing_id=listing.id)]
 
 

@@ -34,6 +34,4 @@ def delete_listing_draft(
     )
     check_rule(PublishedListingMustNotBeDeleted(status=listing.status))
     repository.remove(listing)
-    return CommandResult.success(
-        entity_id=listing.id, events=[ListingDraftDeletedEvent(listing_id=listing.id)]
-    )
+    return CommandResult.success(event=ListingDraftDeletedEvent(listing_id=listing.id))

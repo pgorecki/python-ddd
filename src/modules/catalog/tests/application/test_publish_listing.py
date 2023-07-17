@@ -34,13 +34,12 @@ def test_publish_listing():
     )
 
     # act
-    result = publish_listing_draft(
+    publish_listing_draft(
         command,
         listing_repository=listing_repository,
     )
 
     # assert
-    assert result.is_success()
     assert listing.status == ListingStatus.PUBLISHED
 
 

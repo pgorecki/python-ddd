@@ -21,9 +21,7 @@ def place_bid(
     command: PlaceBidCommand, listing_repository: ListingRepository
 ) -> CommandResult:
     bidder = Bidder(id=command.bidder_id)
-    bid = Bid(bidder=bidder, max_price=Money(command.amount))
+    bid = Bid(bidder=bidder, max_price=Money(amount=command.amount))
 
     listing = listing_repository.get_by_id(command.listing_id)
     listing.place_bid(bid)
-
-    return CommandResult.success()

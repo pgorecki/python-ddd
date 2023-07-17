@@ -15,7 +15,7 @@ from seedwork.domain.value_objects import GenericUUID, Money
 from .value_objects import ListingStatus
 
 
-@dataclass
+@dataclass(kw_only=True)
 class Listing(AggregateRoot):
     title: str
     description: str
@@ -23,25 +23,22 @@ class Listing(AggregateRoot):
     seller_id: GenericUUID
     status = ListingStatus.DRAFT
 
-    def change_main_attributes(
-        self, title: str, description: str, ask_price: Money
-    ) -> list[DomainEvent]:
+    def change_main_attributes(self, title: str, description: str, ask_price: Money):
         self.title = title
         self.description = description
         self.ask_price = ask_price
+        self.register_event(ListingDraftUpdatedEvent(listing_id=self.id))
 
-        return [ListingDraftUpdatedEvent(listing_id=self.id)]
-
-    def publish(self) -> list[DomainEvent]:
+    def publish(self):
         """Instantly publish listing for sale"""
         self.check_rule(ListingMustBeDraft(status=self.status))
         self.check_rule(ListingAskPriceMustBeGreaterThanZero(ask_price=self.ask_price))
         self.status = ListingStatus.PUBLISHED
-        return [
+        self.register_event(
             ListingPublishedEvent(
                 listing_id=self.id, ask_price=self.ask_price, seller_id=self.seller_id
             )
-        ]
+        )
 
 
 @dataclass

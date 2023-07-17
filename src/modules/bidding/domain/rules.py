@@ -6,7 +6,7 @@ from seedwork.domain.rules import BusinessRule
 from seedwork.domain.value_objects import Money
 
 
-class PlacedBidMustBeGreaterOrEqualThanNextMinimumBid(BusinessRule):
+class PriceOfPlacedBidMustBeGreaterOrEqualThanNextMinimumPrice(BusinessRule):
     __message = "Placed bid must be greater or equal than {next_minimum_price}"
 
     current_price: Money

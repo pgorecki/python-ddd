@@ -31,6 +31,10 @@ class GenericRepository(Generic[EntityId, Entity], metaclass=abc.ABCMeta):
     def persist_all(self):
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def collect_events(self):
+        raise NotImplementedError()
+
     def __getitem__(self, index) -> Entity:
         return self.get_by_id(index)
 

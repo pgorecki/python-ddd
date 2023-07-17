@@ -2,10 +2,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional
 
+from modules.bidding.domain.events import (
+    BidWasPlaced,
+    BidWasRetracted,
+    HighestBidderWasOutbid,
+    ListingWasCancelled,
+)
 from modules.bidding.domain.rules import (
     BidCanBeRetracted,
     ListingCanBeCancelled,
-    PlacedBidMustBeGreaterOrEqualThanNextMinimumBid,
+    PriceOfPlacedBidMustBeGreaterOrEqualThanNextMinimumPrice,
 )
 from modules.bidding.domain.value_objects import Bid, Bidder, Seller
 from seedwork.domain.entities import AggregateRoot
@@ -23,18 +29,6 @@ class BidCannotBeRetracted(DomainException):
 
 
 class ListingCannotBeCancelled(DomainException):
-    ...
-
-
-class BidPlacedEvent(DomainEvent):
-    ...
-
-
-class BidRetractedEvent(DomainEvent):
-    ...
-
-
-class ListingCancelledEvent(DomainEvent):
     ...
 
 
@@ -61,24 +55,39 @@ class Listing(AggregateRoot[GenericUUID]):
         return self.current_price + Money(amount=1, currency=self.ask_price.currency)
 
     # public commands
-    def place_bid(self, bid: Bid) -> DomainEvent:
+    def place_bid(self, bid: Bid):
         """Public method"""
         self.check_rule(
-            PlacedBidMustBeGreaterOrEqualThanNextMinimumBid(
+            PriceOfPlacedBidMustBeGreaterOrEqualThanNextMinimumPrice(
                 current_price=bid.max_price, next_minimum_price=self.next_minimum_price
             )
         )
+
+        previous_winner_id = self.highest_bid.bidder.id if self.highest_bid else None
+        current_winner_id = bid.bidder.id
 
         if self.has_bid_placed_by(bidder=bid.bidder):
             self._update_bid(bid)
         else:
             self._add_bid(bid)
 
-        return BidPlacedEvent(
-            listing_id=self.id, bidder=bid.bidder, max_price=bid.max_price
+        self.register_event(
+            BidWasPlaced(
+                listing_id=self.id,
+                bidder_id=bid.bidder.id,
+            )
         )
 
-    def retract_bid_of(self, bidder: Bidder) -> DomainEvent:
+        # if there was previous winner...
+        if previous_winner_id is not None and previous_winner_id != current_winner_id:
+            self.register_event(
+                HighestBidderWasOutbid(
+                    listing_id=self.id,
+                    outbid_bidder_id=previous_winner_id,
+                )
+            )
+
+    def retract_bid_of(self, bidder: Bidder):
         """Public method"""
         bid = self.get_bid_of(bidder)
         self.check_rule(
@@ -86,9 +95,17 @@ class Listing(AggregateRoot[GenericUUID]):
         )
 
         self._remove_bid_of(bidder=bidder)
-        return BidRetractedEvent(listing_id=self.id, bidder_id=bidder.id)
+        self.register_event(
+            BidWasRetracted(
+                listing_id=self.id,
+                retracting_bidder_id=bidder.id,
+                winning_bidder_id=self.highest_bid.bidder.id
+                if self.highest_bid
+                else None,
+            )
+        )
 
-    def cancel(self) -> DomainEvent:
+    def cancel(self):
         """
         Seller can cancel a listing (end a listing early). Listing must be eligible to cancelled,
         depending on time left and if bids have been placed.
@@ -100,14 +117,13 @@ class Listing(AggregateRoot[GenericUUID]):
             )
         )
         self.ends_at = datetime.utcnow()
-        return ListingCancelledEvent(listing_id=self.id)
+        self.register_event(ListingWasCancelled(listing_id=self.id))
 
     def end(self) -> DomainEvent:
         """
         Ends listing.
         """
         raise NotImplementedError()
-        return []
 
     # public queries
     def get_bid_of(self, bidder: Bidder) -> Bid:
@@ -126,7 +142,7 @@ class Listing(AggregateRoot[GenericUUID]):
         return True
 
     @property
-    def winning_bid(self) -> Optional[Bid]:
+    def highest_bid(self) -> Optional[Bid]:
         try:
             highest_bid = max(self.bids, key=lambda bid: bid.max_price)
         except ValueError:

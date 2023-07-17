@@ -19,6 +19,4 @@ def retract_bid(
     bidder = Bidder(id=command.bidder_id)
 
     listing: Listing = listing_repository.get_by_id(id=command.listing_id)
-    event = listing.retract_bid_of(bidder)
-
-    return CommandResult.success(event=event)
+    listing.retract_bid_of(bidder)

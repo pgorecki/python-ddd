@@ -14,8 +14,9 @@ from seedwork.infrastructure.repository import InMemoryRepository
 @pytest.mark.unit
 def test_create_listing_draft():
     # arrange
+    listing_id = UUID(int=1)
     command = CreateListingDraftCommand(
-        listing_id=UUID(int=1),
+        listing_id=listing_id,
         title="foo",
         description="bar",
         ask_price=Money(1),
@@ -27,5 +28,5 @@ def test_create_listing_draft():
     result = create_listing_draft(command, repository)
 
     # assert
-    assert repository.get_by_id(result.entity_id).title == "foo"
+    assert repository.get_by_id(listing_id).title == "foo"
     assert result.has_errors() is False

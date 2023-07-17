@@ -5,7 +5,6 @@ from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
 from modules.catalog.domain.rules import OnlyListingOwnerCanPublishListing
 from modules.catalog.domain.value_objects import ListingId, SellerId
-from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.domain.mixins import check_rule
 
@@ -30,9 +29,4 @@ def publish_listing_draft(
             listing_seller_id=listing.seller_id, current_seller_id=command.seller_id
         )
     )
-
-    events = listing.publish()
-
-    listing_repository.persist_all()
-
-    return CommandResult.success(entity_id=listing.id, events=events)
+    listing.publish()

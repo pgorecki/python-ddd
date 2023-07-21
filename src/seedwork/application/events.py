@@ -2,7 +2,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from seedwork.domain.type_hints import DomainEvent
 from seedwork.domain.value_objects import GenericUUID
@@ -18,6 +18,8 @@ class IntegrationEvent(BaseModel):
     They are created in a domain event handler and then saved in an outbox for further delivery.
     As a result, integration events are handled asynchronously.
     """
+
+    event_id: GenericUUID = Field(default_factory=GenericUUID)
 
 
 @dataclass

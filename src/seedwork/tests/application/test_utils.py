@@ -12,7 +12,9 @@ def test_successful_command_result_as_event_result():
     event_result = as_event_result(command_result)
     assert event_result.is_success()
     assert event_result.payload == "foo"
-    assert event_result.events == [FooEvent()]
+    assert (
+        len(event_result.events) == 1 and event_result.events[0].__class__ is FooEvent
+    )
     assert event_result.errors == []
 
 

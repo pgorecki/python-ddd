@@ -171,7 +171,7 @@ class TransactionContext:
         while len(event_queue) > 0:
             event = event_queue.pop(0)
             if isinstance(event, IntegrationEvent):
-                self.collect_integration_event(event)
+                self.store_integration_event(event)
 
             elif isinstance(event, DomainEvent):
                 event_results = self.handle_domain_event(event)
@@ -196,12 +196,21 @@ class TransactionContext:
             event_results.append(event_result)
         return EventResultSet(event_results)
 
-    def collect_integration_event(self, event):
+    def store_integration_event(self, event):
         self.integration_events.append(event)
+
+    def collect_integration_events(self) -> list[IntegrationEvent]:
+        integration_events = self.integration_events
+        self.integration_events = []
+        return integration_events
+
+    def get_dependency(self, identifier: Any) -> Any:
+        """Get a dependency from the dependency provider"""
+        return self.dependency_provider.get_dependency(identifier)
 
     def get_service(self, service_cls) -> Any:
         """Get a dependency from the dependency provider"""
-        return self.dependency_provider.get_dependency(service_cls)
+        return self.get_dependency(service_cls)
 
     def __getitem__(self, item) -> Any:
         return self.get_service(item)
@@ -232,6 +241,12 @@ class ApplicationModule:
         return handler_func
 
     def domain_event_handler(self, handler_func):
+        """Event handler decorator"""
+        event_cls, _ = get_function_arguments(handler_func)
+        self.event_handlers[event_cls].add(handler_func)
+        return handler_func
+
+    def integration_event_handler(self, handler_func):
         """Event handler decorator"""
         event_cls, _ = get_function_arguments(handler_func)
         self.event_handlers[event_cls].add(handler_func)

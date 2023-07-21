@@ -1,4 +1,16 @@
+import abc
 import contextlib
+from typing import Optional
+
+from seedwork.application.events import IntegrationEvent
+from seedwork.domain.entities import AggregateRoot
+
+
+class Outbox(abc.ABC):
+    @abc.abstractmethod
+    def add(self, event: IntegrationEvent, source: Optional[AggregateRoot] = None):
+        """Add event to the outbox"""
+        raise NotImplementedError()
 
 
 class InMemoryInbox:
@@ -24,9 +36,9 @@ class ProcessInboxUntilEmptyStrategy:
         return not self.inbox.is_empty()
 
 
-class InMemoryOutbox:
+class InMemoryOutbox(Outbox):
     def __init__(self):
         self.events = []
 
-    def save(self, event):
+    def add(self, event: IntegrationEvent, source: Optional[AggregateRoot] = None):
         self.events.append(event)

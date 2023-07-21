@@ -38,7 +38,9 @@ def test_delete_listing_draft():
 
     # assert
     assert result.is_success()
-    assert result.events == [ListingDraftDeletedEvent(listing_id=listing.id)]
+    assert len(result.events) == 1
+    assert result.events[0].__class__ is ListingDraftDeletedEvent
+    assert result.events[0].listing_id == listing_id
 
 
 @pytest.mark.integration

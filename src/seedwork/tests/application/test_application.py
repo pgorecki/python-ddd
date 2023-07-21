@@ -113,14 +113,14 @@ def test_transaction_context_middleware():
     app = Application(trace=[])
 
     @app.transaction_middleware
-    def middleware1(ctx, next, command=None, query=None, event=None):
+    def middleware1(ctx, call_next, command=None, query=None, event=None):
         ctx.dependency_provider["trace"].append("middleware1")
-        return next()
+        return call_next()
 
     @app.transaction_middleware
-    def middleware1(ctx, next, command=None, query=None, event=None):
+    def middleware1(ctx, call_next, command=None, query=None, event=None):
         ctx.dependency_provider["trace"].append("middleware2")
-        return next()
+        return call_next()
 
     @app.command_handler
     def handle_ping(command: SendPing):

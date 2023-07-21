@@ -4,6 +4,11 @@ from pydantic.dataclasses import dataclass
 
 
 class GenericUUID(uuid.UUID):
+    def __init__(self, *args, **kwargs):
+        if not args and not kwargs:
+            kwargs["int"] = uuid.uuid4().int
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def next_id(cls):
         return cls(int=uuid.uuid4().int)

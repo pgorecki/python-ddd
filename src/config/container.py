@@ -1,6 +1,7 @@
 import inspect
 import json
 import uuid
+from logging import Logger
 from typing import Optional
 from uuid import UUID
 
@@ -22,8 +23,8 @@ from modules.catalog.infrastructure.listing_repository import (
 from modules.iam.application.services import IamService
 from modules.iam.infrastructure.repository import PostgresJsonUserRepository
 from seedwork.application import Application, DependencyProvider
-from seedwork.application.inbox_outbox import InMemoryOutbox
 from seedwork.infrastructure.logging import logger
+from seedwork.infrastructure.postgres_outbox import Outbox, PostgresOutbox
 
 
 def resolve_provider_by_type(container: Container, cls: type) -> Optional[Provider]:
@@ -114,6 +115,7 @@ def create_application(db_engine):
     @application.on_exit_transaction_context
     def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
         session = ctx.dependency_provider.get_dependency("db_session")
+
         if exc_type:
             session.rollback()
             logger.debug(f"rollback due to {exc_type}")
@@ -125,7 +127,7 @@ def create_application(db_engine):
         logger.correlation_id.set(uuid.UUID(int=0))
 
     @application.transaction_middleware
-    def logging_middleware(ctx, next, command=None, query=None, event=None):
+    def logging_middleware(ctx, call_next, command=None, query=None, event=None):
         if command:
             prefix = "Executing"
             task = command
@@ -135,11 +137,18 @@ def create_application(db_engine):
         elif event:
             prefix = "Handling"
             task = event
-        task = command or query or event
         session = ctx.dependency_provider.get_dependency("db_session")
         logger.info(f"{id(session)} {prefix} {task}")
-        result = next()
+        result = call_next()
         logger.info(f"{id(session)} {prefix} completed, result: {result}")
+        return result
+
+    @application.transaction_middleware
+    def outbox_middleware(ctx, call_next, command=None, query=None, event=None):
+        result = call_next()
+        outbox = ctx.get_dependency(Outbox)
+        for event in ctx.collect_integration_events():
+            outbox.add(event)
         return result
 
     return application
@@ -153,9 +162,7 @@ class TransactionContainer(containers.DeclarativeContainer):
 
     correlation_id = providers.Dependency(instance_of=UUID)
     db_session = providers.Dependency(instance_of=Session)
-    logger = providers.Dependency()
-
-    outbox = providers.Singleton(InMemoryOutbox)
+    logger = providers.Dependency(instance_of=Logger)
 
     catalog_listing_repository = providers.Singleton(
         CatalogPostgresJsonListingRepository,
@@ -173,6 +180,7 @@ class TransactionContainer(containers.DeclarativeContainer):
     )
 
     iam_service = providers.Singleton(IamService, user_repository=user_repository)
+    outbox = providers.Singleton(PostgresOutbox, db_session=db_session)
 
 
 class TopLevelContainer(containers.DeclarativeContainer):

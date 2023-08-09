@@ -1,6 +1,6 @@
 import importlib
 import inspect
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from functools import partial
 from typing import Any, Type, TypeVar
 
@@ -19,11 +19,19 @@ from seedwork.utils.data_structures import OrderedSet
 def get_function_arguments(func):
     handler_signature = inspect.signature(func)
     kwargs_iterator = iter(handler_signature.parameters.items())
-    _, first_param = next(kwargs_iterator)
-    first_parameter = first_param.annotation
+    parameters = OrderedDict()
+    for name, param in kwargs_iterator:
+        parameters[name] = param.annotation
+    return parameters
+
+
+def get_handler_arguments(func):
+    parameters = get_function_arguments(func)
+    kwargs_iterator = iter(parameters.items())
+    _, first_parameter = next(kwargs_iterator)
     remaining_parameters = {}
     for name, param in kwargs_iterator:
-        remaining_parameters[name] = param.annotation
+        remaining_parameters[name] = param
 
     return first_parameter, remaining_parameters
 
@@ -54,33 +62,40 @@ class DependencyProvider:
     def get_dependency(self, identifier):
         return self.dependencies[identifier]
 
-    def _get_arguments(self, func):
-        return get_function_arguments(func)
-
-    def _resolve_arguments(self, handler_parameters) -> dict:
+    def _resolve_arguments(self, handler_parameters, overrides) -> dict:
         """Match handler_parameters with dependencies"""
+        
+        def _resolve(identifier, overrides):
+            if identifier in overrides:
+                return overrides[identifier]
+            return self.get_dependency(identifier)
+        
         kwargs = {}
         for param_name, param_type in handler_parameters.items():
+            # first, try to resolve by type
+            if param_type is not inspect._empty:
+                try:
+                    kwargs[param_name] = _resolve(param_type, overrides)
+                    continue
+                except (ValueError, KeyError):
+                    pass
+            # then, try to resolve by name
             try:
-                if param_type is inspect._empty:
-                    raise ValueError("No type annotation")
-                kwargs[param_name] = self.get_dependency(param_type)
-                continue
-            except (ValueError, KeyError):
-                pass
-
-            try:
-                kwargs[param_name] = self.get_dependency(param_name)
+                kwargs[param_name] = _resolve(param_name, overrides)
                 continue
             except (ValueError, KeyError):
                 pass
 
         return kwargs
 
-    def get_handler_kwargs(self, func, **overrides):
-        _, handler_parameters = self._get_arguments(func)
-        kwargs = self._resolve_arguments(handler_parameters)
-        kwargs.update(**overrides)
+    def get_function_kwargs(self, func, overrides=None):
+        func_parameters = get_function_arguments(func)
+        kwargs = self._resolve_arguments(func_parameters, overrides or {})
+        return kwargs
+    
+    def get_handler_kwargs(self, func, overrides=None):
+        _, handler_parameters = get_handler_arguments(func)
+        kwargs = self._resolve_arguments(handler_parameters, overrides or {})
         return kwargs
 
     def __getitem__(self, key):
@@ -126,6 +141,30 @@ class TransactionContext:
         for middleware in self.app._transaction_middlewares:
             p = partial(middleware, self, p, command, query, event)
         return p
+    
+    def _get_overrides(self, **kwargs):
+        overrides = dict(ctx=self)
+        overrides.update(self.overrides)
+        overrides.update(kwargs)
+        
+        type_match = defaultdict(list)
+        for name, value in overrides.items():
+            type_match[type(value)].append(value)
+        with_unique_type = dict((k, v[0]) for k, v in type_match.items() if len(v) == 1)
+        
+        overrides.update(with_unique_type)
+        
+        return overrides
+    
+    def call(self, handler_func, **kwargs):
+        overrides = self._get_overrides(**kwargs)
+        handler_kwargs = self.dependency_provider.get_function_kwargs(
+            handler_func, overrides
+        )
+        p = partial(handler_func, **handler_kwargs)
+        wrapped_handler = self._wrap_with_middlewares(p)
+        result = wrapped_handler()
+        return result
 
     def execute_query(self, query) -> QueryResult:
         assert (
@@ -135,7 +174,7 @@ class TransactionContext:
 
         handler_func = self.app.get_query_handler(query)
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
-            handler_func, **self.overrides
+            handler_func, self._get_overrides()
         )
         p = partial(handler_func, query, **handler_kwargs)
         wrapped_handler = self._wrap_with_middlewares(p, query=query)
@@ -153,7 +192,7 @@ class TransactionContext:
 
         handler_func = self.app.get_command_handler(command)
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
-            handler_func, **self.overrides
+            handler_func, self._get_overrides()
         )
         p = partial(handler_func, command, **handler_kwargs)
         wrapped_handler = self._wrap_with_middlewares(p, command=command)
@@ -184,7 +223,7 @@ class TransactionContext:
         event_results = []
         for handler_func in self.app.get_event_handlers(event):
             handler_kwargs = self.dependency_provider.get_handler_kwargs(
-                handler_func, **self.overrides
+                handler_func, self._get_overrides()
             )
             p = partial(handler_func, event, **handler_kwargs)
             wrapped_handler = self._wrap_with_middlewares(p, event=event)
@@ -195,6 +234,10 @@ class TransactionContext:
             event_result = collect_domain_events(event_result, handler_kwargs)
             event_results.append(event_result)
         return EventResultSet(event_results)
+
+    def handle_integration_event(self, event):
+        # TODO: do we need to handle domain and integration events differently???
+        return self.handle_domain_event(event)
 
     def store_integration_event(self, event):
         self.integration_events.append(event)
@@ -230,25 +273,25 @@ class ApplicationModule:
 
     def query_handler(self, handler_func):
         """Query handler decorator"""
-        query_cls, _ = get_function_arguments(handler_func)
+        query_cls, _ = get_handler_arguments(handler_func)
         self.query_handlers[query_cls] = handler_func
         return handler_func
 
     def command_handler(self, handler_func):
         """Command handler decorator"""
-        command_cls, _ = get_function_arguments(handler_func)
+        command_cls, _ = get_handler_arguments(handler_func)
         self.command_handlers[command_cls] = handler_func
         return handler_func
 
     def domain_event_handler(self, handler_func):
         """Event handler decorator"""
-        event_cls, _ = get_function_arguments(handler_func)
+        event_cls, _ = get_handler_arguments(handler_func)
         self.event_handlers[event_cls].add(handler_func)
         return handler_func
 
     def integration_event_handler(self, handler_func):
         """Event handler decorator"""
-        event_cls, _ = get_function_arguments(handler_func)
+        event_cls, _ = get_handler_arguments(handler_func)
         self.event_handlers[event_cls].add(handler_func)
         return handler_func
 

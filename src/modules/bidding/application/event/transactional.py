@@ -10,7 +10,7 @@ from seedwork.application.events import IntegrationEvent
 from seedwork.domain.value_objects import GenericUUID
 
 
-class SendEmailToSellerThatBidWasPlaced(IntegrationEvent):
+class BidWasPlacedNotification(IntegrationEvent):
     listing_id: GenericUUID
     bidder_id: GenericUUID
 
@@ -23,7 +23,7 @@ def notify_outbid_winner(event: BidWasPlaced, logger):
 @bidding_module.domain_event_handler
 def notify_seller_of_new_bid(event: BidWasPlaced, logger):
     logger.info("New bid was placed")
-    return SendEmailToSellerThatBidWasPlaced(
+    return BidWasPlacedNotification(
         listing_id=event.listing_id, bidder_id=event.bidder_id
     )
 

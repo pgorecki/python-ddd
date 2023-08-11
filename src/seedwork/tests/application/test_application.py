@@ -142,18 +142,18 @@ def test_missing_dependency():
 
     with pytest.raises(TypeError):
         app.execute_command(SendPing())
-        
-        
+
+
 @pytest.mark.unit
 def test_call_any_function():
     def some_function(foo, bar):
         return foo + bar
-    
+
     app = Application()
-    
+
     with app.transaction_context(foo=1, bar=0) as ctx:
         result = ctx.call(some_function, bar=2)
-    
+
     assert result == 3
 
 
@@ -168,8 +168,8 @@ def test_call_with_no_dependencies():
         result = ctx.call(foo)
 
     assert result is True
-    
-    
+
+
 @pytest.mark.unit
 def test_call_skips_unneeded_dependencies():
     def foo():

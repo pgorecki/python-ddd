@@ -1,6 +1,6 @@
 import importlib
 import inspect
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict
 from functools import partial
 from typing import Any, Type, TypeVar
 
@@ -26,6 +26,7 @@ def get_function_arguments(func):
 
 
 def get_handler_arguments(func):
+    """Handlers can have multiple arguments, but only the first of them can be a command, query or event."""
     parameters = get_function_arguments(func)
     kwargs_iterator = iter(parameters.items())
     _, first_parameter = next(kwargs_iterator)
@@ -64,12 +65,12 @@ class DependencyProvider:
 
     def _resolve_arguments(self, handler_parameters, overrides) -> dict:
         """Match handler_parameters with dependencies"""
-        
+
         def _resolve(identifier, overrides):
             if identifier in overrides:
                 return overrides[identifier]
             return self.get_dependency(identifier)
-        
+
         kwargs = {}
         for param_name, param_type in handler_parameters.items():
             # first, try to resolve by type
@@ -92,7 +93,7 @@ class DependencyProvider:
         func_parameters = get_function_arguments(func)
         kwargs = self._resolve_arguments(func_parameters, overrides or {})
         return kwargs
-    
+
     def get_handler_kwargs(self, func, overrides=None):
         _, handler_parameters = get_handler_arguments(func)
         kwargs = self._resolve_arguments(handler_parameters, overrides or {})
@@ -141,21 +142,21 @@ class TransactionContext:
         for middleware in self.app._transaction_middlewares:
             p = partial(middleware, self, p, command, query, event)
         return p
-    
+
     def _get_overrides(self, **kwargs):
         overrides = dict(ctx=self)
         overrides.update(self.overrides)
         overrides.update(kwargs)
-        
+
         type_match = defaultdict(list)
         for name, value in overrides.items():
             type_match[type(value)].append(value)
         with_unique_type = dict((k, v[0]) for k, v in type_match.items() if len(v) == 1)
-        
+
         overrides.update(with_unique_type)
-        
+
         return overrides
-    
+
     def call(self, handler_func, **kwargs):
         overrides = self._get_overrides(**kwargs)
         handler_kwargs = self.dependency_provider.get_function_kwargs(
@@ -228,6 +229,7 @@ class TransactionContext:
             p = partial(handler_func, event, **handler_kwargs)
             wrapped_handler = self._wrap_with_middlewares(p, event=event)
             event_result = wrapped_handler() or EventResult.success()
+
             assert isinstance(
                 event_result, EventResult
             ), f"Got {event_result} instead of EventResult from {handler_func}"

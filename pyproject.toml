@@ -6,9 +6,7 @@ authors = ["Przemysław Górecki <przemyslaw.gorecki@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10.0"
-pytest = "^6.2.4"
 pydantic = "^1.8.2"
-black = "^21.5b1"
 fastapi = "^0.95.2"
 uvicorn = "^0.14.0"
 starlette-context = "^0.3.3"
@@ -24,16 +22,19 @@ psycopg2-binary = "^2.9.2"
 freezegun = "^1.1.0"
 SQLAlchemy-Utils = "^0.38.3"
 pre-commit = "^2.20.0"
-click = "8.0.4"
 httpx = "^0.23.1"
 requests = "^2.28.1"
 bcrypt = "^4.0.1"
 mypy = "^1.4.1"
+celery = "^5.3.1"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"
 pytest-cov = "^2.12.1"
 vulture = "^2.7"
+black = "^23.7.0"
+mentat-ai = "^0.1.9"
+pytest = "^7.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

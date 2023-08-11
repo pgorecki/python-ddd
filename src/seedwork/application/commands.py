@@ -1,5 +1,6 @@
 from abc import ABC
-from .command_handlers import CommandResult
+
+from .command_handlers import CommandResult  # type: ignore
 
 
 class Command(ABC):

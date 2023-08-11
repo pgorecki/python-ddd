@@ -23,6 +23,7 @@ from modules.catalog.infrastructure.listing_repository import (
 from modules.iam.application.services import IamService
 from modules.iam.infrastructure.repository import PostgresJsonUserRepository
 from seedwork.application import Application, DependencyProvider
+from seedwork.application.events import DomainEvent, EventResult, IntegrationEvent
 from seedwork.infrastructure.logging import logger
 from seedwork.infrastructure.postgres_outbox import Outbox, PostgresOutbox
 
@@ -125,6 +126,19 @@ def create_application(db_engine):
         session.close()
         logger.debug(f"transaction ended ")
         logger.correlation_id.set(uuid.UUID(int=0))
+
+    @application.transaction_middleware
+    def auto_type_middleware(ctx, call_next, command=None, query=None, event=None):
+        result = call_next()
+        if command:
+            ...
+        elif query:
+            ...
+        elif event:
+            # we are allowing event handlers to return events, if so they are converted to EventResult
+            if isinstance(result, DomainEvent) or isinstance(result, IntegrationEvent):
+                return EventResult.success(event=result)
+        return result
 
     @application.transaction_middleware
     def logging_middleware(ctx, call_next, command=None, query=None, event=None):

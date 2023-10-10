@@ -22,6 +22,9 @@ class CommandResult:
     def is_success(self) -> bool:
         return not self.has_errors()
 
+    def extend_with_events(self, events: list[DomainEvent]):
+        self.events.extend(events)
+
     @classmethod
     def failure(cls, message="Failure", exception=None) -> "CommandResult":
         """Creates a failed result"""

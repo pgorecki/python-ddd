@@ -6,11 +6,12 @@ from typing import Any, Type, TypeVar
 
 from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
-from seedwork.application.events import EventResult, EventResultSet, IntegrationEvent
+from seedwork.application.events import EventResult, IntegrationEvent
 from seedwork.application.exceptions import ApplicationException
 from seedwork.application.inbox_outbox import InMemoryInbox
 from seedwork.application.queries import Query
 from seedwork.application.query_handlers import QueryResult
+from seedwork.application.results import ExecutionChain, ExecutionStep
 from seedwork.domain.events import DomainEvent
 from seedwork.domain.repositories import GenericRepository
 from seedwork.utils.data_structures import OrderedSet
@@ -23,6 +24,29 @@ def get_function_arguments(func):
     for name, param in kwargs_iterator:
         parameters[name] = param.annotation
     return parameters
+
+
+def dispatch_triggered_events(handler):
+    def decorator(self, *args, **kwargs) -> ExecutionChain:
+        integration_events = []
+        execution_chain = handler(self, *args, **kwargs)
+        pending_events = execution_chain.triggered_events()
+        while len(pending_events) > 0:
+            event = pending_events.pop(0)
+            if isinstance(event, IntegrationEvent):
+                integration_events.append(event)
+                execution_chain.add(
+                    ExecutionStep(task=event, handler=None, result=None)
+                )
+
+            elif isinstance(event, DomainEvent):
+                subchain = self._handle_domain_event(event)
+                execution_chain.extend(subchain)
+                pending_events.extend(subchain.triggered_events())
+        self.last_execution_chain = execution_chain
+        return execution_chain
+
+    return decorator
 
 
 def get_handler_arguments(func):
@@ -40,15 +64,21 @@ def get_handler_arguments(func):
 T = TypeVar("T", CommandResult, EventResult)
 
 
-def collect_domain_events(result: T, handler_kwargs) -> T:
+def collect_domain_events(handler_kwargs) -> list[DomainEvent]:
+    """
+    Collect domain events, captured by repositories used by a handler.
+
+    The handler is used to change the state of an entity (which is accessed via repository) by calling one of its
+    methods. The repository is responsible for tracking changes in entities and also for collecting domain events that
+    are raised by entities. Hence, we can use repositories to collect domain events that are raised by entities.
+    """
     domain_events = []
     repositories = filter(
         lambda x: isinstance(x, GenericRepository), handler_kwargs.values()
     )
     for repo in repositories:
         domain_events.extend(repo.collect_events())
-    result.events.extend(domain_events)
-    return result
+    return domain_events
 
 
 class DependencyProvider:
@@ -122,9 +152,6 @@ class TransactionContext:
         self.app = app
         self.overrides = overrides
         self.dependency_provider = app.dependency_provider
-        self.task = None
-        self.next_commands = []
-        self.integration_events = []
 
     def __enter__(self):
         """Should be used to start a transaction"""
@@ -167,30 +194,26 @@ class TransactionContext:
         result = wrapped_handler()
         return result
 
-    def execute_query(self, query) -> QueryResult:
-        assert (
-            self.task is None
-        ), "Cannot execute query while another task is being executed"
-        self.task = query
-
+    def execute_query(self, query) -> ExecutionChain:
         handler_func = self.app.get_query_handler(query)
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
             handler_func, self._get_overrides()
         )
         p = partial(handler_func, query, **handler_kwargs)
         wrapped_handler = self._wrap_with_middlewares(p, query=query)
-        result = wrapped_handler()
+        query_result = wrapped_handler()
         assert isinstance(
-            result, QueryResult
-        ), f"Got {result} instead of QueryResult from {handler_func}"
-        return result
+            query_result, QueryResult
+        ), f"Got {query_result} instead of QueryResult from {handler_func}"
 
-    def execute_command(self, command) -> CommandResult:
-        assert (
-            self.task is None
-        ), "Cannot execute command while another task is being executed"
-        self.task = command
+        return ExecutionChain.one(
+            ExecutionStep(
+                task=query, handler=handler_func.__name__, result=query_result
+            )
+        )
 
+    @dispatch_triggered_events
+    def execute_command(self, command) -> ExecutionChain:
         handler_func = self.app.get_command_handler(command)
         handler_kwargs = self.dependency_provider.get_handler_kwargs(
             handler_func, self._get_overrides()
@@ -203,25 +226,23 @@ class TransactionContext:
         assert isinstance(
             command_result, CommandResult
         ), f"Got {command_result} instead of CommandResult from {handler_func}"
-        command_result = collect_domain_events(command_result, handler_kwargs)
 
-        self.next_commands = []
-        self.integration_events = []
-        event_queue = command_result.events.copy()
-        while len(event_queue) > 0:
-            event = event_queue.pop(0)
-            if isinstance(event, IntegrationEvent):
-                self.store_integration_event(event)
+        # collect events from entities used by the handler
+        collected_domain_events = collect_domain_events(handler_kwargs)
+        command_result.extend_with_events(collected_domain_events)
 
-            elif isinstance(event, DomainEvent):
-                event_results = self.handle_domain_event(event)
-                self.next_commands.extend(event_results.commands)
-                event_queue.extend(event_results.events)
+        return ExecutionChain.one(
+            ExecutionStep(
+                task=command, handler=handler_func.__name__, result=command_result
+            )
+        )
 
-        return CommandResult.success(payload=command_result.payload)
+    @dispatch_triggered_events
+    def handle_domain_event(self, event) -> ExecutionChain:
+        return self._handle_domain_event(event)
 
-    def handle_domain_event(self, event) -> EventResultSet:
-        event_results = []
+    def _handle_domain_event(self, event) -> ExecutionChain:
+        execution_sequence = ExecutionChain()
         for handler_func in self.app.get_event_handlers(event):
             handler_kwargs = self.dependency_provider.get_handler_kwargs(
                 handler_func, self._get_overrides()
@@ -229,25 +250,25 @@ class TransactionContext:
             p = partial(handler_func, event, **handler_kwargs)
             wrapped_handler = self._wrap_with_middlewares(p, event=event)
             event_result = wrapped_handler() or EventResult.success()
-
             assert isinstance(
                 event_result, EventResult
             ), f"Got {event_result} instead of EventResult from {handler_func}"
-            event_result = collect_domain_events(event_result, handler_kwargs)
-            event_results.append(event_result)
-        return EventResultSet(event_results)
+            collected_events = collect_domain_events(handler_kwargs)
+            event_result.extend_with_events(collected_events)
+            execution_sequence.add(
+                ExecutionStep(
+                    task=event, handler=handler_func.__name__, result=event_result
+                )
+            )
+        return execution_sequence
 
     def handle_integration_event(self, event):
         # TODO: do we need to handle domain and integration events differently???
         return self.handle_domain_event(event)
 
-    def store_integration_event(self, event):
-        self.integration_events.append(event)
-
-    def collect_integration_events(self) -> list[IntegrationEvent]:
-        integration_events = self.integration_events
-        self.integration_events = []
-        return integration_events
+    def collect_integration_events(self):
+        assert self.last_execution_chain, "No execution chain available"
+        return self.last_execution_chain.triggered_events(type_of=IntegrationEvent)
 
     def get_dependency(self, identifier: Any) -> Any:
         """Get a dependency from the dependency provider"""

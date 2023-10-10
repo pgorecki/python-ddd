@@ -15,6 +15,7 @@ def test_command_execution_returns_integration_events():
     In this test, we want to verify that the application stores integration events in the outbox.
     """
 
+    # arrange
     @dataclass
     class CompleteOrder(Command):
         order_id: int
@@ -27,7 +28,7 @@ def test_command_execution_returns_integration_events():
         order_id: int
         buyer_email: str
 
-    class PrepareOrderForShipping(IntegrationEvent):
+    class NotifyPrepareOrderForShipping(IntegrationEvent):
         order_id: int
 
     outbox = []
@@ -45,18 +46,19 @@ def test_command_execution_returns_integration_events():
 
     @app.domain_event_handler
     def on_order_completed(event: OrderCompleted):
-        integration_event = PrepareOrderForShipping(order_id=event.order_id)
+        integration_event = NotifyPrepareOrderForShipping(order_id=event.order_id)
         return EventResult.success(event=integration_event)
 
     @app.on_exit_transaction_context
     def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
-        outbox = ctx.dependency_provider["outbox"]
+        outbox = ctx.get_dependency("outbox")
         if exc_type is None:
-            outbox.extend(ctx.integration_events)
+            outbox.extend(ctx.collect_integration_events())
 
+    # act
+    command = CompleteOrder(order_id=1, buyer_email="john.doe@example.com")
     with app.transaction_context() as ctx:
-        ctx.execute_command(
-            CompleteOrder(order_id=1, buyer_email="john.doe@example.com")
-        )
+        ctx.execute_command(command)
 
+    # assert
     assert len(outbox) == 2

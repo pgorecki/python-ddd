@@ -22,10 +22,10 @@ from modules.catalog.infrastructure.listing_repository import (
 )
 from modules.iam.application.services import IamService
 from modules.iam.infrastructure.repository import PostgresJsonUserRepository
-from seedwork.application import Application, DependencyProvider
+from seedwork.application import Application, DependencyProvider, TransactionContext
 from seedwork.application.events import DomainEvent, EventResult, IntegrationEvent
 from seedwork.infrastructure.logging import logger
-from seedwork.infrastructure.postgres_outbox import Outbox, PostgresOutbox
+from seedwork.infrastructure.postgres_outbox import PostgresOutbox
 
 
 def resolve_provider_by_type(container: Container, cls: type) -> Optional[Provider]:
@@ -102,11 +102,11 @@ def create_application(db_engine):
     application.include_module(bidding_module)
 
     @application.on_enter_transaction_context
-    def on_enter_transaction_context(ctx):
+    def on_enter_transaction_context(ctx: TransactionContext):
         engine = ctx.app.dependency_provider["db_engine"]
         session = Session(engine)
         correlation_id = uuid.uuid4()
-        logger.correlation_id.set(uuid.uuid4())
+        logger.correlation_id.set(uuid.uuid4())  # type: ignore
         transaction_container = TransactionContainer(
             db_session=session, correlation_id=correlation_id, logger=logger
         )
@@ -114,8 +114,8 @@ def create_application(db_engine):
         logger.debug(f"transaction started")
 
     @application.on_exit_transaction_context
-    def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
-        session = ctx.dependency_provider.get_dependency("db_session")
+    def on_exit_transaction_context(ctx: TransactionContext, exc_type, exc_val, exc_tb):
+        session = ctx.get_dependency("db_session")
 
         if exc_type:
             session.rollback()
@@ -125,23 +125,12 @@ def create_application(db_engine):
             logger.debug(f"committed")
         session.close()
         logger.debug(f"transaction ended ")
-        logger.correlation_id.set(uuid.UUID(int=0))
+        logger.correlation_id.set(uuid.UUID(int=0))  # type: ignore
 
     @application.transaction_middleware
-    def auto_type_middleware(ctx, call_next, command=None, query=None, event=None):
-        result = call_next()
-        if command:
-            ...
-        elif query:
-            ...
-        elif event:
-            # we are allowing event handlers to return events, if so they are converted to EventResult
-            if isinstance(result, DomainEvent) or isinstance(result, IntegrationEvent):
-                return EventResult.success(event=result)
-        return result
-
-    @application.transaction_middleware
-    def logging_middleware(ctx, call_next, command=None, query=None, event=None):
+    def logging_middleware(
+        ctx: TransactionContext, call_next, command=None, query=None, event=None
+    ):
         if command:
             prefix = "Executing"
             task = command
@@ -158,11 +147,19 @@ def create_application(db_engine):
         return result
 
     @application.transaction_middleware
-    def outbox_middleware(ctx, call_next, command=None, query=None, event=None):
+    def event_to_event_result_middleware(
+        ctx: TransactionContext, call_next, command=None, query=None, event=None
+    ):
+        """If event handler returns an event, convert it to EventResult"""
         result = call_next()
-        outbox = ctx.get_dependency(Outbox)
-        for event in ctx.collect_integration_events():
-            outbox.add(event)
+        if command:
+            ...
+        elif query:
+            ...
+        elif event:
+            # we are allowing event handlers to return events, if so they are converted to EventResult
+            if isinstance(result, DomainEvent) or isinstance(result, IntegrationEvent):
+                return EventResult.success(event=result)
         return result
 
     return application

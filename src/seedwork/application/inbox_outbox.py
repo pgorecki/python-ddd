@@ -89,6 +89,10 @@ class Outbox(abc.ABC):
         raise NotImplementedError()
 
 
+class MessageBroker:
+    ...
+
+
 class InMemoryInbox(Inbox):
     events: list[Message]
     current: Optional[Message]

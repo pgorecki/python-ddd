@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from modules.bidding.application import bidding_module
 from modules.bidding.domain.entities import Listing
-from modules.bidding.domain.events import BidWasPlaced
+from modules.bidding.domain.events import BidWasPlaced, HighestBidderWasOutbid
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Seller
 from modules.catalog.domain.events import ListingPublishedEvent
@@ -16,8 +16,12 @@ class BidWasPlacedNotification(IntegrationEvent):
 
 
 @bidding_module.domain_event_handler
-def notify_outbid_winner(event: BidWasPlaced, logger):
-    logger.info(f"Message from a handler: Listing {event.listing_id} was published")
+def notify_outbid_winner(event: HighestBidderWasOutbid, outbox):
+    outbox.add_message()
+
+    return BidWasPlacedNotification(
+        listing_id=event.listing_id, bidder_id=event.bidder_id
+    )
 
 
 @bidding_module.domain_event_handler

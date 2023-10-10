@@ -7,13 +7,13 @@ from sqlalchemy.sql.schema import Column
 from sqlalchemy.sql.sqltypes import JSON, DateTime, String
 
 from seedwork.application.events import IntegrationEvent
-from seedwork.application.inbox_outbox import Message, MessageStatus, Outbox
+from seedwork.application.inbox_outbox import Inbox, Message, MessageStatus
 from seedwork.domain.entities import AggregateRoot
 from seedwork.infrastructure.database import Base
 
 
-class OutboxMessageModel(Base):
-    __tablename__ = "outbox"
+class InboxMessageModel(Base):
+    __tablename__ = "inbox"
 
     id = Column(UUID(as_uuid=True), primary_key=True)
     event_type = Column(String, nullable=False)
@@ -24,14 +24,14 @@ class OutboxMessageModel(Base):
     status = Column(String, nullable=False, default=MessageStatus.PENDING)
 
 
-class PostgresOutbox(Outbox):
+class PostgresInbox(Inbox):
     def __init__(self, db_session: Session):
         self._session = db_session
 
     def add(
         self, event: IntegrationEvent, source: Optional[AggregateRoot] = None
     ) -> None:
-        message = OutboxMessageModel(
+        message = InboxMessageModel(
             id=event.event_id,
             event_type=str(event.__class__.__name__),
             event_data=event.__dict__,
@@ -44,15 +44,15 @@ class PostgresOutbox(Outbox):
         """Get pending events from the outbox"""
         raise NotImplementedError()
 
-    def mark_as_sent(self):
-        """Mark retrieved event as sent"""
+    def mark_as_processed(self):
+        """Mark event as completed"""
         raise NotImplementedError()
 
     def mark_as_failed(self):
-        """Mark retrieved event as sent"""
+        """Mark event as failed"""
         raise NotImplementedError()
 
     def get_messages(self) -> list[Message]:
         """Get all deliveries"""
-        messages = self._session.query(OutboxMessageModel).all()
+        messages = self._session.query(InboxMessageModel).all()
         return messages

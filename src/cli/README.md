@@ -3,7 +3,7 @@ This is a sample command line script to print all listings
 1. Start the database
 
 ```
-docker-compose -f docker-compose.dev.yml
+docker-compose -f docker-compose.dev.yml up
 ```
 
 2. Apply all migrations

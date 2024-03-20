@@ -45,7 +45,7 @@ def deserialize_id(value: str) -> GenericUUID:
 
 
 def deserialize_money(data: dict) -> Money:
-    return Money(amount=data["amount"], currency=data["currency"])
+    return Money(data["amount"], currency=data["currency"])
 
 
 def serialize_datetime(value: datetime.datetime) -> str:

@@ -35,7 +35,7 @@ def test_place_one_bid():
         ends_at=datetime.utcnow(),
     )
     listing.place_bid(bid)
-    assert listing.highest_bid == Bid(Money(20), bidder=bidder, placed_at=now)
+    assert listing.highest_bid == Bid(max_price=Money(20), bidder=bidder, placed_at=now)
     assert listing.current_price == Money(10)
 
 

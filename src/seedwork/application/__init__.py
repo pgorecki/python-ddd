@@ -300,7 +300,7 @@ class Application(ApplicationModule):
 
     def execute_command(self, command, **dependencies):
         with self.transaction_context(**dependencies) as ctx:
-            return ctx.execute_command(command)
+            return ctx.execute(command)
 
     def execute_query(self, query, **dependencies):
         with self.transaction_context(**dependencies) as ctx:

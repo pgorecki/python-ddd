@@ -5,11 +5,10 @@ from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.events import ListingDraftCreatedEvent
 from modules.catalog.domain.repositories import ListingRepository
 from seedwork.application.command_handlers import CommandResult
-from seedwork.application.commands import Command
+from lato import Command, TransactionContext
 from seedwork.domain.value_objects import GenericUUID, Money
 
 
-@dataclass
 class CreateListingDraftCommand(Command):
     """A command for creating new listing in draft state"""
 
@@ -20,10 +19,10 @@ class CreateListingDraftCommand(Command):
     seller_id: GenericUUID
 
 
-@catalog_module.command_handler
+@catalog_module.handler(CreateListingDraftCommand)
 def create_listing_draft(
-    command: CreateListingDraftCommand, repository: ListingRepository
-) -> CommandResult:
+    command: CreateListingDraftCommand, repository: ListingRepository, publish
+):
     listing = Listing(
         id=command.listing_id,
         title=command.title,
@@ -32,4 +31,4 @@ def create_listing_draft(
         seller_id=command.seller_id,
     )
     repository.add(listing)
-    return CommandResult.success(event=ListingDraftCreatedEvent(listing_id=listing.id))
+    publish(ListingDraftCreatedEvent(listing_id=listing.id))

@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from api.dependencies import oauth2_scheme  # noqa
 from api.routers import bidding, catalog, diagnostics, iam
 from config.api_config import ApiConfig
-from config.container import TopLevelContainer
+from config.container import create_application, ApplicationContainer
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.logging import LoggerFactory, logger
@@ -15,10 +15,14 @@ from seedwork.infrastructure.logging import LoggerFactory, logger
 LoggerFactory.configure(logger_name="api")
 
 # dependency injection container
-container = TopLevelContainer()
-container.config.from_pydantic(ApiConfig())
+config = ApiConfig()
+container = ApplicationContainer(config=config)
+db_engine = container.db_engine()
+logger.info(f"using db engine {db_engine}, creating tables")
+Base.metadata.create_all(db_engine)
+logger.info("setup complete")
 
-app = FastAPI(debug=container.config.DEBUG)
+app = FastAPI(debug=config.DEBUG)
 
 app.include_router(catalog.router)
 app.include_router(bidding.router)
@@ -26,10 +30,7 @@ app.include_router(iam.router)
 app.include_router(diagnostics.router)
 app.container = container
 
-db_engine = container.db_engine()
-logger.info(f"using db engine {db_engine}, creating tables")
-Base.metadata.create_all(db_engine)
-logger.info("setup complete")
+
 
 try:
     import uuid
@@ -37,7 +38,7 @@ try:
     from modules.iam.application.services import IamService
 
     with app.container.application().transaction_context() as ctx:
-        iam_service = ctx.get_service(IamService)
+        iam_service = ctx[IamService]
         iam_service.create_user(
             user_id=uuid.UUID(int=1),
             email="user1@example.com",

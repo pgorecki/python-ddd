@@ -1,6 +1,8 @@
-from seedwork.application import ApplicationModule
+from lato import ApplicationModule
+import importlib
+
 
 bidding_module = ApplicationModule("bidding")
-bidding_module.import_from("modules.bidding.application.command")
-bidding_module.import_from("modules.bidding.application.query")
-bidding_module.import_from("modules.bidding.application.event")
+importlib.import_module("modules.bidding.application.command")
+importlib.import_module("modules.bidding.application.query")
+importlib.import_module("modules.bidding.application.event")

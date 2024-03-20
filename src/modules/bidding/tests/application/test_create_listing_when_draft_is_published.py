@@ -10,8 +10,7 @@ from seedwork.domain.value_objects import GenericUUID, Money
 @pytest.mark.integration
 def test_create_listing_on_draft_published_event(app, engine):
     listing_id = GenericUUID(int=1)
-    with app.transaction_context() as ctx:
-        ctx.handle_domain_event(
+    app.publish(
             ListingPublishedEvent(
                 listing_id=listing_id,
                 seller_id=GenericUUID.next_id(),

@@ -11,11 +11,11 @@ class GetListingsOfSeller(Query):
     seller_id: GenericUUID
 
 
-@catalog_module.query_handler
-def get_listings_of_seller(query: GetListingsOfSeller, session: Session) -> QueryResult:
+@catalog_module.handler(GetListingsOfSeller)
+def get_listings_of_seller(query: GetListingsOfSeller, session: Session) -> list[dict]:
     # FIXME: use seller_id to filter out listings
     queryset = session.query(ListingModel)  # .filter(
     #     listing_repository.model.data['seller'].astext.cast(UUID) == query.seller_id
     # )
-    result = [dict(id=row.id, **row.data) for row in queryset.all()]
-    return QueryResult.success(result)
+    listings = [dict(id=row.id, **row.data) for row in queryset.all()]
+    return listings

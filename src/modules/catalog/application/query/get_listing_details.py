@@ -10,13 +10,12 @@ from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.value_objects import GenericUUID
 
 
-@dataclass
 class GetListingDetails(Query):
     listing_id: GenericUUID
 
 
-@catalog_module.query_handler
+@catalog_module.handler(GetListingDetails)
 def get_listing_details(query: GetListingDetails, session: Session) -> QueryResult:
-    queryset = session.query(ListingModel).filter_by(id=query.listing_id)
-    result = [map_listing_model_to_dao(row) for row in queryset.all()][0]
-    return QueryResult.success(payload=result)
+    row = session.query(ListingModel).filter_by(id=query.listing_id).one()
+    details = map_listing_model_to_dao(row)
+    return details

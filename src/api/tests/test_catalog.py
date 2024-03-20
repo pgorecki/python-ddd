@@ -17,7 +17,7 @@ def test_empty_catalog_list(api_client):
 @pytest.mark.integration
 def test_catalog_list_with_one_item(app, api_client):
     # arrange
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=GenericUUID(int=1),
             title="Foo",
@@ -50,7 +50,7 @@ def test_catalog_list_with_one_item(app, api_client):
 @pytest.mark.integration
 def test_catalog_list_with_two_items(app, api_client):
     # arrange
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=GenericUUID(int=1),
             title="Foo #1",
@@ -59,7 +59,7 @@ def test_catalog_list_with_two_items(app, api_client):
             seller_id=GenericUUID(int=2),
         )
     )
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=GenericUUID(int=2),
             title="Foo #2",
@@ -88,7 +88,7 @@ def test_catalog_create_draft_fails_due_to_incomplete_data(
 @pytest.mark.integration
 def test_catalog_delete_draft(app, authenticated_api_client):
     current_user = authenticated_api_client.current_user
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=GenericUUID(int=1),
             title="Listing to be deleted",
@@ -115,7 +115,7 @@ def test_catalog_publish_listing_draft(app, authenticated_api_client):
     # arrange
     current_user = authenticated_api_client.current_user
     listing_id = GenericUUID(int=1)
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=listing_id,
             title="Listing to be published",
@@ -136,7 +136,7 @@ def test_published_listing_appears_in_biddings(app, authenticated_api_client):
     # arrange
     listing_id = GenericUUID(int=1)
     current_user = authenticated_api_client.current_user
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=listing_id,
             title="Listing to be published",
@@ -145,7 +145,7 @@ def test_published_listing_appears_in_biddings(app, authenticated_api_client):
             seller_id=current_user.id,
         )
     )
-    app.execute_command(
+    app.execute(
         PublishListingDraftCommand(
             listing_id=listing_id,
             seller_id=current_user.id,

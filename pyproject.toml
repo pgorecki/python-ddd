@@ -6,10 +6,7 @@ authors = ["Przemysław Górecki <przemyslaw.gorecki@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10.0"
-pytest = "^6.2.4"
-pydantic = "^1.8.2"
 black = "^21.5b1"
-fastapi = "^0.95.2"
 uvicorn = "^0.14.0"
 starlette-context = "^0.3.3"
 SQLAlchemy = "^1.4.22"
@@ -29,6 +26,9 @@ httpx = "^0.23.1"
 requests = "^2.28.1"
 bcrypt = "^4.0.1"
 mypy = "^1.4.1"
+fastapi = "^0.110.0"
+lato = "^0.10.0"
+pydantic-settings = "^2.2.1"
 
 [tool.poetry.dev-dependencies]
 poethepoet = "^0.10.0"

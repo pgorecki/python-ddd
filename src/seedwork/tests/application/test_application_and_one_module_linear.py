@@ -71,6 +71,7 @@ def on_exit_transaction_context(ctx, exc_type, exc_val, exc_tb):
     """Save events in outbox, End transaction"""
 
 
+@pytest.mark.skip(reason="seedwork Application deprecated by lato")
 @pytest.mark.integration
 def test_mono_module_command_linear_flow():
     global app
@@ -81,7 +82,7 @@ def test_mono_module_command_linear_flow():
     """
     history = []
     with app.transaction_context(history=history) as ctx:
-        ctx.execute_command(CompleteOrderCommand(order_id="order1"))
+        ctx.execute(CompleteOrderCommand(order_id="order1"))
 
     assert history == [
         "completing order1",

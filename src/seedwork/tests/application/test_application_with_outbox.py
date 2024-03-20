@@ -9,6 +9,7 @@ from seedwork.application.events import EventResult, IntegrationEvent
 from seedwork.domain.events import DomainEvent
 
 
+@pytest.mark.skip(reason="seedwork Application deprecated by lato")
 @pytest.mark.unit
 def test_command_execution_returns_integration_events():
     """
@@ -55,7 +56,7 @@ def test_command_execution_returns_integration_events():
             outbox.extend(ctx.integration_events)
 
     with app.transaction_context() as ctx:
-        ctx.execute_command(
+        ctx.execute(
             CompleteOrder(order_id=1, buyer_email="john.doe@example.com")
         )
 

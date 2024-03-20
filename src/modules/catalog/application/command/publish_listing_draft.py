@@ -9,7 +9,6 @@ from seedwork.application.commands import Command
 from seedwork.domain.mixins import check_rule
 
 
-@dataclass
 class PublishListingDraftCommand(Command):
     """A command for publishing a draft of a listing"""
 
@@ -17,7 +16,7 @@ class PublishListingDraftCommand(Command):
     seller_id: SellerId  # a seller, who is publishing a listing
 
 
-@catalog_module.command_handler
+@catalog_module.handler(PublishListingDraftCommand)
 def publish_listing_draft(
     command: PublishListingDraftCommand,
     listing_repository: ListingRepository,

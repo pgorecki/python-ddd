@@ -10,6 +10,9 @@ class BidReadModel(BaseModel):
     currency: str
     bidder_id: GenericUUID
     bidder_username: str
+    
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class BiddingResponse(BaseModel):
@@ -17,8 +20,14 @@ class BiddingResponse(BaseModel):
     auction_status: str = "active"  # active, ended
     auction_end_date: datetime
     bids: list[BidReadModel]
+    
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class PlaceBidRequest(BaseModel):
     bidder_id: GenericUUID
     amount: float
+    
+    class Config:
+        arbitrary_types_allowed = True

@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from modules.iam.application.services import IamService
 from modules.iam.domain.entities import User
-from seedwork.application import Application, TransactionContext
+from lato import Application, TransactionContext
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -28,5 +28,5 @@ async def get_authenticated_user(
     access_token: Annotated[str, Depends(oauth2_scheme)],
     ctx: Annotated[TransactionContext, Depends(get_transaction_context)],
 ) -> User:
-    current_user = ctx.get_service(IamService).find_user_by_access_token(access_token)
+    current_user = ctx[IamService].find_user_by_access_token(access_token)
     return current_user

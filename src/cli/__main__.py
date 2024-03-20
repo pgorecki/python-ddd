@@ -45,7 +45,7 @@ for listing in listings:
 # now we are explicitly creating a transaction context, this time we want to execute a command
 with app.transaction_context() as ctx:
     # see `create_listing_draft` command handler in `src/modules/catalog/application/command/create_listing_draft.py`
-    ctx.execute_command(
+    ctx.execute(
         CreateListingDraftCommand(
             listing_id=uuid.uuid4(),
             title="First listing",

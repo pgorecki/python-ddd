@@ -9,12 +9,11 @@ from modules.catalog.domain.rules import (
     PublishedListingMustNotBeDeleted,
 )
 from seedwork.application.command_handlers import CommandResult
-from seedwork.application.commands import Command
+from lato import Command, TransactionContext
 from seedwork.domain.mixins import check_rule
 from seedwork.domain.value_objects import GenericUUID
 
 
-@dataclass
 class DeleteListingDraftCommand(Command):
     """A command for deleting a listing"""
 
@@ -22,10 +21,10 @@ class DeleteListingDraftCommand(Command):
     seller_id: GenericUUID
 
 
-@catalog_module.command_handler
+@catalog_module.handler(DeleteListingDraftCommand)
 def delete_listing_draft(
-    command: DeleteListingDraftCommand, repository: ListingRepository
-) -> CommandResult:
+    command: DeleteListingDraftCommand, repository: ListingRepository, publish
+):
     listing: Listing = repository.get_by_id(command.listing_id)
     check_rule(
         OnlyListingOwnerCanDeleteListing(
@@ -34,4 +33,4 @@ def delete_listing_draft(
     )
     check_rule(PublishedListingMustNotBeDeleted(status=listing.status))
     repository.remove(listing)
-    return CommandResult.success(event=ListingDraftDeletedEvent(listing_id=listing.id))
+    publish(ListingDraftDeletedEvent(listing_id=listing.id))

@@ -52,7 +52,7 @@ class Listing(AggregateRoot[GenericUUID]):
 
     @property
     def next_minimum_price(self) -> Money:
-        return self.current_price + Money(amount=1, currency=self.ask_price.currency)
+        return self.current_price + Money(1, currency=self.ask_price.currency)
 
     # public commands
     def place_bid(self, bid: Bid):

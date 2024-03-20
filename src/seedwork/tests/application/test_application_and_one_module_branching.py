@@ -73,6 +73,7 @@ def create_app():
     return app
 
 
+@pytest.mark.skip(reason="seedwork Application deprecated by lato")
 @pytest.mark.integration
 def test_mono_module_command_branching_flow():
     """This tests the branching code flow:
@@ -89,7 +90,7 @@ def test_mono_module_command_branching_flow():
     app = create_app()
     history = []
     with app.transaction_context(history=history) as ctx:
-        ctx.execute_command(CompleteOrderCommand(order_id="order1"))
+        ctx.execute(CompleteOrderCommand(order_id="order1"))
 
     assert history == [
         "completing order1",

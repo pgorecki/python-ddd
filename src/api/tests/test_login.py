@@ -8,7 +8,7 @@ from seedwork.domain.value_objects import GenericUUID
 def test_login_with_api_token(app, api_client):
     # arrange
     with app.transaction_context() as ctx:
-        iam_service = ctx.get_service(IamService)
+        iam_service = ctx[IamService]
         iam_service.create_user(
             user_id=GenericUUID(int=1),
             email="admin@example.com",
@@ -31,7 +31,7 @@ def test_login_with_api_token(app, api_client):
 def test_login_with_invalid_username_returns_400(app, api_client):
     # arrange
     with app.transaction_context() as ctx:
-        iam_service = ctx.get_service(IamService)
+        iam_service = ctx[IamService]
         iam_service.create_user(
             user_id=GenericUUID(int=1),
             email="admin@example.com",
@@ -53,7 +53,7 @@ def test_login_with_invalid_username_returns_400(app, api_client):
 def test_login_with_invalid_password_returns_400(app, api_client):
     # arrange
     with app.transaction_context() as ctx:
-        iam_service = ctx.get_service(IamService)
+        iam_service = ctx[IamService]
         iam_service.create_user(
             user_id=GenericUUID(int=1),
             email="admin@example.com",

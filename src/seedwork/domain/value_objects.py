@@ -1,15 +1,26 @@
 import uuid
-
-from pydantic.dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict
+from dataclasses import dataclass
 
 
 class GenericUUID(uuid.UUID):
     @classmethod
     def next_id(cls):
         return cls(int=uuid.uuid4().int)
+    
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, value, validation_info):
+        if isinstance(value, str):
+            return cls(value)
+        if not isinstance(value, uuid.UUID):
+            raise ValueError('Invalid UUID')
+        return cls(value.hex)
 
 
-@dataclass(frozen=True)
 class ValueObject:
     """
     Base class for value objects
@@ -36,7 +47,7 @@ class Money(ValueObject):
 
     def __add__(self, other):
         self._check_currency(other)
-        return Money(amount=self.amount + other.amount, currency=self.currency)
+        return Money(self.amount + other.amount, currency=self.currency)
 
     def __repr__(self) -> str:
         return f"{self.amount}{self.currency}"

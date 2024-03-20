@@ -20,7 +20,7 @@ def get_route_controller(request, module):
 
 
 def post_route_controller(request, module):
-    result = module.execute_command(MyCommand(
+    result = module.execute(MyCommand(
         foo=request.POST.foo,
         bar=request.POST.bar,
     ))

@@ -1,5 +1,6 @@
-from seedwork.application import ApplicationModule
+from lato import ApplicationModule
+import importlib
 
 catalog_module = ApplicationModule("catalog")
-catalog_module.import_from("modules.catalog.application.command")
-catalog_module.import_from("modules.catalog.application.query")
+importlib.import_module("modules.catalog.application.command")
+importlib.import_module("modules.catalog.application.query")

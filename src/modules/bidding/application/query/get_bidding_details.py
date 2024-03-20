@@ -13,19 +13,17 @@ from seedwork.application.query_handlers import QueryResult
 from seedwork.domain.value_objects import GenericUUID
 
 
-@dataclass
 class GetBiddingDetails(Query):
     listing_id: GenericUUID
 
 
-@bidding_module.query_handler
+@bidding_module.handler(GetBiddingDetails)
 def get_bidding_details(
     query: GetBiddingDetails,
     session: Session,
-) -> QueryResult[ListingDAO]:
-    c = session.query(ListingModel).count()
+) -> ListingDAO:
     listing_model = (
         session.query(ListingModel).filter_by(id=str(query.listing_id)).one()
     )
     dao = map_listing_model_to_dao(listing_model)
-    return QueryResult(payload=dao)
+    return dao

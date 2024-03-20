@@ -7,7 +7,7 @@ from api.models.bidding import BiddingResponse, PlaceBidRequest
 from config.container import inject
 from modules.bidding.application.command import PlaceBidCommand, RetractBidCommand
 from modules.bidding.application.query.get_bidding_details import GetBiddingDetails
-from seedwork.application import Application
+from lato import Application
 
 router = APIRouter()
 
@@ -25,12 +25,11 @@ async def get_bidding_details_of_listing(
     Shows listing details
     """
     query = GetBiddingDetails(listing_id=listing_id)
-    query_result = app.execute_query(query)
-    payload = query_result.payload
+    result = app.execute(query)
     return BiddingResponse(
-        listing_id=str(payload.id),
-        auction_end_date=payload.ends_at,
-        bids=payload.bids,
+        listing_id=result.id,
+        auction_end_date=result.ends_at,
+        bids=result.bids,
     )
 
 
@@ -53,15 +52,14 @@ async def place_bid(
         bidder_id=request_body.bidder_id,
         amount=request_body.amount,
     )
-    result = app.execute_command(command)
+    app.execute(command)
 
     query = GetBiddingDetails(listing_id=listing_id)
-    query_result = app.execute_query(query)
-    payload = query_result.payload
+    result = app.execute(query)
     return BiddingResponse(
-        listing_id=str(payload.id),
-        auction_end_date=payload.ends_at,
-        bids=payload.bids,
+        listing_id=result.id,
+        auction_end_date=result.ends_at,
+        bids=result.bids,
     )
 
 
@@ -81,7 +79,7 @@ async def retract_bid(
         listing_id=listing_id,
         bidder_id="",
     )
-    app.execute_command(command)
+    app.execute(command)
 
     query = GetBiddingDetails(listing_id=listing_id)
     query_result = app.execute_query(query)

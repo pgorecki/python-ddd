@@ -36,7 +36,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> LoginResponse:
     try:
-        iam_service = ctx.get_service(IamService)
+        iam_service = ctx[IamService]
         user = iam_service.authenticate_with_name_and_password(
             form_data.username, form_data.password
         )

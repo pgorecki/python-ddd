@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic.dataclasses import Field, dataclass
+from dataclasses import dataclass, field
 
 from seedwork.domain.value_objects import GenericUUID, Money, ValueObject
 
@@ -19,4 +19,4 @@ class Seller(ValueObject):
 class Bid(ValueObject):
     max_price: Money  # a maximum price that a bidder is willing to pay
     bidder: Bidder
-    placed_at: datetime = Field(default_factory=datetime.utcnow)
+    placed_at: datetime = field(default_factory=datetime.utcnow)

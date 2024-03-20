@@ -23,13 +23,13 @@ router = APIRouter()
 
 @router.get("/catalog", tags=["catalog"], response_model=ListingIndexModel)
 @inject
-async def get_all_listings(app: Annotated[Application, Depends(get_application)]):
+def get_all_listings(app: Annotated[Application, Depends(get_application)]):
     """
     Shows all published listings in the catalog
     """
     query = GetAllListings()
-    query_result = app.execute_query(query)
-    return dict(data=query_result.payload)
+    result = app.execute(query)
+    return dict(data=result)
 
 
 @router.get("/catalog/{listing_id}", tags=["catalog"], response_model=ListingReadModel)
@@ -64,7 +64,7 @@ async def create_listing(
         ask_price=Money(request_body.ask_price_amount, request_body.ask_price_currency),
         seller_id=current_user.id,
     )
-    app.execute_command(command)
+    app.execute(command)
 
     query = GetListingDetails(listing_id=command.listing_id)
     query_result = app.execute_query(query)
@@ -87,7 +87,7 @@ async def delete_listing(
         listing_id=listing_id,
         seller_id=current_user.id,
     )
-    app.execute_command(command)
+    app.execute(command)
 
 
 @router.post(
@@ -109,8 +109,8 @@ async def publish_listing(
         listing_id=listing_id,
         seller_id=current_user.id,
     )
-    app.execute_command(command)
+    app.execute(command)
 
     query = GetListingDetails(listing_id=listing_id)
-    query_result = app.execute_query(query)
-    return dict(query_result.payload)
+    response = app.execute(query)
+    return response

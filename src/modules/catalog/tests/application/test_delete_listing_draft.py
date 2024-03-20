@@ -11,7 +11,7 @@ from modules.catalog.infrastructure.listing_repository import (
 )
 from seedwork.domain.value_objects import GenericUUID, Money
 from seedwork.infrastructure.repository import InMemoryRepository
-
+from seedwork.tests.application.test_utils import FakeEventPublisher
 
 @pytest.mark.unit
 def test_delete_listing_draft():
@@ -27,6 +27,7 @@ def test_delete_listing_draft():
         seller_id=seller_id,
     )
     repository.add(listing)
+    publish = FakeEventPublisher()
 
     command = DeleteListingDraftCommand(
         listing_id=listing.id,
@@ -34,11 +35,10 @@ def test_delete_listing_draft():
     )
 
     # act
-    result = delete_listing_draft(command, repository)
+    delete_listing_draft(command, repository, publish)
 
     # assert
-    assert result.is_success()
-    assert result.events == [ListingDraftDeletedEvent(listing_id=listing.id)]
+    assert publish.contains(ListingDraftDeletedEvent)
 
 
 @pytest.mark.integration
@@ -53,6 +53,7 @@ def test_delete_listing_draft_removes_from_database(db_session):
         seller_id=seller_id,
     )
     repository.add(listing)
+    publish = FakeEventPublisher()
 
     command = DeleteListingDraftCommand(
         listing_id=listing.id,
@@ -60,7 +61,7 @@ def test_delete_listing_draft_removes_from_database(db_session):
     )
 
     # act
-    delete_listing_draft(command, repository)
+    delete_listing_draft(command, repository, publish)
 
     # assert
     assert repository.count() == 0

@@ -3,12 +3,10 @@ from dataclasses import dataclass
 from modules.bidding.application import bidding_module
 from modules.bidding.domain.repositories import ListingRepository
 from modules.bidding.domain.value_objects import Bid, Bidder, Money
-from seedwork.application.command_handlers import CommandResult
 from seedwork.application.commands import Command
 from seedwork.domain.value_objects import GenericUUID
 
 
-@dataclass
 class PlaceBidCommand(Command):
     listing_id: GenericUUID
     bidder_id: GenericUUID
@@ -16,12 +14,12 @@ class PlaceBidCommand(Command):
     currency: str = "USD"
 
 
-@bidding_module.command_handler
+@bidding_module.handler(PlaceBidCommand)
 def place_bid(
     command: PlaceBidCommand, listing_repository: ListingRepository
-) -> CommandResult:
+):
     bidder = Bidder(id=command.bidder_id)
-    bid = Bid(bidder=bidder, max_price=Money(amount=command.amount))
+    bid = Bid(bidder=bidder, max_price=Money(command.amount))
 
     listing = listing_repository.get_by_id(command.listing_id)
     listing.place_bid(bid)

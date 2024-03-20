@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from api.dependencies import (
-    TransactionContext,
+    Application,
     User,
     get_authenticated_user,
-    get_transaction_context,
+    get_application,
 )
 
 from .iam import UserResponse
@@ -16,13 +16,13 @@ router = APIRouter()
 
 @router.get("/debug", tags=["diagnostics"])
 async def debug(
-    ctx: Annotated[TransactionContext, Depends(get_transaction_context)],
+    app: Annotated[Application, Depends(get_application)],
     current_user: Annotated[User, Depends(get_authenticated_user)],
 ):
     return dict(
-        app_id=id(ctx.app),
-        name=ctx.app.name,
-        version=ctx.app.version,
+        app_id=id(app),
+        name=app.name,
+        version=app["app_version"],
         user=UserResponse(
             id=str(current_user.id),
             username=current_user.username,

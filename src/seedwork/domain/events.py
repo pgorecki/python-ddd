@@ -1,11 +1,14 @@
-from pydantic import BaseModel
+from lato import Event
 
 
-class DomainEvent(BaseModel):
+class DomainEvent(Event):
     """
     Domain events are used to communicate between aggregates within a single transaction boundary via in-memory queue.
     Domain events are synchronous in nature.
     """
+    
+    class Config:
+        arbitrary_types_allowed = True
 
     def __next__(self):
         yield self

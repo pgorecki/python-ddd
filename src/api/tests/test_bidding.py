@@ -11,7 +11,7 @@ from seedwork.infrastructure.logging import logger
 def setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id):
     logger.info("Adding users")
     with app.transaction_context() as ctx:
-        iam_service = ctx.dependency_provider["iam_service"]
+        iam_service = ctx["iam_service"]
 
         iam_service.create_user(
             user_id=seller_id,
@@ -27,7 +27,7 @@ def setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id):
         )
 
     logger.info("Adding listing")
-    app.execute_command(
+    app.execute(
         CreateListingDraftCommand(
             listing_id=listing_id,
             title="Foo",
@@ -36,7 +36,7 @@ def setup_app_for_bidding_tests(app, listing_id, seller_id, bidder_id):
             seller_id=seller_id,
         )
     )
-    app.execute_command(
+    app.execute(
         PublishListingDraftCommand(listing_id=listing_id, seller_id=seller_id)
     )
     logger.info("test setup complete")
@@ -52,4 +52,5 @@ def test_place_bid(app, api_client):
     url = f"/bidding/{listing_id}/place_bid"
 
     response = api_client.post(url, json={"bidder_id": str(bidder_id), "amount": 11})
+    json = response.json()
     assert response.status_code == 200

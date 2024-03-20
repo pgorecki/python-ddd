@@ -10,15 +10,12 @@ from seedwork.application.query_handlers import QueryResult
 class GetAllListings(Query):
     """This query does not need any parameters"""
 
-    ...
 
-
-@catalog_module.query_handler
+@catalog_module.handler(GetAllListings)
 def get_all_listings(
     query: GetAllListings,
     session: Session,
-) -> QueryResult:
+) -> list[ListingModel]:
     queryset = session.query(ListingModel)
-    payload = [map_listing_model_to_dao(row) for row in queryset.all()]
-    # TODO: add error handling
-    return QueryResult.success(payload)
+    listings = [map_listing_model_to_dao(row) for row in queryset.all()]
+    return listings

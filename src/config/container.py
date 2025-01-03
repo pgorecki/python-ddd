@@ -79,12 +79,12 @@ def create_application(db_engine) -> Application:
         return TransactionContext(dependency_provider)
 
     @application.on_enter_transaction_context
-    async def on_enter_transaction_context(ctx: TransactionContext):
+    def on_enter_transaction_context(ctx: TransactionContext):
         ctx.set_dependencies(publish=ctx.publish)
         logger.debug("Entering transaction")
 
     @application.on_exit_transaction_context
-    async def on_exit_transaction_context(
+    def on_exit_transaction_context(
         ctx: TransactionContext, exception: Optional[Exception] = None
     ):
         session = ctx["db_session"]

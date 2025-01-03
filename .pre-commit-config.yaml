@@ -1,13 +1,7 @@
 default_language_version:
-  python: python3.10
+  python: python3.11
 
 repos:
-  # native hints instead of `from typing` | List -> list
-  - repo: https://github.com/sondrelg/pep585-upgrade
-    rev: 'v1.0' # Version to check
-    hooks:
-      - id: upgrade-type-hints
-
   # Only for removing unused imports > Other staff done by Black
   - repo: https://github.com/myint/autoflake
     rev: "v1.4" # Version to check

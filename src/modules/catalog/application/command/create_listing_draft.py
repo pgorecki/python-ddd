@@ -1,11 +1,9 @@
-from dataclasses import dataclass
+from lato import Command
 
 from modules.catalog.application import catalog_module
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.events import ListingDraftCreatedEvent
 from modules.catalog.domain.repositories import ListingRepository
-from seedwork.application.command_handlers import CommandResult
-from lato import Command, TransactionContext
 from seedwork.domain.value_objects import GenericUUID, Money
 
 
@@ -20,7 +18,7 @@ class CreateListingDraftCommand(Command):
 
 
 @catalog_module.handler(CreateListingDraftCommand)
-def create_listing_draft(
+async def create_listing_draft(
     command: CreateListingDraftCommand, repository: ListingRepository, publish
 ):
     listing = Listing(

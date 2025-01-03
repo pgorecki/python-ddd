@@ -1,13 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from lato import Application
 
 from api.dependencies import get_application
 from api.models.bidding import BiddingResponse, PlaceBidRequest
 from config.container import inject
 from modules.bidding.application.command import PlaceBidCommand, RetractBidCommand
 from modules.bidding.application.query.get_bidding_details import GetBiddingDetails
-from lato import Application
 
 router = APIRouter()
 
@@ -25,7 +25,7 @@ async def get_bidding_details_of_listing(
     Shows listing details
     """
     query = GetBiddingDetails(listing_id=listing_id)
-    result = app.execute(query)
+    result = await app.execute_async(query)
     return BiddingResponse(
         listing_id=result.id,
         auction_end_date=result.ends_at,
@@ -52,10 +52,11 @@ async def place_bid(
         bidder_id=request_body.bidder_id,
         amount=request_body.amount,
     )
-    app.execute(command)
+    await app.execute_async(command)
+    # execute_async, or execute?
 
     query = GetBiddingDetails(listing_id=listing_id)
-    result = app.execute(query)
+    result = await app.execute_async(query)
     return BiddingResponse(
         listing_id=result.id,
         auction_end_date=result.ends_at,

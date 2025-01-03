@@ -22,13 +22,12 @@ router = APIRouter()
 
 
 @router.get("/catalog", tags=["catalog"], response_model=ListingIndexModel)
-@inject
-def get_all_listings(app: Annotated[Application, Depends(get_application)]):
+async def get_all_listings(app: Annotated[Application, Depends(get_application)]):
     """
     Shows all published listings in the catalog
     """
     query = GetAllListings()
-    result = app.execute(query)
+    result = await app.execute_async(query)
     return dict(data=result)
 
 
@@ -41,7 +40,7 @@ async def get_listing_details(
     Shows listing details
     """
     query = GetListingDetails(listing_id=listing_id)
-    query_result = app.execute_query(query)
+    query_result = await app.execute_async(query)
     return dict(data=query_result.payload)
 
 
@@ -87,7 +86,7 @@ async def delete_listing(
         listing_id=listing_id,
         seller_id=current_user.id,
     )
-    app.execute(command)
+    await app.execute_async(command)
 
 
 @router.post(
@@ -109,8 +108,8 @@ async def publish_listing(
         listing_id=listing_id,
         seller_id=current_user.id,
     )
-    app.execute(command)
+    await app.execute_async(command)
 
     query = GetListingDetails(listing_id=listing_id)
-    response = app.execute(query)
+    response = await app.execute_async(query)
     return response

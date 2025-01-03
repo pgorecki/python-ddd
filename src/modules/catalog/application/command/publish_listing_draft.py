@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from modules.catalog.application import catalog_module
 from modules.catalog.domain.entities import Listing
 from modules.catalog.domain.repositories import ListingRepository
@@ -17,7 +15,7 @@ class PublishListingDraftCommand(Command):
 
 
 @catalog_module.handler(PublishListingDraftCommand)
-def publish_listing_draft(
+async def publish_listing_draft(
     command: PublishListingDraftCommand,
     listing_repository: ListingRepository,
 ):

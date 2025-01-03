@@ -12,7 +12,8 @@ from seedwork.infrastructure.repository import InMemoryRepository
 
 
 @pytest.mark.unit
-def test_publish_listing():
+@pytest.mark.asyncio
+async def test_publish_listing():
     # arrange
     seller_repository = InMemoryRepository()
     seller = Seller(id=Seller.next_id())
@@ -34,7 +35,7 @@ def test_publish_listing():
     )
 
     # act
-    publish_listing_draft(
+    await publish_listing_draft(
         command,
         listing_repository=listing_repository,
     )
@@ -44,7 +45,8 @@ def test_publish_listing():
 
 
 @pytest.mark.unit
-def test_publish_listing_and_break_business_rule():
+@pytest.mark.asyncio
+async def test_publish_listing_and_break_business_rule():
     # arrange
     seller_repository = InMemoryRepository()
     seller = Seller(id=Seller.next_id())
@@ -69,7 +71,7 @@ def test_publish_listing_and_break_business_rule():
 
     # assert
     with pytest.raises(BusinessRuleValidationException):
-        publish_listing_draft(
+        await publish_listing_draft(
             command,
             listing_repository=listing_repository,
         )

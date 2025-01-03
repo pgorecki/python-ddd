@@ -2,11 +2,12 @@ import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import ValidationError
 
 from api.dependencies import oauth2_scheme  # noqa
 from api.routers import bidding, catalog, diagnostics, iam
 from config.api_config import ApiConfig
-from config.container import create_application, ApplicationContainer
+from config.container import ApplicationContainer
 from seedwork.domain.exceptions import DomainException, EntityNotFoundException
 from seedwork.infrastructure.database import Base
 from seedwork.infrastructure.logging import LoggerFactory, logger
@@ -28,16 +29,27 @@ app.include_router(catalog.router)
 app.include_router(bidding.router)
 app.include_router(iam.router)
 app.include_router(diagnostics.router)
-app.container = container
+app.container = container  # type: ignore
 
 
+@app.exception_handler(ValidationError)
+async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+        },
+    )
+
+
+# startup
 
 try:
     import uuid
 
     from modules.iam.application.services import IamService
 
-    with app.container.application().transaction_context() as ctx:
+    with container.application().transaction_context() as ctx:
         iam_service = ctx[IamService]
         iam_service.create_user(
             user_id=uuid.UUID(int=1),
@@ -50,7 +62,7 @@ except ValueError as e:
 
 
 @app.exception_handler(DomainException)
-async def unicorn_exception_handler(request: Request, exc: DomainException):
+async def domain_exception_handler(request: Request, exc: DomainException):
     if container.config.DEBUG:
         raise exc
 
@@ -61,13 +73,21 @@ async def unicorn_exception_handler(request: Request, exc: DomainException):
 
 
 @app.exception_handler(EntityNotFoundException)
-async def unicorn_exception_handler(request: Request, exc: EntityNotFoundException):
+async def entity_not_found_exception_handler(
+    request: Request, exc: EntityNotFoundException
+):
     return JSONResponse(
         status_code=404,
         content={
             "message": f"Entity {exc.kwargs} not found in {exc.repository.__class__.__name__}"
         },
     )
+
+
+@app.middleware("http")
+async def add_lato_application(request: Request, call_next):
+    request.state.lato_application = container.application()
+    return await call_next(request)
 
 
 @app.middleware("http")

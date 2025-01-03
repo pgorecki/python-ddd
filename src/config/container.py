@@ -1,18 +1,19 @@
+import asyncio
+import copy
 import inspect
 import json
 import uuid
 from typing import Optional
 from uuid import UUID
-from pydantic_settings import BaseSettings
 
 from dependency_injector import containers, providers
 from dependency_injector.containers import Container
 from dependency_injector.providers import Dependency, Factory, Provider, Singleton
 from dependency_injector.wiring import Provide, inject  # noqa
+from lato import Application, DependencyProvider, TransactionContext
+from pydantic_settings import BaseSettings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from lato import Application, TransactionContext, DependencyProvider
-import copy
 
 from modules.bidding.application import bidding_module
 from modules.bidding.infrastructure.listing_repository import (
@@ -24,9 +25,8 @@ from modules.catalog.infrastructure.listing_repository import (
 )
 from modules.iam.application.services import IamService
 from modules.iam.infrastructure.repository import PostgresJsonUserRepository
-
 from seedwork.application.inbox_outbox import InMemoryOutbox
-from seedwork.infrastructure.logging import logger, Logger
+from seedwork.infrastructure.logging import Logger, logger
 
 
 def _default(val):
@@ -79,16 +79,22 @@ def create_application(db_engine) -> Application:
         return TransactionContext(dependency_provider)
 
     @application.on_enter_transaction_context
-    def on_enter_transaction_context(ctx: TransactionContext):
+    async def on_enter_transaction_context(ctx: TransactionContext):
         ctx.set_dependencies(publish=ctx.publish)
         logger.debug("Entering transaction")
 
     @application.on_exit_transaction_context
-    def on_exit_transaction_context(ctx: TransactionContext, exception: Optional[Exception] = None):
+    async def on_exit_transaction_context(
+        ctx: TransactionContext, exception: Optional[Exception] = None
+    ):
         session = ctx["db_session"]
         if exception:
             session.rollback()
             logger.warning(f"rollback due to {exception}")
+
+            # from pydantic import ValidationError
+            # if type(exception) not in [ValidationError]:
+            #     raise exception
         else:
             session.commit()
             logger.debug(f"committed")
@@ -97,7 +103,7 @@ def create_application(db_engine) -> Application:
         logger.correlation_id.set(uuid.UUID(int=0))  # type: ignore
 
     @application.transaction_middleware
-    def logging_middleware(ctx: TransactionContext, call_next):
+    async def logging_middleware(ctx: TransactionContext, call_next):
         description = (
             f"{ctx.current_action[1]} -> {repr(ctx.current_action[0])}"
             if ctx.current_action
@@ -105,27 +111,31 @@ def create_application(db_engine) -> Application:
         )
         logger.debug(f"Executing {description}...")
         result = call_next()
+        if asyncio.iscoroutine(result):
+            result = await result
         logger.debug(f"Finished executing {description}")
         return result
-    
+
     @application.transaction_middleware
-    def event_collector_middleware(ctx: TransactionContext, call_next):
+    async def event_collector_middleware(ctx: TransactionContext, call_next):
         handler_kwargs = call_next.keywords
 
         result = call_next()
-        
+        if asyncio.iscoroutine(result):
+            result = await result
+
         logger.debug(f"Collecting event from {ctx['message'].__class__}")
-        
+
         domain_events = []
         repositories = filter(
-            lambda x: hasattr(x, 'collect_events'), handler_kwargs.values()
+            lambda x: hasattr(x, "collect_events"), handler_kwargs.values()
         )
         for repo in repositories:
             domain_events.extend(repo.collect_events())
         for event in domain_events:
             logger.debug(f"Publishing {event}")
-            ctx.publish(event)
-            
+            await ctx.publish_async(event)
+
         return result
 
     return application
@@ -133,13 +143,14 @@ def create_application(db_engine) -> Application:
 
 class ApplicationContainer(containers.DeclarativeContainer):
     """Dependency Injection container for the application (application-level dependencies)
-    see https://github.com/ets-labs/python-dependency-injector for more details    
+    see https://github.com/ets-labs/python-dependency-injector for more details
     """
+
     __self__ = providers.Self()
     config = providers.Dependency(instance_of=BaseSettings)
     db_engine = providers.Singleton(create_db_engine, config)
     application = providers.Singleton(create_application, db_engine)
-    
+
 
 class TransactionContainer(containers.DeclarativeContainer):
     """Dependency Injection container for the transaction context (transaction-level dependencies)
@@ -193,6 +204,8 @@ def resolve_provider_by_type(container: Container, cls: type) -> Optional[Provid
 
 
 class ContainerProvider(DependencyProvider):
+    """A dependency provider that uses a dependency injector container under the hood"""
+
     def __init__(self, container: Container):
         self.container = container
         self.counter = 0

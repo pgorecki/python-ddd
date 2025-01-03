@@ -685,13 +685,13 @@ files = [
 
 [[package]]
 name = "lato"
-version = "0.10.0"
+version = "0.12.0"
 description = "Lato is a Python microframework designed for building modular monoliths and loosely coupled applications."
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "lato-0.10.0-py3-none-any.whl", hash = "sha256:9a2efa02d8cf28503c53a8229aa2f787ae46a7123759b0474cfda9a9c44ac446"},
-    {file = "lato-0.10.0.tar.gz", hash = "sha256:d53b212dddb902067fa66969f181457e3fb72c34f8fabe942e4ca9fe632bd606"},
+    {file = "lato-0.12.0-py3-none-any.whl", hash = "sha256:0ef3512ff0d3f7912623595ecc21e8f23dfce8e0ff385f17d847b8bbfed27253"},
+    {file = "lato-0.12.0.tar.gz", hash = "sha256:c3d36cdae0d5ca2db8868423f780c42bff22ce30bd6f3783ee5576ef223cec7a"},
 ]
 
 [package.dependencies]
@@ -1200,13 +1200,13 @@ testing = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygm
 
 [[package]]
 name = "pytest-asyncio"
-version = "0.23.5.post1"
+version = "0.23.8"
 description = "Pytest support for asyncio"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-asyncio-0.23.5.post1.tar.gz", hash = "sha256:b9a8806bea78c21276bc34321bbf234ba1b2ea5b30d9f0ce0f2dea45e4685813"},
-    {file = "pytest_asyncio-0.23.5.post1-py3-none-any.whl", hash = "sha256:30f54d27774e79ac409778889880242b0403d09cabd65b727ce90fe92dd5d80e"},
+    {file = "pytest_asyncio-0.23.8-py3-none-any.whl", hash = "sha256:50265d892689a5faefb84df80819d1ecef566eb3549cf915dfb33569359d1ce2"},
+    {file = "pytest_asyncio-0.23.8.tar.gz", hash = "sha256:759b10b33a6dc61cce40a8bd5205e302978bbbcc00e279a8b61d9a6a3c82e4d3"},
 ]
 
 [package.dependencies]
@@ -1743,4 +1743,4 @@ tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10.0"
-content-hash = "5ac4859b98df7fa83e2b336a4a189531aa1bda42073eff3f6c9229d234d16590"
+content-hash = "44490e84888709bc4e640d8a067c1f262a4e51cc2c768934804860103c11692b"

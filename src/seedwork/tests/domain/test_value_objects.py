@@ -1,6 +1,11 @@
 import pytest
+from pydantic import BaseModel
 
-from seedwork.domain.value_objects import Money
+from seedwork.domain.value_objects import GenericUUID, Money
+
+
+class CustomPydanticModel(BaseModel):
+    uuid: GenericUUID
 
 
 @pytest.mark.unit
